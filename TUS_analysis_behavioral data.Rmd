@@ -42,3 +42,7 @@ RTs<-log %>%
   summarise(mean = mean(n), sd(n)) 
 ```
 
+```{r}
+testins git chunk
+```
+
