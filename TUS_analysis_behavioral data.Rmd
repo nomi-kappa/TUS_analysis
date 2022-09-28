@@ -7,47 +7,141 @@ output: html_document
 
 
 ```{r setup, include=FALSE}
-git_remotes()
+#git_remotes()
 ```
 
 ```{r}
-library(usethis)
-use_github()
+#library(usethis)
+#use_github()
 ```
 
 
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, parnsip, htmltools, bridgesampling, rstanarm)
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm, magrittr, ggplot())
+
+# parnsip
 ```
 
-
+#### Insert .txt files
 ```{r}
 
-log <- read.table(file = "12.09.22_m1_v2_log.txt", header = FALSE)
-View(log)
-```
+pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>% 
+  group_by(filename) %>% 
+  do(read.table(.$filename))
 
-```{r}
-#set variable names
 
-log <- log %>% set_names(c("stimID", "GW", "GAL", "NGQ", "NGL", "jitter1", 
-              "jitter2", "response", "outcome"))
-
-log %>% glimpse
-```
-```{r}
-log <- subset(response, practice != "0") # exlude 0s (no presses)
+#log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
 
 ```
 
+#### Set variable names
 ```{r}
-RTs<-log %>% 
-  group_by(response) %>% 
-  summarise(mean = mean(n), sd(n)) 
+pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcome"))
+
+pilot %>% glimpse
+
 ```
 
+#### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
 ```{r}
-change to line 46```
+library(stringr)
+pilot <- pilot %>%
+      mutate_at("ID", str_replace, "pilot data/", "")# & "log.txt", "")
+
+pilot <- pilot %>%
+      mutate_at("ID", str_replace, "_log.txt", "")
+
+pilot %>% glimpse
+```
+#### Trial for a neat version of the above chunk. No luck at the moment. 
+```{r}
+#pilot <- pilot %>%
+     # mutate_at("ID", str_replace, "pilot data/" and "_log.txt", "")
+
+#replace multiple words in the ID column
+           #pilot$ID <- str_replace_all(pilot$ID, c("pilot data/" = "", "_log.txt"= ""))
+           #pilot$ID %>% glimpse
+
+#pilot$ID <- case_when(
+#   pilot$ID == "pilot data/"~ "",
+#    pilot$ID == "_log.txt"~ "",
+#    TRUE ~ NA
+#)
+
+```
+
+
+#### Add response col (rress - no_press)
+```{r}
+
+pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
+ 
+view(pilot)        
+        
+```
+
+#### Add GNG column (go - noGo)  - WRONGGGGGGGGGG - HEEEELP
+```{r}
+
+
+
+pilot <- mutate(pilot, GNG = ifelse(GW & GAL, 'Go', 'noGo'))
+View(pilot)
+
+```
+        
+#### Add win_lose column (win - lose) - WRONGGGGGGGGGG - HEEEELP
+```{r}
+pilot$win_lose <- with(pilot, ifelse(seq_len(stim_ID) %% 2 == 0, "win", "lose"), 
+                       ifelse(seq_len(stim_ID) %% 2 == 1, "lose", "win"))
+View(pilot)
+
+```
+      #### Add CUE column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+
+```  
+
+
+#### Distribution of RT for presses
+```{r}
+
+ #MEAN RT - PRESSES (distribution of RT)
+pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
+RTs_presses <-pilot_presses%>%  group_by(RT, ID, outcome) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE)) #%>%
+ # filter(CorrectResponse == "Correct")
+
+p1 <-ggplot(data = RTs_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()
+
+p1 +ggtitle ("Distribution of RT for presses")
+
+  #MEAN rt - correct
+#RTs_correct <-pilo t%>% group_by(response_RT, ID, outcome) %>% 
+#  summarise(Mean_RT = mean(response_RT, na.rm = TRUE)) %>%
+# filter(outcome == "1")
+
+#ggplot(data = RTs_correct, 
+   #    aes(x = Mean_RT)) + 
+ # geom_histogram()
+
+```
+#### Number of presses vs no_presses 
+```{r}
+pilot%>% group_by (stim_ID)%>% dplyr::count(response) 
+
+ggplot(pilot, aes(x=response, y=)) + 
+  geom_bar(stat = "identity")
+
+pilot%>% dplyr::count(response) 
+
+
+```
+
+
 
