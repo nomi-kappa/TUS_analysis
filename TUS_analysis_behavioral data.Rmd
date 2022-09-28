@@ -24,6 +24,7 @@ p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanar
 # parnsip
 ```
 
+
 #### Insert .txt files
 ```{r}
 
@@ -36,6 +37,8 @@ pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>
 
 ```
 
+
+
 #### Set variable names
 ```{r}
 pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
@@ -44,6 +47,7 @@ pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitt
 pilot %>% glimpse
 
 ```
+
 
 #### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
 ```{r}
@@ -76,23 +80,22 @@ pilot %>% glimpse
 
 #### Add response col (rress - no_press)
 ```{r}
-
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
- 
-view(pilot)        
+ view(pilot)        
         
 ```
 
+
+
 #### Add GNG column (go - noGo)  - WRONGGGGGGGGGG - HEEEELP
 ```{r}
-
-
-
 pilot <- mutate(pilot, GNG = ifelse(GW & GAL, 'Go', 'noGo'))
 View(pilot)
 
 ```
         
+
+
 #### Add win_lose column (win - lose) - WRONGGGGGGGGGG - HEEEELP
 ```{r}
 pilot$win_lose <- with(pilot, ifelse(seq_len(stim_ID) %% 2 == 0, "win", "lose"), 
@@ -100,9 +103,11 @@ pilot$win_lose <- with(pilot, ifelse(seq_len(stim_ID) %% 2 == 0, "win", "lose"),
 View(pilot)
 
 ```
-      #### Add CUE column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+      
+      
+### Add CUE column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
 ```{r}
-
+#no luck atm
 ```  
 
 
@@ -131,7 +136,10 @@ p1 +ggtitle ("Distribution of RT for presses")
  # geom_histogram()
 
 ```
-#### Number of presses vs no_presses 
+
+
+
+#### Number of presses vs no_presses - needs wooork
 ```{r}
 pilot%>% group_by (stim_ID)%>% dplyr::count(response) 
 
