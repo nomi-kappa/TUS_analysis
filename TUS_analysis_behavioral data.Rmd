@@ -19,7 +19,7 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm, magrittr, ggplot())
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot())
 
 # parnsip
 ```
@@ -81,7 +81,7 @@ pilot %>% glimpse
 #### Add response col (rress - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
- view(pilot)        
+ View(pilot)        
         
 ```
 
@@ -89,8 +89,18 @@ pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
 
 #### Add GNG column (go - noGo)  - WRONGGGGGGGGGG - HEEEELP
 ```{r}
-pilot <- mutate(pilot, GNG = ifelse(GW & GAL, 'Go', 'noGo'))
-View(pilot)
+   pilot$GNG <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
+                  ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))
+
+
+
+pilot <- pilot %>%
+  mutate(correct = ifelse(GNG == "noGo", ifelse(response == "no_press", 1, 0), 
+         
+                    ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
+                          
+
+View(pilot) 
 
 ```
         
