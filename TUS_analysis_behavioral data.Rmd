@@ -78,27 +78,27 @@ pilot %>% glimpse
 ```
 
 
-#### Add response col (rress - no_press)
+#### Add response col (press - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
- View(pilot)        
+      
         
 ```
 
-
-
-#### Add GNG column (go - noGo)  - WRONGGGGGGGGGG - HEEEELP
+#### Add GNG col (Go-noGO)
 ```{r}
-   pilot$GNG <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
-                  ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))
+pilot$GNG <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
+                ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))     
+        
+```
+ 
 
-
-
+#### Add correct column (0-1)  
+```{r}
 pilot <- pilot %>%
   mutate(correct = ifelse(GNG == "noGo", ifelse(response == "no_press", 1, 0), 
          
                     ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
-                          
 
 View(pilot) 
 
