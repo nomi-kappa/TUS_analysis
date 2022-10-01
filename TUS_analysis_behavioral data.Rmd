@@ -42,7 +42,7 @@ pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>
 #### Set variable names
 ```{r}
 pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcome"))
+              "jitter2", "RT", "outcomefeed"))
 
 pilot %>% glimpse
 
@@ -100,28 +100,34 @@ pilot <- pilot %>%
          
                     ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
 
-View(pilot) 
+ 
 
 ```
         
+       
 
 
-#### Add win_lose column (win - lose) - WRONGGGGGGGGGG - HEEEELP
+#### Add win_lose column (win - lose) 
 ```{r}
-pilot$win_lose <- with(pilot, ifelse(seq_len(stim_ID) %% 2 == 0, "win", "lose"), 
-                       ifelse(seq_len(stim_ID) %% 2 == 1, "lose", "win"))
+pilot$win_lose_neutral <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
+                                "1" = "win", "0"= "neutral")
 View(pilot)
-
 ```
       
       
-### Add CUE column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
 ```{r}
-#no luck atm
-```  
+pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
+                ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
+                ifelse(pilot$stim_ID == pilot$GW, 'GW', 
+              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA)))) 
+                     
+
+                         View(pilot)
+    ```
 
 
-#### Distribution of RT for presses
+ #### Distribution of RT for presses
 ```{r}
 
  #MEAN RT - PRESSES (distribution of RT)
@@ -147,9 +153,10 @@ p1 +ggtitle ("Distribution of RT for presses")
 
 ```
 
-
-
 #### Number of presses vs no_presses - needs wooork
+```{r}
+
+
 ```{r}
 pilot%>% group_by (stim_ID)%>% dplyr::count(response) 
 
@@ -157,9 +164,4 @@ ggplot(pilot, aes(x=response, y=)) +
   geom_bar(stat = "identity")
 
 pilot%>% dplyr::count(response) 
-
-
 ```
-
-
-
