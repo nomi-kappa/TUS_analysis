@@ -100,8 +100,6 @@ pilot <- pilot %>%
          
                     ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
 
- 
-
 ```
         
        
@@ -123,8 +121,24 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
               ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA)))) 
                      
 
-                         View(pilot)
     ```
+
+###Trial column - and block column
+```{r}
+#1,2,3...100...400
+pilot <- pilot %>%
+  group_by(ID) %>%
+  mutate(trial_number = row_number())
+
+
+#block 1, 2, 3, 4
+pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
+                ifelse(pilot$trial_number == 101:200, '2', 
+                ifelse(pilot$trial_number == 201:300, '3', 
+              ifelse(pilot$trial_number == 301:400, '4', NA))))
+                         View(pilot)
+
+```
 
 
  #### Distribution of RT for presses
@@ -132,7 +146,7 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
 
  #MEAN RT - PRESSES (distribution of RT)
 pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
-RTs_presses <-pilot_presses%>%  group_by(RT, ID, outcome) %>% 
+RTs_presses <-pilot_presses%>%  group_by(RT, ID, outcomefeed) %>% 
   summarise(Mean_RT = mean(RT, na.rm = TRUE)) #%>%
  # filter(CorrectResponse == "Correct")
 
@@ -143,25 +157,128 @@ p1 <-ggplot(data = RTs_presses,
 p1 +ggtitle ("Distribution of RT for presses")
 
   #MEAN rt - correct
-#RTs_correct <-pilo t%>% group_by(response_RT, ID, outcome) %>% 
-#  summarise(Mean_RT = mean(response_RT, na.rm = TRUE)) %>%
-# filter(outcome == "1")
+#RTs_correct <-pilot %>% group_by(Cue) %>% 
+#summarise(Mean_RT = percent = 100 * n() / nrow( RT ) )# %>%
+# filter(correct == "1")
+
 
 #ggplot(data = RTs_correct, 
-   #    aes(x = Mean_RT)) + 
+  #     aes(x = Mean_RT)) + 
  # geom_histogram()
 
 ```
 
 #### Number of presses vs no_presses - needs wooork
 ```{r}
+pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
 
-
-```{r}
-pilot%>% group_by (stim_ID)%>% dplyr::count(response) 
-
-ggplot(pilot, aes(x=response, y=)) + 
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=Cue, y= response)) + 
   geom_bar(stat = "identity")
 
-pilot%>% dplyr::count(response) 
+
+ggplot(pilot %>% 
+   filter(response == "no_press"), aes(x=Cue, y= response)) + 
+  geom_bar(stat = "identity")
+
+#mess press vs no press? general?
+ggplot(pilot %>%
+         group_by(Cue),
+         aes(x=response)) + 
+          geom_bar(stat = "count")
+
+#not quite yet
+ggplot(pilot%>%
+         group_by(RT),
+         aes(x=Cue, y=response)) + 
+          geom_bar(stat = "Identity")
+
+#this is good 
+ggplot(pilot%>%       
+       filter(response != "no_press"),
+        aes(x = Cue,                                 
+            y =  RT,                                  
+            group = response,                                 
+            color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+
+
+####try number of times == press / times cue presented!!!!
+ggplot(pilot,   
+        aes(x = Cue,                                 
+            y =  response))+                                 
+            #group = response,                                 
+           # color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+-----------------------
+pilot / rowSums(pilot) * 100
+
+BCI_percent2 <- BCI_plus %>%
+gather(key = taxon, value = count, -siteID) %>% #make into thin format
+group_by(siteID) %>% #do calculations by siteID
+mutate(percent = count / sum(count) * 100)
+ 
+head(BCI_percent2 %>% filter(count > 0))# show some data
+#RTs_correct <-pilot %>% group_by(Cue) %>% 
+#summarise(Mean_RT = percent = 100 * n() / nrow( RT ) )# %>%
+# filter(correct == "1")
+ggplot(pilot,
+       summarise(response = 100 *  dplyr::n() / nrow(RT)),
+        aes(x = Cue,                                 
+            y =  response)+
+            #group = response,                                 
+           # color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar"))#+
+
+
+#find how to have both in one graph, presses and no presses (easy but think about it for a nice graph)
 ```
+
+### Numbers of Go vs noGO responses
+```{r}
+ggplot(pilot%>%
+         group_by(GNG),
+       aes(x=win_lose_neutral, y= GNG))+ 
+  geom_bar(stat = "identity")
+
+
+ggplot(pilot,
+        aes(x = Cue,                                 
+            y =  response,                                  
+            group = GNG,                                 
+            color = GNG)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
+
+
+ggplot(pilot,
+        aes(x = response,                                 
+            y =  Cue,                                
+            group = response,                                 
+           color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
+
+
+
+###that shows a
+ggplot(pilot%>%
+         filter(response != "no_press"),
+        aes(x = response,                                 
+            y =  GNG,                                
+            group = Cue,                                 
+           color = Cue)) +  
+  geom_jitter()
+
+```
+
