@@ -171,6 +171,8 @@ pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press"
 presses_per_Cue<- pilot%>% group_by (Cue, ID)%>% dplyr::count(response) %>% filter(response == "press")
 View (presses_per_Cue)
 
+presses_per_Cue_block<- pilot%>% group_by (Cue, block)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue_block)
 
 ggplot(pilot %>% 
    filter(response == "press"), aes(x=Cue, y= response)) + 
