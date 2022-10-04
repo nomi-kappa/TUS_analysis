@@ -123,7 +123,7 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
 
     ```
 
-###Trial column - and block column
+###Trial column and block column
 ```{r}
 #1,2,3...100...400
 pilot <- pilot %>%
@@ -139,6 +139,9 @@ pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                          View(pilot)
 
 ```
+
+###ow many 'Go' responses ppl performed for each of the 4 stimuli, just like that plot from the paper. I was thinking to figure this out it might make it easier to have 4 new columns each with how many Go responses for each stimuli.
+
 
 
  #### Distribution of RT for presses
@@ -156,36 +159,144 @@ p1 <-ggplot(data = RTs_presses,
 
 p1 +ggtitle ("Distribution of RT for presses")
 
-  #MEAN rt - correct
-#RTs_correct <-pilot %>% group_by(Cue) %>% 
-#summarise(Mean_RT = percent = 100 * n() / nrow( RT ) )# %>%
-# filter(correct == "1")
-
-
-#ggplot(data = RTs_correct, 
-  #     aes(x = Mean_RT)) + 
- # geom_histogram()
-
 ```
 
-#### Number of presses vs no_presses - needs wooork
+
+#### Number of presses vs no_presses 
+###How many 'Go' responses ppl performed for each of the 4 stimuli, just like that plot from the paper. I was thinking to figure this out it might make it easier to have 4 new columns each with how many Go responses for each stimuli.
 ```{r}
 pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
+
+#they fluctuate a lot per participant the presses for the noGo responses
+presses_per_Cue<- pilot%>% group_by (Cue, ID)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue)
+
 
 ggplot(pilot %>% 
    filter(response == "press"), aes(x=Cue, y= response)) + 
   geom_bar(stat = "identity")
 
-
-ggplot(pilot %>% 
-   filter(response == "no_press"), aes(x=Cue, y= response)) + 
-  geom_bar(stat = "identity")
-
-#mess press vs no press? general?
+# press vs no press, per Cue better
 ggplot(pilot %>%
          group_by(Cue),
-         aes(x=response)) + 
+         aes(x=response,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
           geom_bar(stat = "count")
+
+# press per Cue per block
+ggplot(pilot %>%
+        filter(response == "press"),
+         aes(y = block,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
+     # facet_grid(Cue~paste("cue", Cue), scales="free")
+          geom_bar(stat = "count")
+          
+```
+
+
+
+###Neutral > win > lose
+```{r}
+pilot%>% group_by(win_lose_neutral) %>%dplyr::count(win_lose_neutral) 
+
+ggplot(pilot,#%>%
+        # group_by(GNG),
+       aes(x=win_lose_neutral, y= GNG))+ 
+  geom_bar(stat = "identity")
+
+
+
+#presses per cue valence (win, lose, neutral)
+pilot%>% group_by(win_lose_neutral, response) %>%dplyr::count(win_lose_neutral) 
+
+ggplot(pilot,
+       aes(x=win_lose_neutral,
+           color = response, fill = response))+ 
+  geom_bar(stat = "count")
+```
+
+###Presses per correctness and blocks and response (press vs no_press)
+```{r}
+#presses per correct and blocks--> they are doing good so far. they learn fast
+pilot%>% group_by(correct, response) %>%dplyr::count(correct) 
+pilot%>% group_by(correct, block) %>%dplyr::count(correct) # 1st block OK, 2nd block better, 3rd block tired, 4th block better
+
+#How good per block and per response (press vs no_press)
+ggplot(pilot,
+        aes(x = response,                                 
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+#How good per block
+ggplot(pilot,
+        aes(x = block,                                 
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+```
+
+###  Go xxxxxxxxxxxxxxxxxxx
+```{r}
+glimpse (pilot)
+
+        pilot %>%
+          group_by(block, Cue)%>%
+        # filter(response == "press")%>%
+         summarise(correct=sum(correct))%>%
+        ggplot(aes(x = block            ,                                 
+             y = correct,
+             group = Cue,                                 
+             color = Cue, fill = Cue))+                                 
+        geom_line()
+
+         prop.table(table (pilot$response))
+        
+         pilot %>%
+          group_by(block, Cue, response)%>%
+         filter(response == "press")%>%
+           prop.table(table (pilot$response))%>%
+        ggplot(aes(x = block            ,                                 
+             y = response,
+             group = Cue,                                 
+             color = Cue, fill = Cue))+                                 
+ stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
+
+
+
+ggplot(pilot,
+        aes(x = response,                                 
+            y =  Cue,                                
+            group = response,                                 
+           color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
+
+
+
+###that shows a
+ggplot(pilot%>%
+         filter(response != "no_press"),
+        aes(x = response,                                 
+            y =  GNG,                                
+            group = Cue,                                 
+           color = Cue)) +  
+  geom_jitter()
+
+```
+
 
 #not quite yet
 ggplot(pilot%>%
@@ -204,9 +315,21 @@ ggplot(pilot%>%
    stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
-
-
+#not so bad
+ggplot(pilot%>%  
+         filter(response != "no_press")%>%
+         group_by(block),
+        aes(x = Cue,                                 
+            y =  RT,                                  
+            group = block,                                 
+            color = block)) +                              
+     stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
 ####try number of times == press / times cue presented!!!!
+
+
+
 ggplot(pilot,   
         aes(x = Cue,                                 
             y =  response))+                                 
@@ -224,12 +347,11 @@ gather(key = taxon, value = count, -siteID) %>% #make into thin format
 group_by(siteID) %>% #do calculations by siteID
 mutate(percent = count / sum(count) * 100)
  
-head(BCI_percent2 %>% filter(count > 0))# show some data
 #RTs_correct <-pilot %>% group_by(Cue) %>% 
 #summarise(Mean_RT = percent = 100 * n() / nrow( RT ) )# %>%
 # filter(correct == "1")
 ggplot(pilot,
-       summarise(response = 100 *  dplyr::n() / nrow(RT)),
+       summarise(response = 100 *  n() / nrow(400)),
         aes(x = Cue,                                 
             y =  response)+
             #group = response,                                 
@@ -281,4 +403,48 @@ ggplot(pilot%>%
   geom_jitter()
 
 ```
+
+
+playinng
+```{r}
+ggplot(pilot%>%
+         filter(response != "no_press")%>%
+         group_by(block),
+        aes(x = block,                                 
+            y =  Cue,                                
+            group = correct,                                 
+           color = correct)) +  
+  geom_jitter()
+
+
+#error
+pilot$p <- prop.table(table(pilot$correct), margin=1)
+
+ggplot(as.data.frame(p), aes(x = Cue, y = response, fill = Var1)) + 
+  geom_bar(stat="identity", position = "dodge")
+
+#error
+ggplot(pilot%>%
+              filter(response != "no_press"),
+              aes(x = Cue,
+                  y = response,
+                  fill = correct)) +
+  geom_bar(position = "fill", stat = "identity")
+ggp     
+
+
+
+library(ggthemes)
+
+data.frame(pilot)
+ ggplot (pilot%>%
+      aes(x = response, y = correct, fill = Cue)) + 
+  geom_bar(stat = 'identity', position = 'dodge', alpha = 2/3) +  
+  scale_y_continuous(labels = scales::percent)+ 
+  scale_fill_few('Medium', drop = FALSE) +              # keep levels, if data is filtered
+  labs(x = 'response', y = NULL, fill = 'Cue')#,
+       # title = 'Proportions in Sub-groups by Group') 
+```
+
+
 
