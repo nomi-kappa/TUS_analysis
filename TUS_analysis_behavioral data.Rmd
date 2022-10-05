@@ -15,11 +15,13 @@ output: html_document
 #use_github()
 ```
 
-
+      
+                ### PREPROCESSING
+  
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot())
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales)
 
 # parnsip
 ```
@@ -72,24 +74,19 @@ pilot %>% glimpse
 #pilot$ID <- case_when(
 #   pilot$ID == "pilot data/"~ "",
 #    pilot$ID == "_log.txt"~ "",
-#    TRUE ~ NA
-#)
-
+#    TRUE ~ NA)
 ```
 
 
 #### Add response col (press - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
-      
-        
 ```
 
 #### Add GNG col (Go-noGO)
 ```{r}
 pilot$GNG <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
                 ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))     
-        
 ```
  
 
@@ -99,11 +96,8 @@ pilot <- pilot %>%
   mutate(correct = ifelse(GNG == "noGo", ifelse(response == "no_press", 1, 0), 
          
                     ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
-
 ```
         
-       
-
 
 #### Add win_lose column (win - lose) 
 ```{r}
@@ -118,9 +112,7 @@ View(pilot)
 pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
                 ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
                 ifelse(pilot$stim_ID == pilot$GW, 'GW', 
-              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA)))) 
-                     
-
+              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA)))
     ```
 
 ###Trial column and block column
@@ -136,17 +128,77 @@ pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                 ifelse(pilot$trial_number == 101:200, '2', 
                 ifelse(pilot$trial_number == 201:300, '3', 
               ifelse(pilot$trial_number == 301:400, '4', NA))))
-                         View(pilot)
 
+
+
+pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
+                ifelse(pilot$trial_number == 21:40, 'b.40', 
+                ifelse(pilot$trial_number == 41:60, 'c.60', 
+              ifelse(pilot$trial_number == 61:80, 'd.80',
+                ifelse(pilot$trial_number == 81:100, 'e.100',
+                       ifelse(pilot$trial_number == 101:120, 'a.20',
+                ifelse(pilot$trial_number == 121:140, 'b.40', 
+                ifelse(pilot$trial_number == 141:160, 'c.60', 
+              ifelse(pilot$trial_number == 161:180, 'd.80',
+                ifelse(pilot$trial_number == 181:200, 'e.100',
+                       ifelse(pilot$trial_number == 201:220, 'a.20',
+                ifelse(pilot$trial_number == 221:240, 'b.40', 
+                ifelse(pilot$trial_number == 241:260, 'c.60', 
+              ifelse(pilot$trial_number == 261:280, 'd.80',
+                ifelse(pilot$trial_number == 281:300, 'e.100',
+                       ifelse(pilot$trial_number == 301:320, 'a.20',
+                ifelse(pilot$trial_number == 321:340, 'b.40', 
+                ifelse(pilot$trial_number == 341:360, 'c.60', 
+              ifelse(pilot$trial_number == 361:380, 'd.80',
+                ifelse(pilot$trial_number == 381:400, 'e.100', NA))))))))))))))))))))
+                       
+#I want to divide each participants' trials into chunks of 5
+n_chunks = 80
+
+pilot<-pilot %>% 
+  group_by(ID) %>% 
+  mutate(per_5trials = rep(1:n_chunks, 
+                        each = ceiling(n() / n_chunks))[1:n()])
+
+#need to find code to make this shoerter...there are still more than a few lines till 400...
+ #  pilot$per_5trials <- ifelse(pilot$trial_number == 1:5, 'a.1',
+ #               ifelse(pilot$trial_number == 6:10, 'b.2', 
+ #               ifelse(pilot$trial_number == 11:15, 'c.3', 
+ # #            ifelse(pilot$trial_number == 16:20, 'd.4',
+   #             ifelse(pilot$trial_number == 21:25, 'e.5',
+ #                      ifelse(pilot$trial_number == 26:30, 'f.6',
+   #             ifelse(pilot$trial_number == 31:35, 'g.7', 
+ #               ifelse(pilot$trial_number == 36:40, 'h.8', 
+ ##             ifelse(pilot$trial_number == 41:45, 'i.9',
+ #               ifelse(pilot$trial_number == 46:50, 'j.10',
+ #                      ifelse(pilot$trial_number == 51:55, 'k.11',
+  #              ifelse(pilot$trial_number == 56:60, 'l.12', 
+   #             ifelse(pilot$trial_number == 61:65, 'm.13', 
+    #          ifelse(pilot$trial_number == 66:70, 'n.14',
+     #           ifelse(pilot$trial_number == 71:75, 'o.15',
+      #                 ifelse(pilot$trial_number == 76:80, 'p.16',
+       #         ifelse(pilot$trial_number == 81:85, 'q.17', 
+        #        ifelse(pilot$trial_number == 86:90, 'r.18', 
+         #     ifelse(pilot$trial_number == 91:95, 's.19',
+          #      ifelse(pilot$trial_number == 96:100, 't.20',....NA))))))))))))))))))))            
+               View(pilot)
 ```
 
-###ow many 'Go' responses ppl performed for each of the 4 stimuli, just like that plot from the paper. I was thinking to figure this out it might make it easier to have 4 new columns each with how many Go responses for each stimuli.
 
+#write .csv file
+```{r}
+write.csv(x=pilot, "pilot.csv") 
+          #How to import:
+            #pilot <- read.csv(file = 'pilot.csv')
+```
+
+
+          
+          ### PROCESSING - COUNTS AND PLOTS
 
 
  #### Distribution of RT for presses
 ```{r}
-
  #MEAN RT - PRESSES (distribution of RT)
 pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
 RTs_presses <-pilot_presses%>%  group_by(RT, ID, outcomefeed) %>% 
@@ -159,26 +211,56 @@ p1 <-ggplot(data = RTs_presses,
 
 p1 +ggtitle ("Distribution of RT for presses")
 
+
+# RTs for each Cue
+ggplot(pilot%>%       
+       filter(response != "no_press"),
+        aes(x = Cue,                                 
+            y =  RT,                                  
+            group = response,                                 
+            color = response)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+
+#Cue per block per RT
+ggplot(pilot%>%  
+         filter(response != "no_press")%>%
+         group_by(block),
+        aes(x = Cue,                                 
+            y =  RT,                                  
+            group = block,                                 
+            color = block)) +                              
+     stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+####try number of times == press / times cue presented!!!!
+
 ```
 
 
-#### Number of presses vs no_presses 
-###How many 'Go' responses ppl performed for each of the 4 stimuli, just like that plot from the paper. I was thinking to figure this out it might make it easier to have 4 new columns each with how many Go responses for each stimuli.
+Note: #How many 'Go' (presses) responses ppt performed for each of the 4 stimuli, just like that plot from the paper.4 new columns each with how many Go responses for each stimuli? --> too much
+
+
+### Number of presses vs no_presses 
 ```{r}
 pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
 
-#they fluctuate a lot per participant the presses for the noGo responses
+
 presses_per_Cue<- pilot%>% group_by (Cue, ID)%>% dplyr::count(response) %>% filter(response == "press")
-View (presses_per_Cue)
+View (presses_per_Cue) #presses for the noGo responses fluctuate a lot per participant  
 
 presses_per_Cue_block<- pilot%>% group_by (Cue, block)%>% dplyr::count(response) %>% filter(response == "press")
 View (presses_per_Cue_block)
 
+ #plot presses per Cue
 ggplot(pilot %>% 
    filter(response == "press"), aes(x=Cue, y= response)) + 
   geom_bar(stat = "identity")
 
-# press vs no press, per Cue better
+
+# plot press vs no press, per Cue better
 ggplot(pilot %>%
          group_by(Cue),
          aes(x=response,
@@ -194,23 +276,107 @@ ggplot(pilot %>%
             color = Cue, fill = Cue)) + 
      # facet_grid(Cue~paste("cue", Cue), scales="free")
           geom_bar(stat = "count")
-          
 ```
+## Percentages plots per trial per block -- Percentages are awful, does not work well. Not sure I understand how they work
+```{r}
 
+#percentages per Cue per block....
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(block)%>%
+  count(Cue) %>% 
+  mutate(perc_presses = n / nrow(pilot))-> pilot_1
+
+ ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
+   geom_bar(stat = "identity")+
+     scale_y_continuous(labels = scales::percent)+
+     facet_grid(~block)
+
+#percentages per Cue per block per 20 trials (increments of 20 on every block)
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(block, Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_0
+
+
+ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(Cue~block) +
+  scale_y_continuous(labels = scales::percent)
+
+          ##per block of trials
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_2
+
+                #bar plot Cues in chunk of 20 trials
+ggplot(pilot_2, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+#ggplot(pilot_2, aes(x = per_20trials)) +
+  #facet_grid(~Cue) +
+ #  scale_y_continuous(labels = scales::percent)+
+#  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=20)+
+# geom_density(alpha=.2, fill="#FF6666") 
+  
+
+          #================ bar plot + hist per 5 trials (I have created an extra column above "per_5trials"
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_4
+View(pilot_4)
+
+ggplot(pilot_4, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+ggplot(pilot_4, aes(x = per_5trials)) +
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+
+
+            #histogram for all trials 1-400 per cue in sequence
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(trial_number) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_3
+
+                               #close to what we need hist (bindwith = 5 means for every 5 trials)
+ggplot(pilot_3, aes(x = trial_number)) +
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+```
 
 
 ###Neutral > win > lose
 ```{r}
+#number of win_lose_neutral instances (valence?)
 pilot%>% group_by(win_lose_neutral) %>%dplyr::count(win_lose_neutral) 
 
+ 
 ggplot(pilot,#%>%
         # group_by(GNG),
        aes(x=win_lose_neutral, y= GNG))+ 
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity") #normal for neutral to be more.
 
 
 
-#presses per cue valence (win, lose, neutral)
+#presses vs no_presses per cue valence (win, lose, neutral)
 pilot%>% group_by(win_lose_neutral, response) %>%dplyr::count(win_lose_neutral) 
 
 ggplot(pilot,
@@ -247,10 +413,9 @@ ggplot(pilot,
 
 ```
 
-###  Go xxxxxxxxxxxxxxxxxxx
+      ### IGNORE playinng
+Go xxxxxxxxxxxxxxxxxxx
 ```{r}
-glimpse (pilot)
-
         pilot %>%
           group_by(block, Cue)%>%
         # filter(response == "press")%>%
@@ -288,7 +453,7 @@ ggplot(pilot,
 
 
 
-###that shows a
+###Xmas tree
 ggplot(pilot%>%
          filter(response != "no_press"),
         aes(x = response,                                 
@@ -297,7 +462,8 @@ ggplot(pilot%>%
            color = Cue)) +  
   geom_jitter()
 
-```
+
+
 
 
 #not quite yet
@@ -306,29 +472,8 @@ ggplot(pilot%>%
          aes(x=Cue, y=response)) + 
           geom_bar(stat = "Identity")
 
-#this is good 
-ggplot(pilot%>%       
-       filter(response != "no_press"),
-        aes(x = Cue,                                 
-            y =  RT,                                  
-            group = response,                                 
-            color = response)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")
 
-#not so bad
-ggplot(pilot%>%  
-         filter(response != "no_press")%>%
-         group_by(block),
-        aes(x = Cue,                                 
-            y =  RT,                                  
-            group = block,                                 
-            color = block)) +                              
-     stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")
-####try number of times == press / times cue presented!!!!
+
 
 
 
@@ -407,7 +552,6 @@ ggplot(pilot%>%
 ```
 
 
-playinng
 ```{r}
 ggplot(pilot%>%
          filter(response != "no_press")%>%
