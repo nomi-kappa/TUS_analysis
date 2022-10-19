@@ -446,18 +446,9 @@ f<-ggplot(pilot_11%>% group_by (Cue),
  f + geom_smooth ()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+ 
+ 
               #NK: #percentage presses in 5 trial increments
 
 pilot %>% 
