@@ -5,9 +5,6 @@ date: '2022-09-23'
 output: html_document
 ---
 
-
-
-
 ```{r}
 #library(usethis)
 #git_remotes()
@@ -395,12 +392,12 @@ pilot_p1 <- cbind(pilot_0, Trial_Type_Number = Vec_press)
 #Create a custom color scale
 
 myColors <- brewer.pal(4,"Set1")
-names(myColors) <- levels(pilot_p$Cue)
+names(myColors) <- levels(pilot_1$Cue)
 colScale <- scale_colour_manual(name = "Cue",values = myColors)
 
 #Percentage presses per block for each trial type
 
-p <- ggplot(pilot_p1,aes(block,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
+p <- ggplot(pilot_1,aes(block,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
 p1 <- p + colScale
 
 plot(p1)
@@ -410,7 +407,55 @@ plot(p1)
 Press_20_Trial_Type <- ggplot(pilot_p1,aes(Trial_Type_Number,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
 Press_20_Trial_Type_Plot <- Press_20_Trial_Type + colScale
 
-plot(Press_20_Trial_Type_Plot)
+Press_20_Trial_Type_Plot + geom_smooth()
+
+
+
+
+
+
+              #NK: #percentage presses in 20 trial increments
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / 250) -> pilot_11 
+
+         #with facets
+g20<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+g20 + geom_smooth(method = loess)
+
+
+        #without facets
+
+f<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+ # xlim(c(0, 80)) + ylim(c(0, 70)) +
+  geom_point () +
+  geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+ f + geom_smooth ()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
               #NK: #percentage presses in 5 trial increments
@@ -446,9 +491,9 @@ gg<-ggplot(pilot_4%>% group_by (Cue),
 
 
 
-gg1 <- gg + geom_smooth ()
+ gg + geom_smooth ()
 
-plot(gg1)
+
 #gg1 +                                              # Zoom without cutting values
   #coord_cartesian(ylim = c(0.75, 0.09999999))
 ```
