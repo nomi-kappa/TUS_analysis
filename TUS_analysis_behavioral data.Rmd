@@ -6,12 +6,11 @@ output: html_document
 ---
 
 
-```{r setup, include=FALSE}
-#git_remotes()
-```
+
 
 ```{r}
 #library(usethis)
+#git_remotes()
 #use_github()
 ```
 
@@ -21,9 +20,8 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales)
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip)
 
-# parnsip
 ```
 
 
@@ -46,8 +44,6 @@ pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>
 pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
               "jitter2", "RT", "outcomefeed"))
 
-pilot %>% glimpse
-
 ```
 
 
@@ -60,7 +56,6 @@ pilot <- pilot %>%
 pilot <- pilot %>%
       mutate_at("ID", str_replace, "_log.txt", "")
 
-pilot %>% glimpse
 ```
 #### Trial for a neat version of the above chunk. No luck at the moment. 
 ```{r}
@@ -103,7 +98,6 @@ pilot <- pilot %>%
 ```{r}
 pilot$win_lose_neutral <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
                                 "1" = "win", "0"= "neutral")
-View(pilot)
 ```
       
       
@@ -112,7 +106,7 @@ View(pilot)
 pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
                 ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
                 ifelse(pilot$stim_ID == pilot$GW, 'GW', 
-              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA)))
+              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
     ```
 
 ###Trial column and block column
@@ -159,6 +153,9 @@ pilot<-pilot %>%
   group_by(ID) %>% 
   mutate(per_5trials = rep(1:n_chunks, 
                         each = ceiling(n() / n_chunks))[1:n()])
+
+View(pilot)
+
 
 #need to find code to make this shoerter...there are still more than a few lines till 400...
  #  pilot$per_5trials <- ifelse(pilot$trial_number == 1:5, 'a.1',
@@ -277,28 +274,30 @@ ggplot(pilot %>%
      # facet_grid(Cue~paste("cue", Cue), scales="free")
           geom_bar(stat = "count")
 ```
-## Percentages plots per trial per block -- Percentages are awful, does not work well. Not sure I understand how they work
+## Percentages plots per trial per block -- a bit confused about the percentages, still
 ```{r}
 
-#percentages per Cue per block....
+    #OK  % per Cue per block
 pilot %>% 
   filter(response == "press")%>%
   group_by(block)%>%
   count(Cue) %>% 
-  mutate(perc_presses = n / nrow(pilot))-> pilot_1
+  mutate(perc_presses = n /250)-> pilot_1#nrow = n of participants x n of trials, so 10 x 400 = 4000. If n is presses per cue per block, we want to divide this by cue presentation per block?? With 10 participants this is 10 x 25 = 250.
 
  ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
    geom_bar(stat = "identity")+
      scale_y_continuous(labels = scales::percent)+
      facet_grid(~block)
 
-#percentages per Cue per block per 20 trials (increments of 20 on every block)
+   
+ #OK % per Cue per block per 20 trials (increments of 20 on every block)
 
 pilot %>% 
   filter(response == "press")%>%
   group_by(block, Cue)%>%
     count(per_20trials) %>% 
-  mutate(perc_presses = n / nrow(pilot)) -> pilot_0
+  mutate(perc_presses = n / 50) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50
+
 
 
 ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
@@ -306,12 +305,12 @@ ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = per_20trials, fi
   facet_grid(Cue~block) +
   scale_y_continuous(labels = scales::percent)
 
-          ##per block of trials
+                    ##OK, per block of 20 trials but not sure why n/250 and not n/50 works here 
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
     count(per_20trials) %>% 
-  mutate(perc_presses = n / nrow(pilot)) -> pilot_2
+  mutate(perc_presses = n / 250) -> pilot_2
 
                 #bar plot Cues in chunk of 20 trials
 ggplot(pilot_2, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
@@ -319,27 +318,35 @@ ggplot(pilot_2, aes(x = per_20trials, y = perc_presses, color = per_20trials, fi
   facet_grid(~Cue) +
   scale_y_continuous(labels = scales::percent)
 
-#ggplot(pilot_2, aes(x = per_20trials)) +
-  #facet_grid(~Cue) +
- #  scale_y_continuous(labels = scales::percent)+
-#  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=20)+
-# geom_density(alpha=.2, fill="#FF6666") 
-  
+
+                 #%per 5 trials
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 25) -> pilot_10 
+
+ggplot(pilot_10, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
 
           #================ bar plot + hist per 5 trials (I have created an extra column above "per_5trials"
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
     count(per_5trials) %>% 
-  mutate(perc_presses = n / nrow(pilot)) -> pilot_4
-View(pilot_4)
+  mutate(perc_presses = n / 25) -> pilot_4
 
 ggplot(pilot_4, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
   geom_bar(stat = "identity") +
   facet_grid(~Cue) +
   scale_y_continuous(labels = scales::percent)
 
-ggplot(pilot_4, aes(x = per_5trials)) +
+#something is wrong with the percentages.
+ggplot(pilot_4, aes(x = per_5trials)) +   
   facet_grid(~Cue) +
    scale_y_continuous(labels = scales::percent)+
   geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
@@ -354,13 +361,98 @@ pilot %>%
     count(trial_number) %>% 
   mutate(perc_presses = n / nrow(pilot)) -> pilot_3
 
-                               #close to what we need hist (bindwith = 5 means for every 5 trials)
+                       #not good at the moment        #close to what we need hist (bindwith = 5 means for every 5 trials)
 ggplot(pilot_3, aes(x = trial_number)) +
   facet_grid(~Cue) +
    scale_y_continuous(labels = scales::percent)+
-  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
+  geom_histogram(aes(y=..density..), colour="black", fill="green", binwidth=5)+
  geom_density(alpha=.2, fill="#FF6666") 
 ```
+
+             #TIM
+    
+```{r}
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(block, Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / 250) -> pilot_0
+
+#Creating a vector to denote block number (indicated by numeric) and position in block where the 20 trial score was calculated (denoted by letter)
+
+Vec_press <- c("1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e")
+
+#Adding trial number column with new vector for plotting percentages of Go responses
+pilot_p1 <- cbind(pilot_0, Trial_Type_Number = Vec_press)
+```
+
+```{r}
+                 #TIM
+#Creating line graph of % Go response (Presses) by trial type (e.g. Go-win,Go-avoid,NoGo-win,NoGo-avoid)
+
+#Source of code: https://stackoverflow.com/questions/6919025/how-to-assign-colors-to-categorical-variables-in-ggplot2-that-have-stable-mappin
+
+#Create a custom color scale
+
+myColors <- brewer.pal(4,"Set1")
+names(myColors) <- levels(pilot_p$Cue)
+colScale <- scale_colour_manual(name = "Cue",values = myColors)
+
+#Percentage presses per block for each trial type
+
+p <- ggplot(pilot_p1,aes(block,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
+p1 <- p + colScale
+
+plot(p1)
+
+
+#percentage presses in 20 trial increments
+Press_20_Trial_Type <- ggplot(pilot_p1,aes(Trial_Type_Number,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
+Press_20_Trial_Type_Plot <- Press_20_Trial_Type + colScale
+
+plot(Press_20_Trial_Type_Plot)
+
+
+              #NK: #percentage presses in 5 trial increments
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 25) -> pilot_10 
+
+         #with facets
+g<-ggplot(pilot_4%>% group_by (Cue), 
+       aes(x = per_5trials, y = perc_presses, color = Cue, fill = Cue)) +
+  xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+g1 <- g + geom_smooth ()
+
+plot(g1)
+
+
+        #without facets  - i think the best one so far!!!!!!!!!
+
+gg<-ggplot(pilot_4%>% group_by (Cue), 
+       aes(x = per_5trials, y = perc_presses, color = Cue, fill = Cue)) +
+  xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+
+gg1 <- gg + geom_smooth ()
+
+plot(gg1)
+#gg1 +                                              # Zoom without cutting values
+  #coord_cartesian(ylim = c(0.75, 0.09999999))
+```
+
 
 
 ###Neutral > win > lose
@@ -518,7 +610,7 @@ ggplot(pilot%>%
        aes(x=win_lose_neutral, y= GNG))+ 
   geom_bar(stat = "identity")
 
-
+#good one
 ggplot(pilot,
         aes(x = Cue,                                 
             y =  response,                                  
@@ -527,6 +619,10 @@ ggplot(pilot,
    stat_summary(fun = "mean", geom = "point") +        
    stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")#+
+
+```
+```{r}
+
 
 
 ggplot(pilot,
@@ -591,6 +687,5 @@ data.frame(pilot)
   labs(x = 'response', y = NULL, fill = 'Cue')#,
        # title = 'Proportions in Sub-groups by Group') 
 ```
-
 
 
