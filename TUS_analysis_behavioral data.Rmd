@@ -17,7 +17,7 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip)
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
 
 ```
 
@@ -149,33 +149,8 @@ n_chunks = 80
 pilot<-pilot %>% 
   group_by(ID) %>% 
   mutate(per_5trials = rep(1:n_chunks, 
-                        each = ceiling(n() / n_chunks))[1:n()])
-
-View(pilot)
-
-
-#need to find code to make this shoerter...there are still more than a few lines till 400...
- #  pilot$per_5trials <- ifelse(pilot$trial_number == 1:5, 'a.1',
- #               ifelse(pilot$trial_number == 6:10, 'b.2', 
- #               ifelse(pilot$trial_number == 11:15, 'c.3', 
- # #            ifelse(pilot$trial_number == 16:20, 'd.4',
-   #             ifelse(pilot$trial_number == 21:25, 'e.5',
- #                      ifelse(pilot$trial_number == 26:30, 'f.6',
-   #             ifelse(pilot$trial_number == 31:35, 'g.7', 
- #               ifelse(pilot$trial_number == 36:40, 'h.8', 
- ##             ifelse(pilot$trial_number == 41:45, 'i.9',
- #               ifelse(pilot$trial_number == 46:50, 'j.10',
- #                      ifelse(pilot$trial_number == 51:55, 'k.11',
-  #              ifelse(pilot$trial_number == 56:60, 'l.12', 
-   #             ifelse(pilot$trial_number == 61:65, 'm.13', 
-    #          ifelse(pilot$trial_number == 66:70, 'n.14',
-     #           ifelse(pilot$trial_number == 71:75, 'o.15',
-      #                 ifelse(pilot$trial_number == 76:80, 'p.16',
-       #         ifelse(pilot$trial_number == 81:85, 'q.17', 
-        #        ifelse(pilot$trial_number == 86:90, 'r.18', 
-         #     ifelse(pilot$trial_number == 91:95, 's.19',
-          #      ifelse(pilot$trial_number == 96:100, 't.20',....NA))))))))))))))))))))            
-               View(pilot)
+                        each = ceiling(n() / n_chunks))[1:n()]) #rep=repeat
+#ceiling() is the function that takes two parameters one parameter that is vector with sequence along to divide the vector sequentially and second is chunk length, which represents the length of chunk to be divided
 ```
 
 
@@ -234,9 +209,6 @@ ggplot(pilot%>%
 ```
 
 
-Note: #How many 'Go' (presses) responses ppt performed for each of the 4 stimuli, just like that plot from the paper.4 new columns each with how many Go responses for each stimuli? --> too much
-
-
 ### Number of presses vs no_presses 
 ```{r}
 pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
@@ -272,28 +244,28 @@ ggplot(pilot %>%
           geom_bar(stat = "count")
 ```
 ## Percentages plots per trial per block -- a bit confused about the percentages, still
-```{r}
 
-    #OK  % per Cue per block
+           #OK  % per Cue per block
+```{r}
 pilot %>% 
   filter(response == "press")%>%
   group_by(block)%>%
   count(Cue) %>% 
-  mutate(perc_presses = n /250)-> pilot_1#nrow = n of participants x n of trials, so 10 x 400 = 4000. If n is presses per cue per block, we want to divide this by cue presentation per block?? With 10 participants this is 10 x 25 = 250.
+  mutate(perc_presses=n/250 )-> pilot_1 # WHAT IS THE CORRECT CALCULATION for % 
 
  ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
    geom_bar(stat = "identity")+
      scale_y_continuous(labels = scales::percent)+
      facet_grid(~block)
-
+```
    
  #OK % per Cue per block per 20 trials (increments of 20 on every block)
-
+```{r}
 pilot %>% 
   filter(response == "press")%>%
   group_by(block, Cue)%>%
     count(per_20trials) %>% 
-  mutate(perc_presses = n / 50) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50
+  mutate(perc_presses = n / 50) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50 = now i have 9 ppt so wrong logic
 
 
 
@@ -301,8 +273,11 @@ ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = per_20trials, fi
   geom_bar(stat = "identity") +
   facet_grid(Cue~block) +
   scale_y_continuous(labels = scales::percent)
+```
 
                     ##OK, per block of 20 trials but not sure why n/250 and not n/50 works here 
+```{r}
+
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
@@ -329,97 +304,17 @@ ggplot(pilot_10, aes(x = per_5trials, y = perc_presses, color = per_5trials, fil
   facet_grid(~Cue) +
   scale_y_continuous(labels = scales::percent)
 
-
-          #================ bar plot + hist per 5 trials (I have created an extra column above "per_5trials"
-pilot %>% 
-  filter(response == "press")%>%
-  group_by(Cue)%>%
-    count(per_5trials) %>% 
-  mutate(perc_presses = n / 25) -> pilot_4
-
-ggplot(pilot_4, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
-  geom_bar(stat = "identity") +
-  facet_grid(~Cue) +
-  scale_y_continuous(labels = scales::percent)
-
-#something is wrong with the percentages.
-ggplot(pilot_4, aes(x = per_5trials)) +   
-  facet_grid(~Cue) +
-   scale_y_continuous(labels = scales::percent)+
-  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
- geom_density(alpha=.2, fill="#FF6666") 
-
-
-            #histogram for all trials 1-400 per cue in sequence
-
-pilot %>% 
-  filter(response == "press")%>%
-  group_by(Cue)%>%
-    count(trial_number) %>% 
-  mutate(perc_presses = n / nrow(pilot)) -> pilot_3
-
-                       #not good at the moment        #close to what we need hist (bindwith = 5 means for every 5 trials)
-ggplot(pilot_3, aes(x = trial_number)) +
-  facet_grid(~Cue) +
-   scale_y_continuous(labels = scales::percent)+
-  geom_histogram(aes(y=..density..), colour="black", fill="green", binwidth=5)+
- geom_density(alpha=.2, fill="#FF6666") 
 ```
-
-             #TIM
-    
-```{r}
-pilot %>% 
-  filter(response == "press")%>%
-  group_by(block, Cue)%>%
-    count(per_20trials) %>% 
-  mutate(perc_presses = n / 250) -> pilot_0
-
-#Creating a vector to denote block number (indicated by numeric) and position in block where the 20 trial score was calculated (denoted by letter)
-
-Vec_press <- c("1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","1.a","1.b","1.c","1.d","1.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","2.a","2.b","2.c","2.d","2.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","3.a","3.b","3.c","3.d","3.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e","4.a","4.b","4.c","4.d","4.e")
-
-#Adding trial number column with new vector for plotting percentages of Go responses
-pilot_p1 <- cbind(pilot_0, Trial_Type_Number = Vec_press)
-```
-
-```{r}
-                 #TIM
-#Creating line graph of % Go response (Presses) by trial type (e.g. Go-win,Go-avoid,NoGo-win,NoGo-avoid)
-
-#Source of code: https://stackoverflow.com/questions/6919025/how-to-assign-colors-to-categorical-variables-in-ggplot2-that-have-stable-mappin
-
-#Create a custom color scale
-
-myColors <- brewer.pal(4,"Set1")
-names(myColors) <- levels(pilot_1$Cue)
-colScale <- scale_colour_manual(name = "Cue",values = myColors)
-
-#Percentage presses per block for each trial type
-
-p <- ggplot(pilot_1,aes(block,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
-p1 <- p + colScale
-
-plot(p1)
-
-
-#percentage presses in 20 trial increments
-Press_20_Trial_Type <- ggplot(pilot_p1,aes(Trial_Type_Number,perc_presses,colour = Cue, group = Cue)) + geom_point() + geom_line()
-Press_20_Trial_Type_Plot <- Press_20_Trial_Type + colScale
-
-Press_20_Trial_Type_Plot + geom_smooth()
-
-
-
-
 
 
               #NK: #percentage presses in 20 trial increments
+```{r}
+
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
     count(per_20trials) %>% 
-  mutate(perc_presses = n / 250) -> pilot_11 
+  mutate(perc_presses = n / 180) -> pilot_11 #5 chunks of 20 in 100, in 400 (20), in 3600 (180)
 
          #with facets
 g20<-ggplot(pilot_11%>% group_by (Cue), 
@@ -444,18 +339,17 @@ f<-ggplot(pilot_11%>% group_by (Cue),
 
 
  f + geom_smooth ()
+```
 
-
- 
  
  
               #NK: #percentage presses in 5 trial increments
-
+```{r}
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
     count(per_5trials) %>% 
-  mutate(perc_presses = n / 25) -> pilot_10 
+  mutate(perc_presses = n / 80) -> pilot_10 
 
          #with facets
 g<-ggplot(pilot_4%>% group_by (Cue), 
@@ -488,6 +382,46 @@ gg<-ggplot(pilot_4%>% group_by (Cue),
 #gg1 +                                              # Zoom without cutting values
   #coord_cartesian(ylim = c(0.75, 0.09999999))
 ```
+
+          #====% wrong===== bar plot + hist per 5 trials (I have created an extra column above "per_5trials"
+```{r}
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 18) -> pilot_4
+
+ggplot(pilot_4, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+#something is wrong with the percentages.
+ggplot(pilot_4, aes(x = per_5trials)) +   
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+
+
+            #histogram for all trials 1-400 per cue in sequence
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(trial_number) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_3
+
+                       #not good at the moment        #close to what we need hist (bindwith = 5 means for every 5 trials)
+ggplot(pilot_3, aes(x = trial_number)) +
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="green", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+```
+
+
 
 
 
@@ -540,6 +474,93 @@ ggplot(pilot,
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
 ```
+
+
+
+
+
+  ###Rolling average calculations for smoothing "per_5trials" column (=THAT IS PROPORTIONALLY PER 100 TRIALS)
+        (not sur if correct)
+
+```{r}
+pilot_1<-pilot%>%  
+  filter(response == "press")%>%
+  group_by (response, Cue, block)%>% dplyr::count(per_5trials) 
+```
+
+
+          #multiple ks
+```{r}
+
+
+rm<-pilot_1 %>%
+  group_by(Cue) %>%
+  mutate(moving_avg5 = rollmean(n, k=5, fill=NA, align='right'),
+        moving_avg10 = rollmean(n, k=10, fill=NA, align='right'),
+        moving_avg15 = rollmean(n, k=15, fill=NA, align='right'),
+         moving_avg20 = rollmean(n, k=20, fill=NA, align='right'),
+         moving_avg25 = rollmean(n, k=25, fill=NA, align='right'),
+        moving_avg40 = rollmean(n, k=40, fill=NA, align='right'),
+        moving_avg60 = rollmean(n, k=60, fill=NA, align='right'),
+        moving_avg90 = rollmean(n, k=90, fill=NA, align='right')) %>% 
+         dplyr::ungroup()
+
+            #long format
+rm_long<-rm %>% 
+  tidyr::pivot_longer(names_to = "rolling_mean_key", 
+                    values_to = "rolling_mean_value", 
+                    cols = c( 
+                             moving_avg5, 
+                             moving_avg10,
+                             moving_avg15,
+                             moving_avg20,
+                             moving_avg25,
+                             moving_avg40,
+                             moving_avg60,
+                             moving_avg90))
+
+            #plot
+  rm_long%>% 
+    ggplot (aes(y = rolling_mean_value, 
+                      x = per_5trials, 
+                      color = Cue)) + 
+                        geom_smooth()
+```
+
+
+
+            #one k
+```{r}
+  rm1<-pilot_1 %>%
+group_by(Cue) %>%
+ mutate(moving_avg5 = rollmean(n, k=5, fill=NA, align='right'))
+             #long format
+  rm_long1<-rm1 %>% 
+  tidyr::pivot_longer(names_to = "rolling_mean_key", 
+                    values_to = "rolling_mean_value", 
+                    cols = moving_avg5)
+
+            #plot
+  rm_long1%>% 
+    ggplot (aes(y = rolling_mean_value, 
+                      x = per_5trials, 
+                      color = Cue)) + 
+                        geom_smooth()
+  
+  ##? HOW TO DO IT WITH PERCENTAGES?
+
+```
+
+
+
+
+
+
+
+
+
+
+
 
       ### IGNORE playinng
 Go xxxxxxxxxxxxxxxxxxx
