@@ -21,3 +21,4 @@
      4 blocks = 400 trials
       
 
+#To avoid running preprocessing download the pilot.csv file.
