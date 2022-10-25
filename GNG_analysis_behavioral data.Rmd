@@ -122,26 +122,26 @@ pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
 
 
 
-pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
-                ifelse(pilot$trial_number == 21:40, 'b.40', 
-                ifelse(pilot$trial_number == 41:60, 'c.60', 
-              ifelse(pilot$trial_number == 61:80, 'd.80',
-                ifelse(pilot$trial_number == 81:100, 'e.100',
-                       ifelse(pilot$trial_number == 101:120, 'a.20',
-                ifelse(pilot$trial_number == 121:140, 'b.40', 
-                ifelse(pilot$trial_number == 141:160, 'c.60', 
-              ifelse(pilot$trial_number == 161:180, 'd.80',
-                ifelse(pilot$trial_number == 181:200, 'e.100',
-                       ifelse(pilot$trial_number == 201:220, 'a.20',
-                ifelse(pilot$trial_number == 221:240, 'b.40', 
-                ifelse(pilot$trial_number == 241:260, 'c.60', 
-              ifelse(pilot$trial_number == 261:280, 'd.80',
-                ifelse(pilot$trial_number == 281:300, 'e.100',
-                       ifelse(pilot$trial_number == 301:320, 'a.20',
-                ifelse(pilot$trial_number == 321:340, 'b.40', 
-                ifelse(pilot$trial_number == 341:360, 'c.60', 
-              ifelse(pilot$trial_number == 361:380, 'd.80',
-                ifelse(pilot$trial_number == 381:400, 'e.100', NA))))))))))))))))))))
+#pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
+ #               ifelse(pilot$trial_number == 21:40, 'b.40', 
+  #              ifelse(pilot$trial_number == 41:60, 'c.60', 
+   #           ifelse(pilot$trial_number == 61:80, 'd.80',
+    #            ifelse(pilot$trial_number == 81:100, 'e.100',
+     #                  ifelse(pilot$trial_number == 101:120, 'a.20',
+      #          ifelse(pilot$trial_number == 121:140, 'b.40', 
+       #         ifelse(pilot$trial_number == 141:160, 'c.60', 
+        #      ifelse(pilot$trial_number == 161:180, 'd.80',
+         #       ifelse(pilot$trial_number == 181:200, 'e.100',
+          #             ifelse(pilot$trial_number == 201:220, 'a.20',
+           #     ifelse(pilot$trial_number == 221:240, 'b.40', 
+            #    ifelse(pilot$trial_number == 241:260, 'c.60', 
+             # ifelse(pilot$trial_number == 261:280, 'd.80',
+              #  ifelse(pilot$trial_number == 281:300, 'e.100',
+               #        ifelse(pilot$trial_number == 301:320, 'a.20',
+                #ifelse(pilot$trial_number == 321:340, 'b.40', 
+                #ifelse(pilot$trial_number == 341:360, 'c.60', 
+              #ifelse(pilot$trial_number == 361:380, 'd.80',
+               # ifelse(pilot$trial_number == 381:400, 'e.100', NA))))))))))))))))))))
                        
 #I want to divide each participants' trials into chunks of 5
 n_chunks = 80
@@ -151,6 +151,16 @@ pilot<-pilot %>%
   mutate(per_5trials = rep(1:n_chunks, 
                         each = ceiling(n() / n_chunks))[1:n()]) #rep=repeat
 #ceiling() is the function that takes two parameters one parameter that is vector with sequence along to divide the vector sequentially and second is chunk length, which represents the length of chunk to be divided
+
+
+
+#I want to divide each participants' trials into chunks of 5
+n_chunks = 20
+
+pilot<-pilot %>% 
+  group_by(ID) %>% 
+  mutate(per_20trials = rep(1:n_chunks, 
+                        each = ceiling(n() / n_chunks))[1:n()])
 ```
 
 
@@ -307,7 +317,9 @@ ggplot(pilot_10, aes(x = per_5trials, y = perc_presses, color = per_5trials, fil
 ```
 
 
-              #NK: #percentage presses in 20 trial increments
+              #NK: #percentage presses in 20 trial increments 
+              
+              !!!!!!!these are the best so far   - #################################################################################################################################################################again percentages are wrong
 ```{r}
 
 pilot %>% 
@@ -322,26 +334,27 @@ g20<-ggplot(pilot_11%>% group_by (Cue),
   #xlim(c(0, 80)) + ylim(c(0, 50)) +
   geom_point () +
   geom_line ()+
-  facet_grid(~Cue) +
-  scale_y_continuous(labels = scales::percent)
+  facet_grid(~Cue)+
+ scale_y_continuous(labels = scales::percent)
+g20 + geom_smooth()
+```
 
-g20 + geom_smooth(method = loess)
-
-
+```{r}
         #without facets
 
 f<-ggplot(pilot_11%>% group_by (Cue), 
        aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
- # xlim(c(0, 80)) + ylim(c(0, 70)) +
-  geom_point () +
-  geom_line ()+
+# xlim(c(0, 80)) + ylim(c(0, 70)) +
+  #geom_point () +
+  #geom_line ()+
   scale_y_continuous(labels = scales::percent)
 
 
  f + geom_smooth ()
 ```
 
- 
+       !!!!!!!these are the best so far   - #################################################################################################################################################################again percentages are wrong
+```{r}
  
               #NK: #percentage presses in 5 trial increments
 ```{r}
@@ -363,8 +376,9 @@ g<-ggplot(pilot_4%>% group_by (Cue),
 g1 <- g + geom_smooth ()
 
 plot(g1)
+```
 
-
+```{r}
         #without facets  - i think the best one so far!!!!!!!!!
 
 gg<-ggplot(pilot_4%>% group_by (Cue), 

@@ -5,7 +5,21 @@ date: '2022-10-25'
 output: html_document
 ---
 
+
+#Load data and packages
+```{r}
+library(pacman)
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo, reshape)
+
+
+pilot <- read.csv(file = 'pilot.csv')
+
+```
+
+
       ### V.1
+      
+  
 
 
   ###Rolling average calculations for smoothing "per_5trials" column (=THAT IS PROPORTIONALLY PER 100 TRIALS)
@@ -104,16 +118,6 @@ Count of 'Press' responses: number of press responses for each cue across all pa
 Roll Mean: a rolling average can then be calculated from the data frames containing all press responses for all participants.
 
 Data frame for plotting: all rolling average calculations are then added to a data frame, converted to long format with 'melt' function and plotted.
-
-#Load data and packages
-```{r}
-library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo, reshape)
-
-
-pilot <- read.csv(file = 'pilot.csv')
-
-```
 
 
 #vector representing order cue is presented
