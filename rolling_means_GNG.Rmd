@@ -1,0 +1,285 @@
+---
+title: "rolling_mean_GNG"
+author: "nomi"
+date: '2022-10-25'
+output: html_document
+---
+
+      ### V.1
+
+
+  ###Rolling average calculations for smoothing "per_5trials" column (=THAT IS PROPORTIONALLY PER 100 TRIALS)
+        (not sur if correct)
+
+```{r}
+pilot_1<-pilot%>%  
+  filter(response == "press")%>%
+  group_by (response, Cue, block)%>% dplyr::count(per_5trials) 
+```
+
+
+          #multiple ks
+```{r}
+
+
+rm<-pilot_1 %>%
+  group_by(Cue) %>%
+  mutate(moving_avg5 = rollmean(n, k=5, fill=NA, align='right'),
+        moving_avg10 = rollmean(n, k=10, fill=NA, align='right'),
+        moving_avg15 = rollmean(n, k=15, fill=NA, align='right'),
+         moving_avg20 = rollmean(n, k=20, fill=NA, align='right'),
+         moving_avg25 = rollmean(n, k=25, fill=NA, align='right'),
+        moving_avg40 = rollmean(n, k=40, fill=NA, align='right'),
+        moving_avg60 = rollmean(n, k=60, fill=NA, align='right'),
+        moving_avg90 = rollmean(n, k=90, fill=NA, align='right')) %>% 
+         dplyr::ungroup()
+
+            #long format
+rm_long<-rm %>% 
+  tidyr::pivot_longer(names_to = "rolling_mean_key", 
+                    values_to = "rolling_mean_value", 
+                    cols = c( 
+                             moving_avg5, 
+                             moving_avg10,
+                             moving_avg15,
+                             moving_avg20,
+                             moving_avg25,
+                             moving_avg40,
+                             moving_avg60,
+                             moving_avg90))
+
+            #plot
+  rm_long%>% 
+    ggplot (aes(y = rolling_mean_value, 
+                      x = per_5trials, 
+                      color = Cue)) + 
+                        geom_smooth()
+```
+
+
+
+            #one k
+```{r}
+  rm1<-pilot_1 %>%
+group_by(Cue) %>%
+ mutate(moving_avg5 = rollmean(n, k=5, fill=NA, align='right'))
+             #long format
+  rm_long1<-rm1 %>% 
+  tidyr::pivot_longer(names_to = "rolling_mean_key", 
+                    values_to = "rolling_mean_value", 
+                    cols = moving_avg5)
+
+            #plot
+  rm_long1%>% 
+    ggplot (aes(y = rolling_mean_value, 
+                      x = per_5trials, 
+                      color = Cue)) + 
+                        geom_smooth()
+  
+  ##? HOW TO DO IT WITH PERCENTAGES?
+
+```
+
+
+
+ ###### V.2
+
+---
+title: "tim_rollingmeans_TUS_beha"
+author: "nomi" --added bits
+date: '2022-10-25'
+output: html_document
+---
+
+
+
+PRE-PROCESSING FOR CALCULATING ROLLING AVERAGES OF PRESS RESPONSES ACROSS ALL 100 TRIALS FOR EACH CUE, AND PLOTTING:
+
+Creating data frames from Pilot DF that represent all responses from all participants. 
+
+Controlling for Jitter to calculate order of cue presentation: by adding a vector from 1:25 we create an order of presentation (i.e. 1 represents the first time that cue was presented in that block, rather than using trial number which will differ from person to person due to jitter).
+
+Count of 'Press' responses: number of press responses for each cue across all participants and in order of presentation is then calculated.
+
+Roll Mean: a rolling average can then be calculated from the data frames containing all press responses for all participants.
+
+Data frame for plotting: all rolling average calculations are then added to a data frame, converted to long format with 'melt' function and plotted.
+
+#Load data and packages
+```{r}
+library(pacman)
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo, reshape)
+
+
+pilot <- read.csv(file = 'pilot.csv')
+
+```
+
+
+#vector representing order cue is presented
+```{r}
+#This will be used for all Cue DFs
+#Make a vec representing order cue is presented, enough so that each cue for each participant has 1:25 of order
+
+Stim_Seq<-c(1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25,1:25)
+#vector of 40 sequences.why 40???????
+
+#+++NK: CHANGED TO THIS
+Stim_Seq<-c(rep(1:25, 36))#900 OBSERBATIONS FIND CODE SO THIS WILL NOT BE HAPPENING MANUALLY
+
+
+```
+
+
+
+```{r}
+#GW
+#Create data frame for each Cue for press responses
+GW_All_Present<-pilot %>% filter(Cue == "GW")
+View(GW_All_Present)
+
+#Add vec
+GW_All_Present$Stim_Sequence<-Stim_Seq
+
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+GW_All_Present$response<-as.factor(GW_All_Present$response)
+
+#Count number of presses for all participants across all blocks in order from 1 to 100 (Total amount the cue was presented)
+GW_All_Present_Count<- GW_All_Present%>% group_by (Cue, block, Stim_Sequence)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+as.numeric(GW_All_Present_Count$n)
+#Making a DF for just the count col (For some reason the roll mean isnt working with whole DF)
+#Count DF
+GW_n<-GW_All_Present_Count$n
+
+#As DF
+GW_n<-as.data.frame(GW_n)
+#Roll mean
+GW_n_DF<-GW_n %>%
+  mutate(Roll_Mean_21 = zoo::rollmean(GW_n, k=21, fill=NA,align='center'))
+```
+
+
+```{r}
+#NGW
+#Create data frame for each Cue
+NGW_All_Present<-pilot %>% filter(Cue == "NGW")
+#Add vec
+NGW_All_Present$Stim_Sequence<-Stim_Seq
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+NGW_All_Present$response<-as.factor(NGW_All_Present$response)
+#Count
+NGW_All_Present_Count<- NGW_All_Present%>% group_by (Cue, block, Stim_Sequence)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+#Count DF
+NGW_n<-NGW_All_Present_Count$n
+
+#As DF
+NGW_n<-as.data.frame(NGW_n)
+#Roll mean
+NGW_n_DF<-NGW_n %>%
+  mutate(Roll_Mean_21 = zoo::rollmean(NGW_n, k=21, fill=NA,align='center'))
+```
+
+
+```{r}
+#NGL
+#Create data frame for each Cue
+NGL_All_Present<-pilot %>% filter(Cue == "NGL")
+#Add vec
+NGL_All_Present$Stim_Sequence<-Stim_Seq
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+NGL_All_Present$response<-as.factor(NGL_All_Present$response)
+#Count
+NGL_All_Present_Count<- NGL_All_Present%>% group_by (block, Stim_Sequence)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+
+#Count DF
+NGL_n<-NGL_All_Present_Count$n
+
+#As DF
+NGL_n<-as.data.frame(NGL_n)
+#Roll mean
+NGL_n_DF<-NGL_n %>%
+  mutate(Roll_Mean_21 = zoo::rollmean(NGL_n, k=21, fill=NA,align='center'))
+```
+
+
+```{r}
+#GAL
+#Create data frame for each Cue
+GAL_All_Present<-pilot %>% filter(Cue == "GAL")
+#Add vec
+GAL_All_Present$Stim_Sequence<-Stim_Seq
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+GAL_All_Present$response<-as.factor(GAL_All_Present$response)
+#Count
+GAL_All_Present_Count<- GAL_All_Present%>% group_by (Cue, block, Stim_Sequence)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+#As.df
+as.data.frame(GAL_All_Present_Count)
+#Count DF
+GAL_n<-GAL_All_Present_Count$n
+
+#As DF
+GAL_n<-as.data.frame(GAL_n)
+#Roll mean
+GAL_n_DF<-GAL_n %>%
+  mutate(Roll_Mean_21 = zoo::rollmean(GAL_n, k=21, fill=NA,align='center'))
+```
+
+
+#Join cols from Rolling Mean DFs
+
+```{r}
+#Joining columns to form data frame:
+Roll_All_21 <- cbind(GW_n_DF$Roll_Mean_21,GAL_n_DF$Roll_Mean_21,NGW_n_DF$Roll_Mean_21,NGL_n_DF$Roll_Mean_21)
+
+#Making it a data.frame
+Roll_All_21<-as.data.frame(Roll_All_21)
+
+#Rename columns
+Roll_All_21<-Roll_All_21 %>% 
+  rename(
+    GW = V1,
+    GAL = V2,
+    NGW = V3,
+    NGL = V4,)
+
+#Add sequence vector
+Roll_vec<-1:100
+
+Roll_All_21$Sequence<-Roll_vec
+
+###############
+#Plotting the Roll Mean 21 data:
+
+#Long format
+Roll_All_21_Long = melt(Roll_All_21, id.vars = c("Sequence"),
+                measure.vars = c("GW", "GAL", "NGL", "NGW"))
+#Remove NA
+Roll_All_21_Long<-na.omit(Roll_All_21_Long)
+```
+
+#Roll Mean Plot
+```{r}
+#Create a custom color scale
+#library(RColorBrewer)
+myColors <- brewer.pal(4,"Set1")
+names(myColors) <- levels(Roll_All_21_Long$variable)
+colScale <- scale_colour_manual(name = "variable",values = myColors)
+
+#Roll mean plot
+Roll_All_21 <- ggplot(Roll_All_21_Long,aes(Sequence,value,colour = variable, group = variable)) + geom_point() + geom_line()
+Roll_All_21_Plot <- Roll_All_21 + colScale
+
+plot(Roll_All_21_Plot)
+
+
+
+
+Roll_All_21 <- ggplot(Roll_All_21_Long,aes(Sequence,value,colour = variable, group = variable))+
+  geom_smooth()
+Roll_All_21_Plot <- Roll_All_21 + colScale
+
+plot(Roll_All_21_Plot)
+```
+
+
+
