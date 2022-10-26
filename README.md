@@ -9,9 +9,10 @@
       - not press to avoid losing (NGL)
       
       
+      
      Full tasks consists of 400 trials split into 4 blocks each.
      
-     Each block (100 trials) has 4 different gems.
+     Each block (100 trials) has 4 different gems (Cues) that correspond to one condition; GW, GAL, NGW, NGL. 
      
      Each gem is presented 25 times per block.
      
