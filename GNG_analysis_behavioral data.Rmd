@@ -257,11 +257,17 @@ ggplot(pilot %>%
 
            #OK  % per Cue per block
 ```{r}
+pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
+
+
+
 pilot %>% 
   filter(response == "press")%>%
   group_by(block)%>%
   count(Cue) %>% 
-  mutate(perc_presses=n/250 )-> pilot_1 # WHAT IS THE CORRECT CALCULATION for % 
+  mutate(perc_presses=n/900)-> pilot_1 # I believe this is the correct calculation (about 50% GW ifyou sum up the percentages, the other half no presses)
+                   #each Cue 25%, 100 in 400trials, 900 in 3600 trials (3600=9participants)
+   #here for 9ppts GW:801 in 3600 = 22.25%
 
  ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
    geom_bar(stat = "identity")+
@@ -269,20 +275,30 @@ pilot %>%
      facet_grid(~block)
 ```
    
- #OK % per Cue per block per 20 trials (increments of 20 on every block)
+ #per Cue per block per 20 trials (increments of 20 on every block)
 ```{r}
+t20<-pilot%>% filter(response == "press") %>%group_by(response, per_20trials)%>% count(response) 
+sum(t20$n/20) #2015 times appeared / 180
+
+
+
+
+
 pilot %>% 
   filter(response == "press")%>%
   group_by(block, Cue)%>%
     count(per_20trials) %>% 
-  mutate(perc_presses = n / 50) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50 = now i have 9 ppt so wrong logic
+  mutate(perc_presses = n / 180) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50 = now i have 9 ppt so wrong logic
 
 
 
-ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
+ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
   geom_bar(stat = "identity") +
   facet_grid(Cue~block) +
   scale_y_continuous(labels = scales::percent)
+
+
+
 ```
 
                     ##OK, per block of 20 trials but not sure why n/250 and not n/50 works here 
@@ -337,6 +353,26 @@ g20<-ggplot(pilot_11%>% group_by (Cue),
   facet_grid(~Cue)+
  scale_y_continuous(labels = scales::percent)
 g20 + geom_smooth()
+
+
+
+#For all trials for all trial_numbers
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(trial_number) %>% 
+  mutate(perc_presses = n / 900) -> pilot_111 #5 chunks of 20 in 100, in 400 (20), in 3600 (180)
+
+         #with facets
+g20<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = trial_number, y = perc_presses, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  #geom_point () +
+ # geom_line ()+
+  facet_grid(~Cue)+
+ scale_y_continuous(labels = scales::percent)
+g20 + geom_smooth()
 ```
 
 ```{r}
@@ -344,6 +380,18 @@ g20 + geom_smooth()
 
 f<-ggplot(pilot_11%>% group_by (Cue), 
        aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+# xlim(c(0, 80)) + ylim(c(0, 70)) +
+  #geom_point () +
+  #geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+ f + geom_smooth ()
+ 
+  
+ # for all trial numbers
+f<-ggplot(pilot_111%>% group_by (Cue), 
+       aes(x = trial_number, y = perc_presses, color = Cue, fill = Cue)) +
 # xlim(c(0, 80)) + ylim(c(0, 70)) +
   #geom_point () +
   #geom_line ()+
@@ -488,7 +536,6 @@ ggplot(pilot,
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
 ```
-
 
 
 
