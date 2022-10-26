@@ -219,6 +219,48 @@ ggplot(pilot%>%
 ```
 
 
+###Correct
+
+```{r}
+#correct counts per Cue
+pilot %>% group_by (Cue)%>% count (correct)
+
+
+ggplot(pilot,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+
+
+#correct per ID
+c<-pilot %>% filter(correct == "1")%>% group_by (ID)%>% count (correct)
+
+
+mean(c$n) #avg of 307.444 correct responses--> 
+          #may be if a person has less than 230 correct responses --> CUT? or below 60? see below aggregate
+
+   
+
+#PROPORTION correct PER PARTCIPANT
+
+
+#the proportion of 1s by participant, + more i.e. sound, and language.
+#Because the proportion of 1s in a vector with only 0s and 1s is just the mean, this should work:
+
+aggregate(data=pilot, correct ~ ID, FUN="mean")
+
+df <- aggregate(data=pilot, correct ~ ID, FUN="mean")
+p <- ggplot(df)
+p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')
+p + ylab('ID')
+
+#same as above but with stat_summary
+ggplot(pilot) + 
+  stat_summary(aes(x = ID, y = correct), 
+               geom = "bar")
+````
+
+
 ### Number of presses vs no_presses 
 ```{r}
 pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
@@ -405,7 +447,6 @@ f<-ggplot(pilot_111%>% group_by (Cue),
 ```{r}
  
               #NK: #percentage presses in 5 trial increments
-```{r}
 pilot %>% 
   filter(response == "press")%>%
   group_by(Cue)%>%
