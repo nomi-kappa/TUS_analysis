@@ -219,7 +219,7 @@ ggplot(pilot%>%
 ```
 
 
-###Correct
+###Correct counts per Cue, per ID, proportions per ID
 
 ```{r}
 #correct counts per Cue
@@ -241,7 +241,7 @@ mean(c$n) #avg of 307.444 correct responses-->
 
    
 
-#PROPORTION correct PER PARTCIPANT
+#PROPORTIONs - correct PER PARTCIPANT
 
 
 #the proportion of 1s by participant, + more i.e. sound, and language.
@@ -258,7 +258,49 @@ p + ylab('ID')
 ggplot(pilot) + 
   stat_summary(aes(x = ID, y = correct), 
                geom = "bar")
+
+
 ````
+
+trials playing with correct
+
+```{r}
+#Correct per Cue
+pilot %>% group_by (Cue)%>% count (correct)
+
+
+ggplot(pilot, aes(x = Cue, y = response, color = Cue, fill = Cue))+
+               geom_bar(stat = "identity")+
+  facet_grid(~correct)
+
+
+#Cue per response (percentage) - NICE one
+pilot %>% 
+  group_by(correct, trial_number)%>%
+  count(Cue) %>% 
+  mutate(perc_presses=n/900)-> pilot_1 #
+
+ ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
+   geom_bar(stat = "identity")+
+     scale_y_continuous(labels = scales::percent)+
+     facet_grid(~correct)
+ 
+ 
+ 
+
+         #with facets = CANNOT do the % (I WANT ALL RESPONSE 0 AND 1S TO APPEAR)
+  pilot %>% group_by(correct, trial_number, Cue)%>% count(Cue)
+ 
+ pilot %>% 
+  group_by(Cue, correct, response, trial_number)%>%
+  count(Cue) %>% 
+  mutate(perc_presses=n/900)-> pilot_1 #
+ggplot(pilot_1%>% group_by (Cue), 
+       aes(x = trial_number, y = perc_presses, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_smooth()+
+  facet_grid(response~correct)
+```
 
 
 ### Number of presses vs no_presses 
