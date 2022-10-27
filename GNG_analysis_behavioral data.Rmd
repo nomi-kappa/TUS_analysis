@@ -207,29 +207,41 @@ p1 <-ggplot(data = RTs_presses,
 
 p1 +ggtitle ("Distribution of RT for presses")
 
+# get mean RT per participant
+MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(ID, ReqAction, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ ReqAction + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condtion",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(0, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .3, # Points
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
 
 # RTs for each Cue
-ggplot(pilot%>%       
-       filter(response != "no_press"),
+ggplot(data = MeanRTpersub,
         aes(x = Cue,                                 
-            y =  RT,                                  
-            group = response,                                 
-            color = response)) +                              
+            y =  RT)) +                              
    stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
-
 
 #Cue per block per RT
 ggplot(pilot%>%  
          filter(response != "no_press")%>%
-         group_by(block),
-        aes(x = Cue,                                 
+         group_by(Cue),
+        aes(x = block,                                 
             y =  RT,                                  
-            group = block,                                 
-            color = block)) +                              
+            group = Cue,                                 
+            color = Cue)) +                              
      stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 ####try number of times == press / times cue presented!!!!
 
