@@ -106,6 +106,23 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
               ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
     ```
 
+### Add Go/NoGo condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'Go',
+                   ifelse(pilot$Cue == 'NGW', 'Go',
+                   ifelse(pilot$Cue == 'GW', 'NoGo',
+                   ifelse(pilot$Cue == 'GAL', 'NoGo', NA))))
+    ```
+
+    
+### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
+                   ifelse(pilot$Cue == 'NGW', 'Win',
+                   ifelse(pilot$Cue == 'GW', 'Win',
+                   ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
+    ```
+
 ###Trial column and block column
 ```{r}
 #1,2,3...100...400
