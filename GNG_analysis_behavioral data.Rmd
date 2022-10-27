@@ -289,9 +289,9 @@ ggplot(pilot) +
                geom = "bar")
 
 
-````
+```
 
-trials playing with correct
+# trials playing with correct
 
 ```{r}
 #Correct per Cue
