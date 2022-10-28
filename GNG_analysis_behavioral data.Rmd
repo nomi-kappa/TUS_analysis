@@ -82,6 +82,7 @@ pilot <- pilot %>%
 #### Add response col (press - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
+pilot$GoResponse <- with(pilot, ifelse(RT>0, 1, 0))
 ```
 
 #### Add GNG col (Go-noGO)
