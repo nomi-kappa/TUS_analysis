@@ -17,7 +17,16 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
+library(tidyverse)
+library(BayesFactor)
+library(lmerTest)
+library(RColorBrewer)
+library(wesanderson)
+library(yarrr)
+library(ggplot2)
+
+
+#p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
 
 ```
 
