@@ -54,6 +54,7 @@ pilot <- pilot %>%
       mutate_at("ID", str_replace, "_log.txt", "")
 
 ```
+
 #### Trial for a neat version of the above chunk. No luck at the moment. 
 ```{r}
 #pilot <- pilot %>%
@@ -106,6 +107,9 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
               ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
     ```
 
+
+
+
 ###Trial column and block column
 ```{r}
 #1,2,3...100...400
@@ -113,12 +117,167 @@ pilot <- pilot %>%
   group_by(ID) %>%
   mutate(trial_number = row_number())
 
-
 #block 1, 2, 3, 4
 pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                 ifelse(pilot$trial_number == 101:200, '2', 
                 ifelse(pilot$trial_number == 201:300, '3', 
               ifelse(pilot$trial_number == 301:400, '4', NA))))
+
+```
+
+
+
+
+
+
+
+
+##For each Cue create a different column so we can replicate Hanneke's plot: 
+             
+             #Each Cue: create a new column of presses in order (trial number) 
+             #and then I can add per_5trial or per_3trial
+   c(rep(1:25))per block
+   c(rep(1:25, 4)) per task
+```{r}
+
+View(pilot)
+   #This will be used for all Cue DFs
+#Make a vec representing order cue is presented, 
+#enough so that each cue for each participant has 1:25 of order
+
+#For all participants
+stim_seq<-c(rep(1:25, 36))#3600 OBSERBATIONS FIND CODE SO THIS WILL NOT BE HAPPENING MANUALLY for each cue for 9 people
+```
+
+
+ #CREATE DIFFERENT DF FOR EACH CUE
+
+#GW df
+```{r}
+
+#Create data frame for each Cue for press responses
+gw<-pilot %>% filter(Cue == "GW")
+
+#Add vec
+gw$stim_seq<-stim_seq
+
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+gw$response<-as.factor(gw$response)
+View(gw)
+
+
+#Count number of presses for all participants across all blocks in order from 1 to 100 (Total amount the cue was presented)
+gw_count<- gw%>% group_by (Cue, block, stim_seq)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+
+library(data.table)
+setnames(gw_count, "n", "number_responses")
+
+
+View(gw_count)
+```
+
+#NGW df
+```{r}
+
+#Create data frame for each Cue
+ngw<-pilot %>% filter(Cue == "NGW")
+#Add vec
+ngw$stim_seq<-stim_seq
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+ngw$response<-as.factor(ngw$response)
+#Count
+ngw_count<- ngw%>% group_by (Cue, block, stim_seq)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+
+setnames(ngw_count, "n", "number_responses")
+
+View(ngw_count)
+```
+
+#NGL
+```{r}
+
+#Create data frame for each Cue
+ngl<-pilot %>% filter(Cue == "NGL")
+#Add vec
+ngl$stim_seq<-stim_seq
+
+
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+ngl$response<-as.factor(ngl$response)
+#Count
+ngl_count<- ngl%>% group_by (Cue,block, stim_seq)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+
+setnames(ngl_count, "n", "number_responses")
+```
+
+#GAL
+```{r}
+#Create data frame for each Cue
+gal<-pilot %>% filter(Cue == "GAL")
+#Add vec
+gal$stim_seq<-stim_seq
+#Make response a factor to use .drop = FALSE to keep zeroes in the count
+gal$response<-as.factor(gal$response)
+#Count
+gal_count<- gal%>% group_by (Cue, block, stim_seq)%>% dplyr::count(response,.drop = FALSE) %>% filter(response == "press")
+
+setnames(gal_count, "n", "number_responses")
+```
+
+
+#Join cols of the 4 different Cues  *******************play from here tooo
+
+```{r}
+#Joining columns to form data frame:
+df_all <- rbind(gal_count,ngl_count,gw_count,ngw_count)
+
+
+#add sequence vector
+ #n_chunks = 400
+
+#df_all<-df_all %>% 
+# mutate(sequence = rep(1:n_chunks, 
+             #           each = ceiling(n() / n_chunks))[1:n()])
+
+#add trial_number  - does not work yet
+#df_all <- df_all %>%
+ # mutate(trial_number = row_number())
+
+  
+
+#Add sequence vector  c(rep(1:25))per block
+   roll_vec<-c(rep(1:100, 4))
+df_all$sequence<-roll_vec
+
+View(df_all)
+write.csv(x=df_all, "df_all.csv") 
+#Making it a data.frame
+#df_all<-as.data.frame(df_all)
+
+```
+
+
+#plots
+```{r}
+ggplot(df_all, aes(x = sequence, y = number_responses, color = Cue, fill = Cue)) +
+  #geom_bar(stat = "identity") +
+  geom_smooth ()
+
+
+as.numeric(df_all$number_responses)
+
+percent <-df_all %>% 
+    group_by(number_responses, Cue) %>% 
+    summarise( percent = 100 * n(number_responses) / nrow( df_all ) )
+
+
+```
+
+*********************************here
+
+
+
+```{r}
 
 
 
@@ -810,5 +969,4 @@ data.frame(pilot)
   labs(x = 'response', y = NULL, fill = 'Cue')#,
        # title = 'Proportions in Sub-groups by Group') 
 ```
-
 
