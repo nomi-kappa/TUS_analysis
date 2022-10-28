@@ -17,7 +17,16 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
+library(tidyverse)
+library(BayesFactor)
+library(lmerTest)
+library(RColorBrewer)
+library(wesanderson)
+library(yarrr)
+library(ggplot2)
+
+
+#p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
 
 ```
 
@@ -73,6 +82,7 @@ pilot <- pilot %>%
 #### Add response col (press - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
+pilot$GoResponse <- with(pilot, ifelse(RT>0, 1, 0))
 ```
 
 #### Add GNG col (Go-noGO)
@@ -106,6 +116,23 @@ pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
               ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
     ```
 
+### Add Go/NoGo condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
+                   ifelse(pilot$Cue == 'NGW', 'NoGo',
+                   ifelse(pilot$Cue == 'GW', 'Go',
+                   ifelse(pilot$Cue == 'GAL', 'Go', NA))))
+    ```
+
+    
+### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
+                   ifelse(pilot$Cue == 'NGW', 'Win',
+                   ifelse(pilot$Cue == 'GW', 'Win',
+                   ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
+    ```
+
 ###Trial column and block column
 ```{r}
 #1,2,3...100...400
@@ -113,13 +140,20 @@ pilot <- pilot %>%
   group_by(ID) %>%
   mutate(trial_number = row_number())
 
-
 #block 1, 2, 3, 4
 pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                 ifelse(pilot$trial_number == 101:200, '2', 
                 ifelse(pilot$trial_number == 201:300, '3', 
               ifelse(pilot$trial_number == 301:400, '4', NA))))
 
+# counts trials of the same condition within each block
+library(tibbletime)
+count_trials <- rollify(function(x) sum(last(x) == x), window=100)
+pilot <- pilot %>%
+  group_by(ID, block) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
 
 
 #pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
@@ -190,36 +224,74 @@ p1 <-ggplot(data = RTs_presses,
 
 p1 +ggtitle ("Distribution of RT for presses")
 
+# get mean RT per participant
+MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(ID, ReqAction, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ ReqAction + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condtion",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(0, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .3, # Points
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
 
 # RTs for each Cue
-ggplot(pilot%>%       
-       filter(response != "no_press"),
+ggplot(data = MeanRTpersub,
         aes(x = Cue,                                 
-            y =  RT,                                  
-            group = response,                                 
-            color = response)) +                              
+            y =  RT)) +                              
    stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
-
 
 #Cue per block per RT
 ggplot(pilot%>%  
          filter(response != "no_press")%>%
-         group_by(block),
-        aes(x = Cue,                                 
+         group_by(Cue),
+        aes(x = block,                                 
             y =  RT,                                  
-            group = block,                                 
-            color = block)) +                              
+            group = Cue,                                 
+            color = Cue)) +                              
      stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 ####try number of times == press / times cue presented!!!!
 
 ```
 
+```{r}
+###Correct counts per Cue, per ID
+# compute proportion of correct response for each participant
+MeanCorrectpersub <- pilot %>% group_by(ID, Cue, ReqAction, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue, ReqAction, OutValence, TrialCount) %>% summarise(correct = mean(correct))
 
-###Correct counts per Cue, per ID, proportions per ID
+# plot
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount,correct*100, colour=ReqAction, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_bw() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+### proportion of go response per condition
+# compute proportion of go responses for each participant
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, ReqAction, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, ReqAction, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=ReqAction, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set2") +
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
+```
+
 
 ```{r}
 #correct counts per Cue
@@ -260,9 +332,9 @@ ggplot(pilot) +
                geom = "bar")
 
 
-````
+```
 
-trials playing with correct
+# trials playing with correct
 
 ```{r}
 #Correct per Cue
