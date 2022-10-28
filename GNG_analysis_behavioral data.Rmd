@@ -140,13 +140,20 @@ pilot <- pilot %>%
   group_by(ID) %>%
   mutate(trial_number = row_number())
 
-
 #block 1, 2, 3, 4
 pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                 ifelse(pilot$trial_number == 101:200, '2', 
                 ifelse(pilot$trial_number == 201:300, '3', 
               ifelse(pilot$trial_number == 301:400, '4', NA))))
 
+# counts trials of the same condition within each block
+library(tibbletime)
+count_trials <- rollify(function(x) sum(last(x) == x), window=100)
+pilot <- pilot %>%
+  group_by(ID, block) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
 
 
 #pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
