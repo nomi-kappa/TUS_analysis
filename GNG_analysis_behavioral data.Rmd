@@ -264,8 +264,34 @@ ggplot(pilot%>%
 
 ```
 
+```{r}
+###Correct counts per Cue, per ID
+# compute proportion of correct response for each participant
+MeanCorrectpersub <- pilot %>% group_by(ID, Cue, ReqAction, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue, ReqAction, OutValence, TrialCount) %>% summarise(correct = mean(correct))
 
-###Correct counts per Cue, per ID, proportions per ID
+# plot
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount,correct*100, colour=ReqAction, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_bw() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+### proportion of go response per condition
+# compute proportion of go responses for each participant
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, ReqAction, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, ReqAction, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=ReqAction, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set2") +
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
+```
+
 
 ```{r}
 #correct counts per Cue
