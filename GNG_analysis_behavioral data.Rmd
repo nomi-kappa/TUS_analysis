@@ -17,21 +17,18 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot(), scales, RColorBrewer, parsnip, zoo)
+
+p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, yarr)
 
 ```
 
-
 #### Insert .txt files
 ```{r}
-
 pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>% 
   group_by(filename) %>% 
   do(read.table(.$filename))
 
-
 #log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
-
 ```
 
 
@@ -52,42 +49,40 @@ pilot <- pilot %>%
 
 pilot <- pilot %>%
       mutate_at("ID", str_replace, "_log.txt", "")
-
 ```
-#### Trial for a neat version of the above chunk. No luck at the moment. 
-```{r}
-#pilot <- pilot %>%
-     # mutate_at("ID", str_replace, "pilot data/" and "_log.txt", "")
-
-#replace multiple words in the ID column
-           #pilot$ID <- str_replace_all(pilot$ID, c("pilot data/" = "", "_log.txt"= ""))
-           #pilot$ID %>% glimpse
-
-#pilot$ID <- case_when(
-#   pilot$ID == "pilot data/"~ "",
-#    pilot$ID == "_log.txt"~ "",
-#    TRUE ~ NA)
-```
-
 
 #### Add response col (press - no_press)
 ```{r}
 pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
+pilot$GoResponse <- with(pilot, ifelse(RT>0, 1, 0))
 ```
+
+### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
+                ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
+                ifelse(pilot$stim_ID == pilot$GW, 'GW', 
+              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
+    ```
 
 #### Add GNG col (Go-noGO)
 ```{r}
-pilot$GNG <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
-                ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))     
+pilot$req_action <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
+                ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))   
+
+#NB's way: 
+#pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
+            #       ifelse(pilot$Cue == 'NGW', 'NoGo',
+             #      ifelse(pilot$Cue == 'GW', 'Go',
+              #      felse(pilot$Cue == 'GAL', 'Go', NA))))
 ```
  
-
 #### Add correct column (0-1)  
 ```{r}
 pilot <- pilot %>%
-  mutate(correct = ifelse(GNG == "noGo", ifelse(response == "no_press", 1, 0), 
+  mutate(correct = ifelse(req_action == "noGo", ifelse(response == "no_press", 1, 0), 
          
-                    ifelse(GNG == "Go", ifelse(response == "press", 1, 0), 1)))
+                    ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
 ```
         
 
@@ -97,22 +92,20 @@ pilot$win_lose_neutral <- recode_factor(pilot$outcomefeed, "-1" = "lose",
                                 "1" = "win", "0"= "neutral")
 ```
       
-      
-### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
 ```{r}
-pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
-                ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
-                ifelse(pilot$stim_ID == pilot$GW, 'GW', 
-              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
-    ```
+pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
+                   ifelse(pilot$Cue == 'NGW', 'Win',
+                   ifelse(pilot$Cue == 'GW', 'Win',
+                   ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
+```
 
-###Trial column and block column
+###Trial column & block column
 ```{r}
 #1,2,3...100...400
 pilot <- pilot %>%
   group_by(ID) %>%
   mutate(trial_number = row_number())
-
 
 #block 1, 2, 3, 4
 pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
@@ -120,7 +113,18 @@ pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                 ifelse(pilot$trial_number == 201:300, '3', 
               ifelse(pilot$trial_number == 301:400, '4', NA))))
 
+# counts trials of the same condition within each block
+count_trials <- rollify(function(x) sum(last(x) == x), window=100)#turns a function 
+#into a rolling version of itself for use inside of a call to dplyr::mutate() ,
+# however it works equally as well when called from purrr::map()
 
+pilot <- pilot %>%
+  group_by(ID, block) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
+
+View(pilot)
 
 #pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
  #               ifelse(pilot$trial_number == 21:40, 'b.40', 
@@ -144,23 +148,23 @@ pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
                # ifelse(pilot$trial_number == 381:400, 'e.100', NA))))))))))))))))))))
                        
 #I want to divide each participants' trials into chunks of 5
-n_chunks = 80
+          #n_chunks = 80
 
-pilot<-pilot %>% 
-  group_by(ID) %>% 
-  mutate(per_5trials = rep(1:n_chunks, 
-                        each = ceiling(n() / n_chunks))[1:n()]) #rep=repeat
+        #pilot<-pilot %>% 
+        #group_by(ID) %>% 
+        #mutate(per_5trials = rep(1:n_chunks, 
+                       # each = ceiling(n() / n_chunks))[1:n()]) #rep=repeat
 #ceiling() is the function that takes two parameters one parameter that is vector with sequence along to divide the vector sequentially and second is chunk length, which represents the length of chunk to be divided
 
 
 
 #I want to divide each participants' trials into chunks of 5
-n_chunks = 20
+          #_chunks = 20
 
-pilot<-pilot %>% 
-  group_by(ID) %>% 
-  mutate(per_20trials = rep(1:n_chunks, 
-                        each = ceiling(n() / n_chunks))[1:n()])
+            #pilot<-pilot %>% 
+            # group_by(ID) %>% 
+            #mutate(per_20trials = rep(1:n_chunks, 
+           #each = ceiling(n() / n_chunks))[1:n()])
 ```
 
 
@@ -176,50 +180,151 @@ write.csv(x=pilot, "pilot.csv")
           ### PROCESSING - COUNTS AND PLOTS
 
 
- #### Distribution of RT for presses
+ #### RTs
+ 
+   ##Distribution of RT for presses
 ```{r}
  #MEAN RT - PRESSES (distribution of RT)
 pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
-RTs_presses <-pilot_presses%>%  group_by(RT, ID, outcomefeed) %>% 
-  summarise(Mean_RT = mean(RT, na.rm = TRUE)) #%>%
+RT_presses <-pilot_presses%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE));RT_presses #%>%
  # filter(CorrectResponse == "Correct")
 
-p1 <-ggplot(data = RTs_presses, 
+ggplot(data = RT_presses, 
        aes(x = Mean_RT)) + 
-  geom_histogram()
+  geom_histogram()+ ggtitle ("Distribution of RT for presses")
 
-p1 +ggtitle ("Distribution of RT for presses")
+# get mean RT per participant
+MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condtion",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(400, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
 
-
+ ##RTs Cue
+```{r}
 # RTs for each Cue
-ggplot(pilot%>%       
-       filter(response != "no_press"),
+ggplot(data = MeanRTpersub,
         aes(x = Cue,                                 
-            y =  RT,                                  
-            group = response,                                 
-            color = response)) +                              
+            y =  RT)) +                              
    stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
-
+# get mean RT per Cue per participant
+MeanRTcue <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ Cue,    # DV = reaction time, IV1 = Cue
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "RT per Cue",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
+ ##RTs Block
+```{r}
 #Cue per block per RT
 ggplot(pilot%>%  
          filter(response != "no_press")%>%
-         group_by(block),
-        aes(x = Cue,                                 
+         group_by(Cue),
+        aes(x = block,                                 
             y =  RT,                                  
-            group = block,                                 
-            color = block)) +                              
+            group = Cue,                                 
+            color = Cue)) +                              
      stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 ####try number of times == press / times cue presented!!!!
 
+# get mean RT per block per participant 
+MeanRTcueblock <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ block + Cue,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTcueblock,           
+                  theme = 2,
+                  main = "RT cue per block",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
+#!!!!!!Repeated measures so we need to measure per participant first.
+
+ ##Correct counts per Cue, per ID
+```{r}
+# compute proportion of correct response for each participant
+MeanCorrectpersub <- pilot %>% group_by(ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue, block,req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+View(MeanCorrect)
+# plot
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount,correct*100, colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_dark() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+# plot correct per block
+ggplot(MeanCorrect_b) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+```
+
+  ## proportion of GO response per condition
+```{r}
+# compute proportion of go responses for each participant
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
+
+#plot Go responses per block
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
 ```
 
 
-###Correct counts per Cue, per ID, proportions per ID
 
 ```{r}
 #correct counts per Cue
@@ -229,8 +334,6 @@ pilot %>% group_by (Cue)%>% count (correct)
 ggplot(pilot,
        aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
   geom_bar(stat = "identity")
-
-
 
 #correct per ID
 c<-pilot %>% filter(correct == "1")%>% group_by (ID)%>% count (correct)
@@ -260,9 +363,9 @@ ggplot(pilot) +
                geom = "bar")
 
 
-````
+```
 
-trials playing with correct
+# trials playing with correct
 
 ```{r}
 #Correct per Cue
@@ -619,196 +722,3 @@ ggplot(pilot,
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
 ```
-
-
-
-
-
-
-
-
-
-      ### IGNORE playinng
-Go xxxxxxxxxxxxxxxxxxx
-```{r}
-        pilot %>%
-          group_by(block, Cue)%>%
-        # filter(response == "press")%>%
-         summarise(correct=sum(correct))%>%
-        ggplot(aes(x = block            ,                                 
-             y = correct,
-             group = Cue,                                 
-             color = Cue, fill = Cue))+                                 
-        geom_line()
-
-         prop.table(table (pilot$response))
-        
-         pilot %>%
-          group_by(block, Cue, response)%>%
-         filter(response == "press")%>%
-           prop.table(table (pilot$response))%>%
-        ggplot(aes(x = block            ,                                 
-             y = response,
-             group = Cue,                                 
-             color = Cue, fill = Cue))+                                 
- stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
-
-
-
-ggplot(pilot,
-        aes(x = response,                                 
-            y =  Cue,                                
-            group = response,                                 
-           color = response)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
-
-
-
-###Xmas tree
-ggplot(pilot%>%
-         filter(response != "no_press"),
-        aes(x = response,                                 
-            y =  GNG,                                
-            group = Cue,                                 
-           color = Cue)) +  
-  geom_jitter()
-
-
-
-
-
-#not quite yet
-ggplot(pilot%>%
-         group_by(RT),
-         aes(x=Cue, y=response)) + 
-          geom_bar(stat = "Identity")
-
-
-
-
-
-
-ggplot(pilot,   
-        aes(x = Cue,                                 
-            y =  response))+                                 
-            #group = response,                                 
-           # color = response)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")
-
------------------------
-pilot / rowSums(pilot) * 100
-
-BCI_percent2 <- BCI_plus %>%
-gather(key = taxon, value = count, -siteID) %>% #make into thin format
-group_by(siteID) %>% #do calculations by siteID
-mutate(percent = count / sum(count) * 100)
- 
-#RTs_correct <-pilot %>% group_by(Cue) %>% 
-#summarise(Mean_RT = percent = 100 * n() / nrow( RT ) )# %>%
-# filter(correct == "1")
-ggplot(pilot,
-       summarise(response = 100 *  n() / nrow(400)),
-        aes(x = Cue,                                 
-            y =  response)+
-            #group = response,                                 
-           # color = response)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar"))#+
-
-
-#find how to have both in one graph, presses and no presses (easy but think about it for a nice graph)
-```
-
-### Numbers of Go vs noGO responses
-```{r}
-ggplot(pilot%>%
-         group_by(GNG),
-       aes(x=win_lose_neutral, y= GNG))+ 
-  geom_bar(stat = "identity")
-
-#good one
-ggplot(pilot,
-        aes(x = Cue,                                 
-            y =  response,                                  
-            group = GNG,                                 
-            color = GNG)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
-
-```
-```{r}
-
-
-
-ggplot(pilot,
-        aes(x = response,                                 
-            y =  Cue,                                
-            group = response,                                 
-           color = response)) +                              
-   stat_summary(fun = "mean", geom = "point") +        
-   stat_summary(fun = "mean", geom = "line") +         
-   stat_summary(fun.data = "mean_se", geom = "errorbar")#+
-
-
-
-###that shows a
-ggplot(pilot%>%
-         filter(response != "no_press"),
-        aes(x = response,                                 
-            y =  GNG,                                
-            group = Cue,                                 
-           color = Cue)) +  
-  geom_jitter()
-
-```
-
-
-```{r}
-ggplot(pilot%>%
-         filter(response != "no_press")%>%
-         group_by(block),
-        aes(x = block,                                 
-            y =  Cue,                                
-            group = correct,                                 
-           color = correct)) +  
-  geom_jitter()
-
-
-#error
-pilot$p <- prop.table(table(pilot$correct), margin=1)
-
-ggplot(as.data.frame(p), aes(x = Cue, y = response, fill = Var1)) + 
-  geom_bar(stat="identity", position = "dodge")
-
-#error
-ggplot(pilot%>%
-              filter(response != "no_press"),
-              aes(x = Cue,
-                  y = response,
-                  fill = correct)) +
-  geom_bar(position = "fill", stat = "identity")
-ggp     
-
-
-
-library(ggthemes)
-
-data.frame(pilot)
- ggplot (pilot%>%
-      aes(x = response, y = correct, fill = Cue)) + 
-  geom_bar(stat = 'identity', position = 'dodge', alpha = 2/3) +  
-  scale_y_continuous(labels = scales::percent)+ 
-  scale_fill_few('Medium', drop = FALSE) +              # keep levels, if data is filtered
-  labs(x = 'response', y = NULL, fill = 'Cue')#,
-       # title = 'Proportions in Sub-groups by Group') 
-```
-
-
