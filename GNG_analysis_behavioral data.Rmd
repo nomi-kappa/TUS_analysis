@@ -286,7 +286,7 @@ MeanGoResp <- MeanGoResppersub %>% group_by(Cue, ReqAction, OutValence, TrialCou
 
 #plot
 ggplot(MeanGoResp) + 
-  geom_smooth(aes(TrialCount,GoResponse,colour=ReqAction, lty = OutValence)) +
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
   scale_colour_brewer(palette = "Set2") +
   theme_bw() +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
@@ -343,7 +343,7 @@ pilot %>% group_by (Cue)%>% count (correct)
 
 ggplot(pilot, aes(x = Cue, y = response, color = Cue, fill = Cue))+
                geom_bar(stat = "identity")+
-  facet_grid(~correct)
+            facet_grid(~correct)
 
 
 #Cue per response (percentage) - NICE one
