@@ -34,6 +34,66 @@ library(afex)
 ```
 
 
+     ####NOTES:
+***
+#How do I show and interpret the outcome of these:
+1. after salient outcomes-feedback (not neutral),participants adjusted their 
+   responses to a larger degree following Go responses than NoGo responses
+2. When selectively analyzing trials with salient outcomes only, rewards (compared to punishments)
+   led to a higher proportion of choice repetitions following Go relative to NoGo responses (valence x response;
+valence effect for Go only; valence effect for NoGo 
+
+
+***Algermissen et al. 2021*** see S02 p.37 Model of stay behavior. 
+
+              QUESTION - not sure how they did it. Different datasets?
+EFFECT
+- Valence                     45.59 1 < .001
+- Salience * Valence          30.95 1 < .001
+- Action * Valence * Salience 19.73 1 < .001
+
+SALIENT OUTCOME ONLY
+- Valence                     46.36 1 < .001
+- Action * Valence            17.80 1 < .001
+
+NEUTRAL OUTCOME ONLY
+- Action * Valence            12.32 1 < .001
+
+
+GO with salient outcomes only:
+- Valence                     53.93 1 < .001
+NOGO with salient outcomes only:
+- Valence                     18.23 1 < .001
+
+
+Mixed-effects logistic regression of 
+
+              QUESTION - unsure about the formulas
+A. stay vs. switch behavior 
+(i.e., repeating vs. changing an action on the next occurrence of the same cue) 
+ as a function of performed action (Go vs. NoGo) (for my dataset is "response"????)
+
+Formula:  ???*response
+
+outcome salience (salient: reward or punishment vs. neutral: no reward or no punishment), 
+Formula: ????
+
+
+outcome valence (positive: reward or no punishment vs. negative: no reward or punishment). 
+Formula: ~ valence
+Formula: 
+
+
+salient vs. neutral outcomes separately, 
+Formula: 
+Formula:
+
+and then separately based on Go vs. NoGo actions(presses) and salient vs. neutral outcomes. 
+Formula: response*valence
+Formula: response*valence
+
+Pvalues are computed using likelihood ratio tests using the mixed-function (option “LRT”) from package afex.
+***
    
    
      ***Frequentist approach***
@@ -57,11 +117,13 @@ pilot.m1.0 <- glmer(correct ~  + (1|ID),
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
+
 anova(pilot.m1.0, pilot.m1)
 summary(pilot.m1)
 report::report(pilot.m1)
 
 print(pilot.m1)
+coef(pilot.m1)
 
 ```
 
@@ -270,7 +332,6 @@ summary(pilot.r.m1)
 report::report(pilot.r.m1)
 anova(pilot.or.m1, pilot.r.m1 )
 ```
-
 
 
 
