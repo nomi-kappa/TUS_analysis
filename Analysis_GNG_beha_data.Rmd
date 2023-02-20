@@ -10,3 +10,259 @@ pilot <- read.csv(file = 'pilot.csv')
 pilot_dropped <- read.csv(file = 'df.csv') #dropped NAs
 ```
 
+#### LOAD LIBRARIES
+```{r}
+library(tidyverse)
+library(BayesFactor)
+library(dplyr)
+library(rstanarm)
+library(lmerTest)
+library(GGally)
+library(bridgesampling)
+library(ggplot2)
+library(scales)
+library(splines)
+library(aod)
+library(bridgesampling)
+library(tibbletime)
+library(yarr)
+library(report)
+library(sjstats)
+library(stats)
+library(parsnip)
+library(afex)
+```
+
+
+   
+   
+     ***Frequentist approach***
+   *correct is a binary response (binomial proportion in blocks for example)*
+
+
+                        **GLMM - correct approach**
+              
+
+
+
+    ###Learning - main effect of required action Go vs noGo on correct response
+
+#main effect of required action - CORRECT
+```{r}
+pilot.m1 <- glmer(correct ~ req_action + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.m1)
+summary(pilot.m1)
+report::report(pilot.m1)
+
+print(pilot.m1)
+
+```
+***
+```{r}
+#TRYING TO FIND DEGREES OF FREEDOM - not working but appear in print() and summary (df. red)
+lmermodg <- lme4::lmer(correct ~ req_action + (1 + correct||req_action), data=pilot)
+
+afmodr <- mixed(correct ~ req_action + (1 + correct||req_action), data=pilot, check_contrasts = FALSE, test_intercept = TRUE, expand_re = TRUE, method="KR")
+
+
+#not working
+wald.test(b = coef(pilot.m1), Sigma = vcov(pilot.m1), Terms = 2:2)
+
+
+## odds ratios and 95% CI - not working
+exp(cbind(OR = coef(pilot.m1), confint(pilot.m1)))
+    
+
+####PSEUDO R-SQUARED FOR LOGISTIC/BINOMIAL - DOES not MAKE SENSE MUCH FOR LOGISTIC
+r2_tjur(pilot.m1)#0.1367558 
+
+#########RESIDUALS
+plot(pilot.m1,which=1)#If we use R's diagnostic plot, the first one is the 
+#scatterplot of the residuals, against predicted values (the score actually)
+
+plot(predict(pilot.m1),residuals(pilot.m1))
+abline(h=0,lty=2,col="grey")
+
+#Why do we have those two lines of points ? Because we predict a probability for a variable taking values 0 or 1. If the tree value is 0, then we always predict more, and residuals have to be negative (the blue points) and if the true value is 1, then we underestimate, and residuals have to be positive (the red points). And of course, there is a monotone relationship. We can see more clearly what's going on when we use colors
+
+plot(predict(pilot.m1),residuals(pilot.m1),col=c("blue","red"))
+abline(h=0,lty=2,col="grey")
+
+#run a local regression, to see what's going on,
+lines(lowess(predict(pilot.m1),residuals(pilot.m1)),col="black",lwd=2)
+
+rl=lm(residuals(pilot.m1)~bs(predict(pilot.m1),8))
+#rl=loess(residuals(reg)~predict(reg))
+y=predict(rl,se=TRUE)
+segments(predict(pilot.m1),y$fit+2*y$se.fit,predict(pilot.m1),y$fit-2*y$se.fit,col="green")
+
+
+#Predicted probability working but not good
+data <- data.frame(actual= pilot$req_action, predicted=predict(pilot.m1))
+
+data$predicted <-as.numeric(data$predicted)
+
+ggplot(data, aes(x=actual, y= predicted)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  labs(x='Actual Values', y='Predicted Values', title='Predicted vs. Actual Values')
+
+ggplot(data=data, aes(x=actual, y=predicted)) +
+  geom_point(aes(color=actual), size=4) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+
+
+
+
+
+                             ***might be helpful***
+ #####----> predicted probability shoes much better when results from lmer instead of glmer
+            # *****Ignore for others not myself
+
+GLM -Good for the extras...chi, plots, probabilities etc.
+https://github.com/StatQuest/logistic_regression_demo/blob/master/logistic_regression_demo.R
+
+
+logistic <- glm(correct ~ req_action, data = pilot) #famlily= "binomial")
+summary(logistic) #requested action is a useful predictor
+
+logistic_0 <- glm(correct ~ 1, data = pilot) 
+summary(logistic_0)
+
+anova(logistic, logistic_0)
+
+report::report(logistic)
+
+
+## Now calculate the overall "Pseudo R-squared" and its p-value
+ll.null <- logistic$null.deviance/-2;ll.null
+ll.proposed <- logistic$deviance/-2; ll.proposed
+
+## McFadden's Pseudo R^2 = [ LL(Null) - LL(Proposed) ] / LL(Null)
+(ll.null - ll.proposed) / ll.null # !!!!!OVERAL effect size
+## The p-value for the R^2 
+1 - pchisq(2*(ll.proposed - ll.null), df=(length(logistic$coefficients)-1))
+ 
+## chi-square value  
+2*(ll.proposed - ll.null) #or
+
+
+## p-value = 1 - pchisq(chi-square value, df = 2-1)
+1 - pchisq(2*(ll.proposed - ll.null), df=1); p=1.20128e-08
+1 - pchisq((logistic$null.deviance - logistic$deviance), df=1)
+
+
+## Lastly, let's  see what this logistic regression predicts, given
+## that a patient is either female or male (and no other data about them).
+predicted.data <- data.frame(
+  probability.of.correct=logistic$fitted.values,
+ req_action=pilot$req_action)
+
+
+## We can plot the data...
+ggplot(data=predicted.data, aes(x=req_action, y=probability.of.correct)) +
+  geom_point(aes(color=req_action), size=10) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+
+```
+***
+
+    ### Biased-responding - responses biased by Cue valence (win/avoid) of prospective outcomes,i.e. favouring win? 
+      =  motivational bias -  more presses to win than to avoid
+
+#main effect of CUE valence (WIN OR AVOID) - CORRECT
+```{r}
+pilot.valence.m1 <- glmer(correct ~ OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.valence.m1)
+summary(pilot.valence.m1)
+report::report(pilot.valence.m1)
+print (pilot.valence.m1)
+
+# The effect of cue valence was highly significant 
+```
+
+
+#req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
+```{r}
+pilot.vgng.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~ req_action + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.vgng.m1)
+summary(pilot.vgng.m1)
+print (pilot.vgng.m1)
+
+report::report(pilot.vgng.m1)
+report::report(pilot.m1.0)
+
+#The effect of cue valence was marginally stronger for the Go cues (Req_ction x Valence). 
+#Because each Go cue was associated with only one correct Go response, we confirmed that this 
+#motivational bias was present for both correct and incorrect Go responses. 
+
+```
+
+#Feedback was significant when it was Win and neutral ?????
+```{r}
+pilot.feed.m1 <- glmer(correct ~ feedback + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.fr.m1 <- glmer(correct ~ feedback*req_action + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+summary(pilot.feed.m1)
+summary(pilot.fr.m1)
+
+anova(pilot.feed.m1, pilot.fr.m1)
+
+report::report(pilot.fr.m1)
+report::report(pilot.feed.m1)
+```
+
+
+#Salient outcomes only – rewards led to more choice repetitions following 
+GO responses vs. NoGo responses [valence*response] ???NOT clear.
+```{r}
+pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.r.m1 <- glmer(correct ~ response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(pilot.or.m1)
+
+report::report(pilot.or.m1)
+
+summary(pilot.r.m1)
+report::report(pilot.r.m1)
+anova(pilot.or.m1, pilot.r.m1 )
+```
+
+
+
+
+
