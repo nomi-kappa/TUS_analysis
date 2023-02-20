@@ -64,7 +64,10 @@ report::report(pilot.m1)
 print(pilot.m1)
 
 ```
-***
+
+
+
+********************************************************************************
 ```{r}
 #TRYING TO FIND DEGREES OF FREEDOM - not working but appear in print() and summary (df. red)
 lmermodg <- lme4::lmer(correct ~ req_action + (1 + correct||req_action), data=pilot)
@@ -174,8 +177,11 @@ ggplot(data=predicted.data, aes(x=req_action, y=probability.of.correct)) +
   ylab("Predicted probability of being correct") #noGo 64%, Go 81%
 
 ```
-***
+********************************************************************************
 
+   
+   
+    
     ### Biased-responding - responses biased by Cue valence (win/avoid) of prospective outcomes,i.e. favouring win? 
       =  motivational bias -  more presses to win than to avoid
 
@@ -196,6 +202,8 @@ print (pilot.valence.m1)
 
 # The effect of cue valence was highly significant 
 ```
+
+
 
 
 #req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
@@ -220,6 +228,7 @@ report::report(pilot.m1.0)
 #motivational bias was present for both correct and incorrect Go responses. 
 
 ```
+
 
 #Feedback was significant when it was Win and neutral ?????
 ```{r}
