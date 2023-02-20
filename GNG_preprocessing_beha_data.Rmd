@@ -57,7 +57,10 @@ pilot<- tibble(filename = list.files("pilot data_400trials", "*.txt", full.names
     group_by(filename) %>% 
     do(read.table(.$filename))
 
-#log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
+#log <- read.table(fil
+
+
+e = "MRGI0033_log.txt", header = FALSE)
 ```
 
 #### Set variable names
@@ -207,7 +210,8 @@ write.csv(x=pilot, "pilot.csv")
 
 #drop NAs
 df <- na.omit(pilot)
-View(df)
+
+write.csv(x=df, "df.csv") 
 ```
 
           

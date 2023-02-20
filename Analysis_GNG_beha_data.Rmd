@@ -1,0 +1,12 @@
+---
+title: "Analysis_GNG_beha_data"
+author: "nomi"
+date: "2023-02-20"
+output: html_document
+---
+
+```{r}
+pilot <- read.csv(file = 'pilot.csv')
+pilot_dropped <- read.csv(file = 'df.csv') #dropped NAs
+```
+
