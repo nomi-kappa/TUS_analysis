@@ -10,21 +10,66 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
+library(tidyverse)
+library(BayesFactor)
+library(lmerTest)
+library(ggplot2)
+library(dplyr)
+library(yarr)
+library(tibbletime)
 
-p_load(tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr)
+
+p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
 
 ```
 
+```{r}
+theme_APA <- theme_bw()+
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          axis.line = element_line(size = 1),                                        
+          text = element_text(
+              size = 16,
+              face="bold"), 
+          axis.text = element_text(
+              size = 16,
+              face="plain",
+              colour="black"),
+          legend.title = element_blank(),
+          legend.position = 'top',
+          legend.direction = "horizontal",
+          legend.text = element_text(
+              face="plain",
+              colour="black",
+              size=16),
+          strip.text.x = element_text(
+              size = 16,
+              face = "bold"),
+          panel.background = element_rect(
+              fill='white',
+              colour='white'),
+          strip.background = element_rect(
+              fill='white',
+              colour='white'),
+          axis.title.x = element_text(
+              margin = margin(t = 10)),
+          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+          plot.caption = element_text(size=8)
+          )
+```
+
+
 #### Insert .txt files
 ```{r}
-pilot<- tibble(filename = list.files("pilot data", "*.txt", full.names=TRUE)) %>% 
-  group_by(filename) %>% 
-  do(read.table(.$filename))
+pilot<- tibble(filename = list.files("pilot data_400trials", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
 
 #log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
 ```
 
-
+View(pilot)
 
 #### Set variable names
 ```{r}
@@ -37,7 +82,7 @@ pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitt
 #### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
 ```{r}
 pilot <- pilot %>%
-      mutate_at("ID", str_replace, "pilot data/", "")# & "log.txt", "")
+      mutate_at("ID", str_replace, "pilot data_400trials/", "")# & "log.txt", "")
 
 pilot <- pilot %>%
       mutate_at("ID", str_replace, "_log.txt", "")
@@ -78,9 +123,10 @@ pilot <- pilot %>%
 ```
         
 
+
 #### Add win_lose column (win - lose) 
 ```{r}
-pilot$win_lose_neutral <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
+pilot$feedback <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
                                 "1" = "win", "0"= "neutral")
 ```
       
@@ -91,6 +137,17 @@ pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
                    ifelse(pilot$Cue == 'GW', 'Win',
                    ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
 ```
+
+
+
+#### Add salient feedback column only
+```{r}
+pilot <- pilot %>%
+  mutate(salient = ifelse(feedback == "win","win",
+                      ifelse(feedback == "lose", "lose", NA)))
+
+```
+        
 
 ###Trial column & block column
 ```{r}
@@ -159,11 +216,17 @@ View(pilot)
            #each = ceiling(n() / n_chunks))[1:n()])
 ```
 
+
+
 #write .csv file
 ```{r}
 write.csv(x=pilot, "pilot.csv") 
           #How to import:
             #pilot <- read.csv(file = 'pilot.csv')
+
+#drop NAs
+df <- na.omit(pilot)
+View(df)
 ```
 
           
@@ -182,7 +245,7 @@ RT_presses <-pilot_presses%>%  group_by(RT, ID) %>%
 
 ggplot(data = RT_presses, 
        aes(x = Mean_RT)) + 
-  geom_histogram()+ ggtitle ("Distribution of RT for presses")
+  geom_histogram()+ ggtitle ("Distribution of RT for presses") +theme_APA
 
 # get mean RT per participant
 MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
@@ -201,7 +264,7 @@ yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction tim
                   avg.line.o = 0, # Average line
                   point.pch = 21,
                   point.bg = "white",
-                  point.cex = .7)
+                  point.cex = .7) + theme_APA
 ```
 
  ##RTs Cue
@@ -283,7 +346,7 @@ ggplot(MeanCorrect) +
   labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
 
 # plot correct per block
-ggplot(MeanCorrect_b) + 
+ggplot(MeanCorrect) + 
   geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
   #scale_colour_brewer(palette = "Set3") +
   facet_grid(~block)+
@@ -304,7 +367,7 @@ ggplot(MeanGoResp) +
   geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
   scale_colour_brewer(palette = "Set1") +
   theme_bw() +
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
 
 #plot Go responses per block
 ggplot(MeanGoResp) + 
@@ -312,7 +375,7 @@ ggplot(MeanGoResp) +
   scale_colour_brewer(palette = "Set1") +
   facet_grid(~block)+
   theme_bw() +
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour")
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
 ```
 
 
@@ -405,15 +468,22 @@ ggplot(MeanCorrect) +
 
 
 # plot correct per block
-ggplot(MeanCorrect_b) + 
-  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(trial_number, correct*100, colour=req_action, lty = OutValence)) +
   #scale_colour_brewer(palette = "Set3") +
   facet_grid(~block)+
   theme_light() +
   labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
 
   
-  
+  # plot correct per block
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
   
   
   
@@ -444,9 +514,13 @@ View (presses_per_Cue_block)
 
  #plot presses per Cue
 ggplot(pilot %>% 
-   filter(response == "press"), aes(x=Cue, y= response)) + 
-  geom_bar(stat = "identity")
+   filter(response == "press"), aes(x=Cue, y= response, color = Cue, fill = Cue)) + 
+  geom_bar(stat = "identity") + theme_APA
 
+ #plot presses per Cue
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=req_action, y= response, color = req_action, fill = req_action)) + 
+  geom_bar(stat = "identity") + theme_APA
 
 # plot press vs no press, per Cue better
 ggplot(pilot %>%
@@ -454,7 +528,7 @@ ggplot(pilot %>%
          aes(x=response,
              group = Cue,                                 
             color = Cue, fill = Cue)) + 
-          geom_bar(stat = "count")
+          geom_bar(stat = "count") +theme_APA
 
 # press per Cue per block
 ggplot(pilot %>%
@@ -463,7 +537,7 @@ ggplot(pilot %>%
              group = Cue,                                 
             color = Cue, fill = Cue)) + 
      # facet_grid(Cue~paste("cue", Cue), scales="free")
-          geom_bar(stat = "count")
+          geom_bar(stat = "count") + theme_APA
 ```
 
 
@@ -517,6 +591,312 @@ ggplot(pilot,
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
 ```
+
+
+
+   **ANALYSES**
+```{r}
+pilot <-read.csv("pilot.csv")
+```
+   
+      
+```{r}
+library (GGally)
+ggpairs(pilot[, c("response", "req_action")])
+
+ggpairs(pilot[, c("correct", "req_action", "OutValence", "block")])
+ggpairs(pilot[, c("correct", "req_action", "OutValence")])
+ggpairs(pilot[, c("correct", "req_action", "response")])
+
+
+ggpairs(pilot[, c("correct", "req_action")])
+ggpairs(pilot[, c("correct", "req_action", "block")])
+ggpairs(pilot[, c("response", "req_action", "block")])
+
+xtabs(~ correct + req_action, data=pilot) # "req_action" seems to be a good predictor
+
+```
+   
+
+   
+   
+   
+   ###Frequentist
+   
+   correct is a binary response (binomial proportion in blocks for example)
+
+
+                        *******GLMM - correct approach*********
+              
+    ###Learning - main effect of required action Go vs noGo on correct response
+main effect of required action - CORRECT
+```{r}
+library(lmerTest)
+
+#pilot <- elm_test %>% 
+#  filter(trial_type=="noGo") %>% 
+ # group_by(experimental_condition, block, subj, test3or7) %>% 
+ # summarise(exposure=n(), is_slip=sum(is_slip)/exposure)#exposure?
+  
+pilot.m1 <- glmer(correct ~ req_action + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.m1)
+summary(pilot.m1)
+report::report(pilot.m1)
+
+print(pilot.m1)
+
+#TRYING TO FIND DEGREES OF FREEDOM - not working
+library (afex)
+lmermodg <- lme4::lmer(correct ~ req_action + (1 + correct||req_action), data=pilot)
+
+afmodr <- mixed(correct ~ req_action + (1 + correct||req_action), data=pilot, check_contrasts = FALSE, test_intercept = TRUE, expand_re = TRUE, method="KR")
+
+
+library(aod)
+#not working
+wald.test(b = coef(pilot.m1), Sigma = vcov(pilot.m1), Terms = 2:2)
+
+
+## odds ratios and 95% CI - not working
+exp(cbind(OR = coef(pilot.m1), confint(pilot.m1)))
+     
+
+####PSEUDO R-SQUARED FOR LOGISTIC/BINOMIAL - DOES not MAKE SENSE MUCH FOR LOGISTIC
+r2_tjur(pilot.m1)#0.1367558 
+
+
+#########RESIDUALS
+plot(pilot.m1,which=1)#If we use R's diagnostic plot, the first one is the 
+#scatterplot of the residuals, against predicted values (the score actually)
+
+plot(predict(pilot.m1),residuals(pilot.m1))
+abline(h=0,lty=2,col="grey")
+
+#Why do we have those two lines of points ? Because we predict a probability for a variable taking values 0 or 1. If the tree value is 0, then we always predict more, and residuals have to be negative (the blue points) and if the true value is 1, then we underestimate, and residuals have to be positive (the red points). And of course, there is a monotone relationship. We can see more clearly what's going on when we use colors
+
+plot(predict(pilot.m1),residuals(pilot.m1),col=c("blue","red"))
+abline(h=0,lty=2,col="grey")
+
+#run a local regression, to see what's going on,
+lines(lowess(predict(pilot.m1),residuals(pilot.m1)),col="black",lwd=2)
+
+library (splines)
+rl=lm(residuals(pilot.m1)~bs(predict(pilot.m1),8))
+#rl=loess(residuals(reg)~predict(reg))
+y=predict(rl,se=TRUE)
+segments(predict(pilot.m1),y$fit+2*y$se.fit,predict(pilot.m1),y$fit-2*y$se.fit,col="green")
+
+
+#Predicted probability working but not good
+data <- data.frame(actual= pilot$req_action, predicted=predict(pilot.m1))
+
+glimpse(data)
+data$predicted <-as.numeric(data$predicted)
+
+ggplot(data, aes(x=actual, y= predicted)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  labs(x='Actual Values', y='Predicted Values', title='Predicted vs. Actual Values')
+
+ggplot(data=data, aes(x=actual, y=predicted)) +
+  geom_point(aes(color=actual), size=4) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+```
+
+
+    ### Biased-responding - responses biased by Cue valence (win/avoid) of prospective outcomes,i.e. favouring win? 
+      =  motivational bias -  more presses to win than to avoid
+
+main effect of CUE valence (WIN OR AVOID) - CORRECT
+```{r}
+pilot.valence.m1 <- glmer(correct ~ OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.valence.m1)
+summary(pilot.valence.m1)
+report::report(pilot.valence.m1)
+print (pilot.valence.m1)
+
+# The effect of cue valence was highly significant 
+```
+
+working on it
+
+  req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
+```{r}
+pilot.vgng.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~ req_action + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.vgng.m1)
+summary(pilot.vgng.m1)
+print (pilot.vgng.m1)
+
+report::report(pilot.vgng.m1)
+report::report(pilot.m1.0)
+
+#The effect of cue valence was marginally stronger for the Go cues (Req_ction x Valence). 
+#Because each Go cue was associated with only one correct Go response, we confirmed that this 
+#motivational bias was present for both correct and incorrect Go responses. 
+
+```
+
+#Feedback was significant when it was Win and neutral ?????
+```{r}
+pilot.feed.m1 <- glmer(correct ~ feedback + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.fr.m1 <- glmer(correct ~ feedback*req_action + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+summary(pilot.feed.m1)
+summary(pilot.fr.m1)
+
+anova(pilot.feed.m1, pilot.fr.m1)
+
+report::report(pilot.fr.m1)
+report::report(pilot.feed.m1)
+```
+
+
+#Salient outcomes only - rewards led to more choice repetitions following 
+GO responses vs. NoGo responses [valence*response] ???NOT clear.
+
+```{r}
+pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.r.m1 <- glmer(correct ~ response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(pilot.or.m1)
+
+report::report(pilot.or.m1)
+
+summary(pilot.r.m1)
+report::report(pilot.r.m1)
+anova(pilot.or.m1, pilot.r.m1 )
+
+
+```
+
+
+
+
+
+
+
+
+                *****Ignore for others not myself
+
+GLM -Good for the extras...chi, plots, probabilities etc.
+https://github.com/StatQuest/logistic_regression_demo/blob/master/logistic_regression_demo.R
+```{r}
+
+logistic <- glm(correct ~ req_action, data = pilot) #famlily= "binomial")
+summary(logistic) #requested action is a useful predictor
+
+logistic_0 <- glm(correct ~ 1, data = pilot) 
+summary(logistic_0)
+
+anova(logistic, logistic_0)
+
+report::report(logistic)
+
+
+## Now calculate the overall "Pseudo R-squared" and its p-value
+ll.null <- logistic$null.deviance/-2;ll.null
+ll.proposed <- logistic$deviance/-2; ll.proposed
+
+## McFadden's Pseudo R^2 = [ LL(Null) - LL(Proposed) ] / LL(Null)
+(ll.null - ll.proposed) / ll.null # !!!!!OVERAL effect size
+## The p-value for the R^2 
+1 - pchisq(2*(ll.proposed - ll.null), df=(length(logistic$coefficients)-1))
+ 
+## chi-square value  
+2*(ll.proposed - ll.null) #or
+
+
+## p-value = 1 - pchisq(chi-square value, df = 2-1)
+1 - pchisq(2*(ll.proposed - ll.null), df=1); p=1.20128e-08
+1 - pchisq((logistic$null.deviance - logistic$deviance), df=1)
+
+
+## Lastly, let's  see what this logistic regression predicts, given
+## that a patient is either female or male (and no other data about them).
+predicted.data <- data.frame(
+  probability.of.correct=logistic$fitted.values,
+ req_action=pilot$req_action)
+
+
+## We can plot the data...
+ggplot(data=predicted.data, aes(x=req_action, y=probability.of.correct)) +
+  geom_point(aes(color=req_action), size=10) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+
+
+#Residuals
+#get list of residuals #not notmally distributed as we deal with Go vs nogo -->One reason for heavy tails. The residuals come from TWO groups with different variances. Always leads to heavy tails. Interpretation: two different volatility regimes, low and high.
+#The volatility regime model, in which trades take place at different rates over the course of a day, relies on knowing the key facts that
+res <- resid(logistic);res
+head(res)
+#produce residual vs. fitted plot
+plot(fitted(logistic), res)
+
+#add a horizontal line at 0 
+abline(0,0)
+
+#create Q-Q plot for residuals
+qqnorm(res)
+
+#add a straight diagonal line to the plot
+qqline(res) #We can see that the residuals tend to stray from the line quite a bit near the tails, which could indicate that they're not normally distributed.
+
+#Create density plot of residuals
+plot(density(res))
+```
+
+
+lm
+```{r} 
+library (report)
+m0.lm <- lm(correct ~ 1, data = pilot)
+summary(m0.lm)
+
+
+m1.lm<-lm(correct ~ req_action, data = pilot)
+summary(m1.lm)
+
+anova(m1.lm, m0.lm, test = "F")
+
+report::report(m1.lm)
+```
+
+
+
 
 
 

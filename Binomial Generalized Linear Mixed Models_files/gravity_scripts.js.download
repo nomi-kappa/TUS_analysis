@@ -1,0 +1,374 @@
+// Customization for AJAX using Gravity Forms.
+var ldapSearchURL = location.protocol + '//' + document.domain + '/find_uva_person/ldap.php';
+var codSearchURL = location.protocol + '//' + document.domain + '/find_uva_course/cod.php';
+
+$(document).ready(function() {
+    // For SC Reference Request form combine the first and last names into the instructor name if the request is for a course.
+    $('.ff-first-name input, .ff-last-name input, .ff-course-related-request select').live('change', function() {
+        if ($('.f-online-reference-request').length) {
+          if ($('.ff-course-related-request select').val() == 'Yes') {
+            var name = $('.ff-first-name input').val() + ' ' + $('.ff-last-name input').val();
+            $('.ff-instructor-name input').attr('value',name);
+          } else {
+            $('.ff-instructor-name input').attr('value','');
+          }
+        }
+    });
+
+    // Standard user information form fields can be prepopulated via LDAP using the computing ID
+    $('.ff-uva-computing-id input').live('change', function() {
+        uvaComputingIdChanged('.ff-uva-computing-id input', '.ff-name input', '.ff-email-address input',
+            '.ff-phone input', '.ff-university-affiliation select', '.ff-university-department select');
+    });
+    // If computing id not empty on page load then populate other requestor fields
+    if ($('.ff-uva-computing-id').length) {
+        uvaComputingIdChanged('.ff-uva-computing-id input', '.ff-name input', '.ff-email-address input',
+            '.ff-phone input', '.ff-university-affiliation select', '.ff-university-department select');
+    }
+
+    // Set the default for the course term based on the current month
+    if ($('.ff-term select').length) {
+        selectDefaultTermBasedOnSystemDate('.ff-term select');
+    }
+
+    // When the term is changed or a course mnemonic is added for a course or alternate course,
+    // query for course section info and display it to allow instructors to choose their sections.
+    // Class number and alternate class number are ahidden fields, which don't have unique CSS classes
+    // so you must access them via the GF class gform_hidden (first occurrence for class number,
+    // last occurrence for alternate class number).
+    $('.ff-term select, .ff-course input').live('change', function() {
+        if ($('.ff-course input').val()) {
+            if ($('.f-purchase-request').length) {
+                if ($('.ff-place-on-course-reserve select').val() == 'Yes') {
+                    courseChanged('.ff-term select', '.ff-course input', 'input.gform_hidden:first', '.ff-course-section input',
+                        '.ff-course-title input', '.ff-meeting-time input', '.ff-enrollment input', false);
+                }
+            } else {
+                courseChanged('.ff-term select', '.ff-course input', 'input.gform_hidden:first', '.ff-course-section input',
+                    '.ff-course-title input', '.ff-meeting-time input', '.ff-enrollment input', false);
+            }
+        }
+    });
+    $('.ff-term select, .ff-alternate-course input').live('change', function() {
+        if ($('.ff-alternate-course input').val()) {
+            if ($('.f-purchase-request').length) {
+                if ($('.ff-place-on-course-reserve select').val() == 'Yes') {
+                    courseChanged('.ff-term select', '.ff-alternate-course input', $('input.gform_hidden').filter(':last'), '.ff-alternate-course-section input',
+                        'course-title', 'meeting-time', 'enrollment', true);
+                }
+            } else {
+                courseChanged('.ff-term select', '.ff-alternate-course input', $('input.gform_hidden').filter(':last'), '.ff-alternate-course-section input',
+                    'course-title', 'meeting-time', 'enrollment', true);
+            }
+        }
+    });
+
+    // If a form contains sessions that can be added and removed there should be a current count hidden
+    // field. Make sure this count is displayed in its location.
+    if ($('#current_session_count').length) {
+        $('#session_count_display').html($('#current_session_count').val());
+
+        // Forms with session counts will probably have a remove session checkbox for each one; so apply the
+        // change event for each of these checkboxes so that appropriate actions are made when removed.
+        $('.ff-remove-session input').each(function(index) {
+            $(this).click(function() {
+                removeSession(this);
+            });
+        });
+    }
+
+    // Only allow future dates via the calendar for date fields found on forms.
+    // Optional classes can have first day allowed be a week out and not allow for weekend days to be selected.
+    $('.ff-date input').each(function(i) {
+        $(this).datepicker('option', 'minDate', '+0').datepicker('option', 'yearRange', '-0:+2').datepicker('refresh');
+    });
+    $('.ff-date.week-out input').each(function(i) {
+        $(this).datepicker('option', 'minDate', '+8').datepicker('refresh');
+    });
+    $('.ff-date.no-weekend input').each(function(i) {
+        $(this).datepicker('option', 'beforeShowDay', $.datepicker.noWeekends).datepicker('refresh');
+    });
+    $('.ff-date.week-out-default input').each(function(i) {
+        $(this).datepicker('option', 'minDate', '+0').datepicker('option', 'yearRange', '-0:+2').datepicker('option', 'defaultDate', '+7').datepicker('refresh');
+    });
+
+});
+
+// Adds a session (section content) by unchecking the remove item for a section not being displayed.
+// Having a Remove session checked should be condition used to hide a section of fields in Gravity
+// Forms.
+// fieldFocusClass should hold the field you want the focus to be on after adding the new item, e.g. ff-length
+function addSession(fieldClassFocus) {
+    var current_count = parseInt($('#current_session_count').val());
+    var max_count = parseInt($('#maximum_session_count').val());
+    if (current_count < max_count) {
+        $('.ff-remove-session input').each(function(index) {
+            if ($(this).is(':checked')) {
+                var itemClass = $(this).val();
+                $(this).attr('checked', false);
+                $(this).trigger('click').attr('checked', false);
+                $(fieldClassFocus + itemClass + ' input').focus();
+                return false;
+            }
+        });
+        // Increment the session count and display it.
+        current_count = current_count + 1;
+        $('#current_session_count').val(current_count);
+        $('#session_count_display').html($('#current_session_count').val());
+    }
+    // Disable the add session button if max count is reached.
+    if (current_count == max_count) {
+        $('#add_another_session').attr('disabled', true);
+    }
+}
+
+// This function will look for the course and auto fill other course info fields if found. If multiple
+// sections exist for the course then they are displayed and the person chooses one. The second parameter
+// is used to indicate if the mnemonic is coming from the alternate field which should be true or false
+function courseChanged(termField, courseField, numField, sectField, titlField, mtgTmField, enrollField, altCourse) {
+    var semester = $(termField).val();
+    // For summer 1, 2, or 3 we just need 'summer'
+    semester = semester.replace(/\s/g, '').replace(/I/g, '');
+    var mnemonic = $(courseField).val().trim();
+    // Only bother to look up course information if the course mnemonic does not contain "not applicable" or "n/a"
+    if ((mnemonic.toLowerCase() != 'n/a') && (mnemonic.toLowerCase() != 'not applicable')) {
+        $.getJSON(codSearchURL + "?term=" + semester + "&mnemonic=" + mnemonic, function(data) {
+            // If the course was found...
+            if (data.semester != '') {
+                // If only one section exists then update the course fields.
+                if (data.classSections.length == 1) {
+                    var i = 0;
+                    var number = data.classSections[i].classNumber;
+                    var section = data.classSections[i].classSection;
+                    var title = data.classSections[i].classTitle;
+                    var mtgDays = data.classSections[i].meetingDays;
+                    var mtgStartTime = data.classSections[i].meetingStartTime;
+                    var mtgEndTime = data.classSections[i].meetingEndTime;
+                    var enrollment = data.classSections[i].enrollmentCapacity;
+                    updateCourseInformation(altCourse, numField, sectField, titlField, mtgTmField, enrollField, number, section, title, mtgDays, mtgStartTime, mtgEndTime, enrollment);
+                } else if (data.classSections.length > 1) {
+                    // Otherwise display a list of class sections found for the course and allow
+                    // the person to select one that is used to auto fill the other fields.
+                    // First, update the content in the courseSections div container
+                    var heading = 'Choose ' + semester + ' ' + mnemonic.toUpperCase() + ' Section';
+                    var body = '';
+                    for (i = 0; i < data.classSections.length; i++) {
+                        var number = data.classSections[i].classNumber;
+                        var section = data.classSections[i].classSection;
+                        var title = data.classSections[i].classTitle;
+                        var instructor = data.classSections[i].instructor;
+                        if (instructor == '') {
+                            instructor = '&nbsp;';
+                        }
+                        var meetingDays = data.classSections[i].meetingDays;
+                        var mtgDaysDisplay;
+                        if (meetingDays == '') {
+                            mtgDaysDisplay = '&nbsp;';
+                        } else {
+                            mtgDaysDisplay = meetingDays;
+                        }
+                        var meetingStartTime = data.classSections[i].meetingStartTime;
+                        var mtgStartDisplay;
+                        if (meetingStartTime == '') {
+                            mtgStartDisplay = '&nbsp;';
+                        } else {
+                            mtgStartDisplay = meetingStartTime;
+                        }
+                        var meetingEndTime = data.classSections[i].meetingEndTime;
+                        var mtgEndDisplay;
+                        if (meetingEndTime == '') {
+                            mtgEndDisplay = '&nbsp;';
+                        } else {
+                            mtgEndDisplay = meetingEndTime;
+                        }
+                        var enrollment = data.classSections[i].enrollmentCapacity;
+                        body += '<div><p><label style="width:90%;" for="class_num_' + number + '">';
+                        body += '<input type="radio" id="class_num_' + number + '" name="class_num" value="';
+                        body += number + '" onClick="updateCourseInformation(' + altCourse + ",'";
+                        body += numField + "','" + sectField + "','" + titlField + "','" + mtgTmField + "','";
+                        body += enrollField + "','" + number + "','" + section + "','" + title + "','" + meetingDays;
+                        body += "','" + meetingStartTime + "','" + meetingEndTime + "','" + enrollment + "')\"/>";
+                        body += ' Section ' + section + ', ' + mtgDaysDisplay;
+                        body += ', ' + mtgStartDisplay + ' - ' + mtgEndDisplay + ' (' + instructor + ')</label></p></div>';
+                    }
+                    // Display the content so the user can select a section.
+                    $('#CR').remove();
+                    $('#main').append('<div id="CR" class="modal"><div class="modal-header"><button class="close" data-dismiss="modal">×</button><h3>Choose Section</h3></div><div class="modal-body">' + body + '</div><div class="modal-footer"></div></div>');
+                    $('#CR').modal({ backdrop: true, keyboard: true, show: true });
+                    $(sectField)[0].focus();
+                }
+            } else {
+                // Nothing found to auto fill any fields so don't do anything???
+                if (confirm(mnemonic.toUpperCase() + ' could not be found. Are you sure this is correct?')) {
+                    $(sectField)[0].focus();
+                } else {
+                    $(courseField)[0].focus();
+                }
+            }
+        });
+    }
+}
+
+// Removes a session (section content) by clearing out the field values in that section. Gravity
+// Forms conditional logic will handle hiding the item.
+function removeSession(object) {
+    if ($(object).is(':checked')) {
+        var max_count = parseInt($('#maximum_session_count').val());
+        var current_count = parseInt($('#current_session_count').val());
+        if (current_count > 0) {
+            $($(object).val() + " input[type='text']").val('');
+            // Decrement the session count and display it.
+            current_count = current_count - 1;
+            $('#current_session_count').val(current_count);
+            $('#session_count_display').html($('#current_session_count').val());
+        }
+        // Enable the add session button if below the max count.
+        if (current_count < max_count) {
+            $('#add_another_session').attr('disabled', false);
+        }
+    }
+}
+
+function selectDefaultTermBasedOnSystemDate(select_id) {
+    // Use the current month to autoselect a default term/semester
+    var today = new Date();
+    // January thru April should have term set to Spring
+    if ((0 <= today.getMonth()) && (today.getMonth() <= 3)) {
+        $(select_id).val('Spring').attr('selected', 'selected');
+        // May should have term set to Summer I
+    } else if (today.getMonth() == 4) {
+        $(select_id).val('Summer I').attr('selected', 'selected');
+        // June thru November should have term set to Fall
+    } else if ((5 <= today.getMonth()) && (today.getMonth() <= 10)) {
+        $(select_id).val('Fall').attr('selected', 'selected');
+        // December should have term set to Spring; NOT January
+    } else if (today.getMonth() == 11) {
+        $(select_id).val('Spring').attr('selected', 'selected');
+    }
+}
+
+// Using the option selected from the course section modal, populate the
+// appropriate course fields with specific info for that course section
+function updateCourseInformation(altCourse, numField, sectField, titlField, mtgTmField, enrollField,
+    numVal, sectVal, titlVal, daysVal, stTmVal, enTmVal, enrollVal) {
+    // If alternate course specified only get the section and number for it.
+    if (altCourse) {
+        $(sectField).attr('value', sectVal);
+        $(numField).attr('value', numVal);
+    } else {
+        // Otherwise fill in the term, title, etc.
+        var meeting_time = daysVal + ' ' + stTmVal + '-' + enTmVal;
+        $(numField).attr('value', numVal);
+        $(sectField).attr('value', sectVal);
+        $(titlField).attr('value', titlVal);
+        $(mtgTmField).attr('value', meeting_time);
+        $(enrollField).attr('value', enrollVal);
+    }
+    // Remove modal from display
+    $('#CR').modal('hide');
+}
+
+// Loop through the department form field selection options to determine
+// if one might match what was retrieved from LDAP
+function updateDepartmentSelection(department, ldapValue) {
+    // Throw away words that won't match our department list...
+    // school of , dept of, graduate, visiting, 'vp for'
+    var dept = ldapValue.replace('Curry School of', '');
+    dept = dept.replace('McIntire School of', '');
+    dept = dept.replace('School of', '');
+    dept = dept.replace('Department of', '');
+    dept = dept.replace('Department for', '');
+    dept = dept.replace('University of Virginia', '');
+    dept = dept.replace('Museum', '');
+    dept = dept.replace('VP for', '');
+    dept = dept.replace('Graduate', '');
+    dept = dept.replace('Undergraduate', '');
+    dept = dept.replace('Language and Literatures', '');
+    dept = dept.replace('Languages and Literatures', '');
+    dept = dept.replace('Languages, Literatures, and Cultures', '');
+    dept = dept.replace('Languages and Cultures', '');
+    dept = dept.replace('Visiting', '');
+    // Remap certain department names to completely different ones.
+    if ((dept == 'Virginia Center for Transportation Innovation and Research') || (dept == 'Civil & Env Engr')) {
+        dept = 'Civil Eng. and Applied Mathematics';
+    } else if (dept == 'American Studies') {
+        dept = 'English';
+    } else if (dept == 'Centers for Computation Research & Scholarship') {
+        dept = 'Computer Science';
+    } else if (dept.indexOf('Batten ') > -1) {
+        dept = 'Batten School';
+    } else if (dept.indexOf('Germanic') > -1) {
+        dept = 'German';
+    } else if (dept.indexOf('Mechanical and Ae') > -1) {
+        dept = 'Mechanical and Aerospace Engineering';
+    } else if (dept.indexOf('Urban and Environmental Planning') > -1) {
+        dept = 'Architecture';
+    } else if ((dept == 'Institute of African-American and African Studies') || (dept == 'Papers of James Madison') || (dept.indexOf('Woodson Institute') > -1)) {
+        dept = 'History';
+    } else if (dept == 'Office of the Vice Prov for Instructional Dev') {
+        dept = 'Education';
+    }
+    // Split department up into parts. NOTE: If no hyphen then result
+    // is first array element contains what the string was before trying
+    // to split.
+    var deptArray = dept.split('-');
+    // Go through the department strings left in the array and see if
+    // they match without splitting the words apart.
+    var found = '';
+    var i = 0;
+    while (i < deptArray.length) {
+        for (j = 0; j < $(department + " option").size(); j++) {
+            if ($(department + " option").eq(j).text() == jQuery.trim(deptArray[i])) {
+                found = $(department + " option").eq(j).val();
+                i = deptArray.length; // something matched; exit loop
+                break; // stop executing the for loop
+            }
+        }
+        i = i + 1;
+    }
+    // If a match was found then make it the selected option
+    if (found != '') {
+        $(department).val(found);
+    }
+}
+
+// When the UVA computing id field is updated on the form, proceed to
+// auto-fill information about the user into the appropriate fields.
+function uvaComputingIdChanged(computing_id, name, email, phone, affiliation,
+    department) {
+    $.getJSON(ldapSearchURL + "?user=" + $(computing_id).val(), function(data) {
+        // identify the user affiliation
+        var userStatus = new String(data.affiliation);
+        // user was found so prefill the name and email form field values
+        // choose the appropriate affiliation
+        if (data.nickname == '') {
+            $(name).attr('value', data.firstName + ' ' + data.lastName);
+        } else {
+            $(name).attr('value', data.nickname + ' ' + data.lastName);
+        }
+        $(email).attr('value', data.email);
+        if ($(phone).length) {
+            $(phone).attr('value', data.phone);
+        }
+        // update the affiliation selection list to reflect the person's
+        // first unselect all the options... then select based on affiliation
+        // also hide/show the question about course reserves and potentially
+        // hide all course fields if not faculty/grad stud on purchase request form
+        $(affiliation).find("option").attr("selected", false).change();
+        if (userStatus.search(/faculty/i) >= 0) {
+            $(affiliation + " option:contains('Faculty')").attr("selected", true).change();
+        } else if (userStatus.search(/undergraduate/i) >= 0) {
+            $(affiliation + " option:contains('Undergraduate')").attr("selected", true).change();
+        } else if (userStatus.search(/graduate/i) >= 0) {
+            $(affiliation + " option:contains('Graduate')").attr("selected", true).change();
+        } else if (userStatus.search(/staff/i) >= 0) {
+            $(affiliation + " option:contains('Staff')").attr("selected", true).change();
+        } else {
+            $(affiliation + " option:contains('Affiliation')").attr("selected", true).change();
+        }
+        // Update the department value based on what the person's LDAP result is
+        if ($(department).length) {
+            updateDepartmentSelection(department, new String(data.department));
+        }
+    });
+}
