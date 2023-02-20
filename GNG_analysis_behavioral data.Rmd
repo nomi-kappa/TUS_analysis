@@ -10,14 +10,6 @@ output: html_document
 #### LOAD LIBRARIES
 ```{r}
 library(pacman)
-library(tidyverse)
-library(BayesFactor)
-library(lmerTest)
-library(ggplot2)
-library(dplyr)
-library(yarr)
-library(tibbletime)
-
 
 p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
 
@@ -59,7 +51,6 @@ theme_APA <- theme_bw()+
           )
 ```
 
-
 #### Insert .txt files
 ```{r}
 pilot<- tibble(filename = list.files("pilot data_400trials", "*.txt", full.names=TRUE)) %>% 
@@ -68,8 +59,6 @@ pilot<- tibble(filename = list.files("pilot data_400trials", "*.txt", full.names
 
 #log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
 ```
-
-View(pilot)
 
 #### Set variable names
 ```{r}
@@ -122,8 +111,6 @@ pilot <- pilot %>%
                     ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
 ```
         
-
-
 #### Add win_lose column (win - lose) 
 ```{r}
 pilot$feedback <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
@@ -138,8 +125,6 @@ pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
                    ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
 ```
 
-
-
 #### Add salient feedback column only
 ```{r}
 pilot <- pilot %>%
@@ -148,7 +133,6 @@ pilot <- pilot %>%
 
 ```
         
-
 ###Trial column & block column
 ```{r}
 #1,2,3...100...400
@@ -206,7 +190,6 @@ View(pilot)
 #ceiling() is the function that takes two parameters one parameter that is vector with sequence along to divide the vector sequentially and second is chunk length, which represents the length of chunk to be divided
 
 
-
 #I want to divide each participants' trials into chunks of 5
           #_chunks = 20
 
@@ -215,8 +198,6 @@ View(pilot)
             #mutate(per_20trials = rep(1:n_chunks, 
            #each = ceiling(n() / n_chunks))[1:n()])
 ```
-
-
 
 #write .csv file
 ```{r}
@@ -233,9 +214,9 @@ View(df)
           ### PROCESSING - COUNTS AND PLOTS
 
 
- #### RTs
+      *****RTs
  
-   ##Distribution of RT for presses
+#Distribution of RT for presses
 ```{r}
  #MEAN RT - PRESSES (distribution of RT)
 pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
@@ -267,7 +248,7 @@ yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction tim
                   point.cex = .7) + theme_APA
 ```
 
- ##RTs Cue
+#RTs Cue
 ```{r}
 # RTs for each Cue
 ggplot(data = MeanRTpersub,
@@ -295,7 +276,8 @@ yarrr::pirateplot(formula = RT ~ Cue,    # DV = reaction time, IV1 = Cue
                   point.bg = "white",
                   point.cex = .7)
 ```
- ##RTs Block
+
+#RTs Block
 ```{r}
 #Cue per block per RT
 ggplot(pilot%>%  
@@ -329,9 +311,11 @@ yarrr::pirateplot(formula = RT ~ block + Cue,    # DV = reaction time, IV1= bloc
                   point.bg = "white",
                   point.cex = .7)
 ```
-#!!!!!!Repeated measures so we need to measure per participant first.
 
- ##Correct counts per Cue, per ID
+             #!!!!!!Repeated measures so we need to measure per participant first.
+
+
+#Correct counts per Cue, per ID
 ```{r}
 # compute proportion of correct response for each participant
 MeanCorrectpersub <- pilot %>% group_by(ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
@@ -355,7 +339,7 @@ ggplot(MeanCorrect) +
 
 ```
 
-  ## proportion of GO response per condition
+#proportion of GO response per condition
 ```{r}
 # compute proportion of go responses for each participant
 MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
@@ -426,12 +410,9 @@ p + ylab('ID')
 ggplot(pilot) + 
   stat_summary(aes(x = ID, y = correct), 
                geom = "bar")
-
-
 ```
 
 # trials playing with correct
-
 ```{r}
 #Correct per Cue
 pilot %>% group_by (Cue)%>% count (correct)
@@ -454,7 +435,7 @@ pilot %>%
      facet_grid(~correct)
  
  
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                     ???@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       
   MeanCorrectpersub <- pilot %>% group_by(trial_number, ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
 # compute mean proportion of correct response
@@ -501,7 +482,7 @@ ggplot(MeanCorrect) +
 ```
 
 
-### Number of presses vs no_presses 
+# Number of presses vs no_presses 
 ```{r}
 pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
 
@@ -542,7 +523,7 @@ ggplot(pilot %>%
 
 
 
-###Neutral > win > lose
+#Neutral > win > lose
 ```{r}
 #number of win_lose_neutral instances (valence?)
 pilot%>% group_by(win_lose_neutral) %>%dplyr::count(win_lose_neutral) 
@@ -564,7 +545,7 @@ ggplot(pilot,
   geom_bar(stat = "count")
 ```
 
-###Presses per correctness and blocks and response (press vs no_press)
+#Presses per correctness and blocks and response (press vs no_press)
 ```{r}
 #presses per correct and blocks--> they are doing good so far. they learn fast
 pilot%>% group_by(correct, response) %>%dplyr::count(correct) 
@@ -614,7 +595,6 @@ ggpairs(pilot[, c("correct", "req_action", "block")])
 ggpairs(pilot[, c("response", "req_action", "block")])
 
 xtabs(~ correct + req_action, data=pilot) # "req_action" seems to be a good predictor
-
 ```
    
 
@@ -622,14 +602,15 @@ xtabs(~ correct + req_action, data=pilot) # "req_action" seems to be a good pred
    
    
    ###Frequentist
-   
-   correct is a binary response (binomial proportion in blocks for example)
+   *correct is a binary response (binomial proportion in blocks for example)*
 
 
-                        *******GLMM - correct approach*********
+                        **GLMM - correct approach**
               
+
     ###Learning - main effect of required action Go vs noGo on correct response
-main effect of required action - CORRECT
+
+#main effect of required action - CORRECT
 ```{r}
 library(lmerTest)
 
@@ -715,7 +696,7 @@ ggplot(data=data, aes(x=actual, y=predicted)) +
     ### Biased-responding - responses biased by Cue valence (win/avoid) of prospective outcomes,i.e. favouring win? 
       =  motivational bias -  more presses to win than to avoid
 
-main effect of CUE valence (WIN OR AVOID) - CORRECT
+#main effect of CUE valence (WIN OR AVOID) - CORRECT
 ```{r}
 pilot.valence.m1 <- glmer(correct ~ OutValence  + (1|ID), 
                  data  = pilot, family="binomial", 
@@ -733,9 +714,8 @@ print (pilot.valence.m1)
 # The effect of cue valence was highly significant 
 ```
 
-working on it
 
-  req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
+#req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
 ```{r}
 pilot.vgng.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
                  data  = pilot, family="binomial", 
@@ -781,7 +761,6 @@ report::report(pilot.feed.m1)
 
 #Salient outcomes only - rewards led to more choice repetitions following 
 GO responses vs. NoGo responses [valence*response] ???NOT clear.
-
 ```{r}
 pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
                  data  = df, family="binomial",
@@ -798,8 +777,6 @@ report::report(pilot.or.m1)
 summary(pilot.r.m1)
 report::report(pilot.r.m1)
 anova(pilot.or.m1, pilot.r.m1 )
-
-
 ```
 
 
