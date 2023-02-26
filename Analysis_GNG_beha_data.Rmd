@@ -8,6 +8,8 @@ output: html_document
 ```{r}
 pilot <- read.csv(file = 'pilot.csv')
 pilot_dropped <- read.csv(file = 'df.csv') #dropped NAs
+
+View(pilot)
 ```
 
 #### LOAD LIBRARIES
@@ -94,7 +96,10 @@ Formula: response*valence
 
 Pvalues are computed using likelihood ratio tests using the mixed-function (option “LRT”) from package afex.
 ***
-   
+  
+  
+  
+
    
      ***Frequentist approach***
    *correct is a binary response (binomial proportion in blocks for example)*
@@ -103,11 +108,31 @@ Pvalues are computed using likelihood ratio tests using the mixed-function (opti
                         **GLMM - correct approach**
               
 
+#all fixed effects
+```{r}
+pilot_full <- glmer(correct ~ req_action + OutValence + Cue +feedback + block + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (pilot_full) # block does not seem to affect so I drop it. 
+
+
+pilot_no_block <- glmer(correct ~ req_action + OutValence + Cue +feedback + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary(pilot_no_block) # what the intercept represents here? What condition?
+
+anova (pilot_full, pilot_no_block) # no significant difference -
+
+
+```
+
 
 
     ###Learning - main effect of required action Go vs noGo on correct response
 
-#main effect of required action - CORRECT
+
+
+#main effect of required action 
 ```{r}
 pilot.m1 <- glmer(correct ~ req_action + (1|ID), 
                  data  = pilot, family="binomial", 
@@ -124,7 +149,7 @@ report::report(pilot.m1)
 
 print(pilot.m1)
 coef(pilot.m1)
-
+    
 ```
 
 
@@ -268,71 +293,94 @@ print (pilot.valence.m1)
 
 
 
-#req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
+#req_action*valence = their interaction is also significant
 ```{r}
-pilot.vgng.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
+pilot_rv.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-pilot.m1.0 <- glmer(correct ~ req_action + (1|ID),
+pilot.rv.0 <- glmer(correct ~ req_action + OutValence + (1|ID),
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-anova(pilot.m1.0, pilot.vgng.m1)
-summary(pilot.vgng.m1)
-print (pilot.vgng.m1)
+anova(pilot.rv.0, pilot_rv.m1)
+summary(pilot_rv.m1)
+print (pilot_rv.m1)
 
-report::report(pilot.vgng.m1)
-report::report(pilot.m1.0)
+report::report(pilot_rv.m1)
+report::report(pilot.rv.0)
 
-#The effect of cue valence was marginally stronger for the Go cues (Req_ction x Valence). 
+#The effect of cue valence was marginally stronger for the Go cues (Req_ction x Valence). ???oppossite here?????
 #Because each Go cue was associated with only one correct Go response, we confirmed that this 
 #motivational bias was present for both correct and incorrect Go responses. 
-
+    # How to test the purple????????????? just above?
 ```
 
 
-#Feedback was significant when it was Win and neutral ?????
+#Feedback was significant only when it is Win or neutral ????????
 ```{r}
 pilot.feed.m1 <- glmer(correct ~ feedback + (1|ID), 
                  data  = pilot, family="binomial",
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-pilot.fr.m1 <- glmer(correct ~ feedback*req_action + (1|ID), 
+pilot.feed.m0 <- glmer(correct ~  + (1|ID), 
                  data  = pilot, family="binomial",
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
 summary(pilot.feed.m1)
-summary(pilot.fr.m1)
+summary(pilot.feed.m0)
 
-anova(pilot.feed.m1, pilot.fr.m1)
+anova(pilot.feed.m1, pilot.feed.m0)
 
-report::report(pilot.fr.m1)
+report::report(pilot.feed.m0)
 report::report(pilot.feed.m1)
 ```
 
 
 #Salient outcomes only – rewards led to more choice repetitions following 
-GO responses vs. NoGo responses [valence*response] ???NOT clear.
+GO responses vs. NoGo responses [valence*response] ???NOT clear. the opposite here????
+
+    interaction OutValence*response is significant
 ```{r}
 pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
-                 data  = df, family="binomial",
+                 data  = pilot, family="binomial",
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-pilot.r.m1 <- glmer(correct ~ response + (1|ID), 
-                 data  = df, family="binomial",
+pilot.or.m0 <- glmer(correct ~ OutValence + response + (1|ID), 
+                 data  = pilot, family="binomial",
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 summary(pilot.or.m1)
 
 report::report(pilot.or.m1)
 
-summary(pilot.r.m1)
-report::report(pilot.r.m1)
-anova(pilot.or.m1, pilot.r.m1 )
+summary(pilot.or.m0)
+report::report(pilot.or.m0)
+anova(pilot.or.m1, pilot.or.m0 )
 ```
 
+#Salient outcomes only – rewards led to more choice repetitions following 
+GO responses vs. NoGo responses [valence*response] ???NOT clear. 
 
+pilot with NAs (neutral) dropped
+```{r}
 
+View(pilot_dropped)
+pilot_dr.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
+                 data  = pilot_dropped, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot_dr.or.m0 <- glmer(correct ~ OutValence + response + (1|ID), 
+                 data  = pilot_dropped, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(pilot_dr.or.m1)
+
+report::report(pilot_dr.or.m1)
+
+summary(pilot_dr.or.m0)
+report::report(pilot_dr.or.m0)
+anova(pilot_dr.or.m1, pilot_dr.or.m0 )
+```
 

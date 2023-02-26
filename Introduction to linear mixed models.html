@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)https://ourcodingclub.github.io/tutorials/mixed-models/ -->
+<html lang="en-GB"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style>.osano-cm-button,.osano-cm--borderless .osano-cm-button{border:none;box-shadow:1px 1px 3px rgba(100,100,100,0.7)}.osano-cm-button{background-color:rgba(243,228,126,0.9);border-color:#111010;color:#111010}.osano-cm-button:focus,.osano-cm-button:hover{background:rgba(240,220,89,0.9);outline:none}.osano-cm-toggle__switch{background-color:#ddd8d8}.osano-cm-toggle__switch::after{background-color:#fff}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch{background-color:#a29494}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch::after{background-color:#bfbfbf}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch{background-color:#cac2c2}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch::after{background-color:#ebebeb}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch{background-color:#98d9c9}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{background-color:#f4f4f4}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch{background-color:#41b095}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch::after{background-color:#b4b4b4}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch{background-color:#7aceb9}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch::after{background-color:#e0e0e0}.osano-cm-deny{background:rgba(243,228,126,0.9);color:#151414}.osano-cm-link,.osano-cm-disclosure__toggle{color:#b5e5e1}.osano-cm-link:hover,.osano-cm-disclosure__toggle:hover,.osano-cm-link:active,.osano-cm-disclosure__toggle:active{color:#b5e5e1;outline:none}.osano-cm-link:focus,.osano-cm-disclosure__toggle:focus{color:#97dad5;outline:none}.osano-cm-disclosure__list:first-of-type::after{background-color:#b5e5e1}.osano-cm-window{font-size:16px;font-family:Helvetica, Arial, 'Hiragino Sans GB', STXihei, 'Microsoft YaHei', 'WenQuanYi Micro Hei', Hind, 'MS Gothic', 'Apple SD Gothic Neo', 'NanumBarunGothic', sans-serif;font-smooth:always;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothingz:auto;display:block;z-index:2147483638;line-height:1;width:100%}.osano-cm-button,.osano-cm--borderless .osano-cm-button{border:none;box-shadow:1px 1px 3px rgba(100,100,100,0.7)}.osano-cm-button{background-color:rgba(243,228,126,0.9);border-color:#111010;color:#111010}.osano-cm-button:focus,.osano-cm-button:hover{background:rgba(240,220,89,0.9);outline:none}.osano-cm-toggle__switch{background-color:#ddd8d8}.osano-cm-toggle__switch::after{background-color:#fff}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch{background-color:#a29494}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch::after{background-color:#bfbfbf}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch{background-color:#cac2c2}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch::after{background-color:#ebebeb}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch{background-color:#98d9c9}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{background-color:#f4f4f4}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch{background-color:#41b095}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch::after{background-color:#b4b4b4}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch{background-color:#7aceb9}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch::after{background-color:#e0e0e0}.osano-cm-deny{background:rgba(243,228,126,0.9);color:#151414}.osano-cm-link,.osano-cm-disclosure__toggle{color:#b5e5e1}.osano-cm-link:hover,.osano-cm-disclosure__toggle:hover,.osano-cm-link:active,.osano-cm-disclosure__toggle:active{color:#b5e5e1;outline:none}.osano-cm-link:focus,.osano-cm-disclosure__toggle:focus{color:#97dad5;outline:none}.osano-cm-disclosure__list:first-of-type::after{background-color:#b5e5e1}.osano-cm-link{cursor:pointer;text-decoration:underline;transition-duration:200ms;transition-property:color;transition-timing-function:ease-out}.osano-cm-button,.osano-cm--borderless .osano-cm-button{border:none;box-shadow:1px 1px 3px rgba(100,100,100,0.7)}.osano-cm-button{background-color:rgba(243,228,126,0.9);border-color:#111010;color:#111010}.osano-cm-button:focus,.osano-cm-button:hover{background:rgba(240,220,89,0.9);outline:none}.osano-cm-toggle__switch{background-color:#ddd8d8}.osano-cm-toggle__switch::after{background-color:#fff}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch{background-color:#a29494}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch::after{background-color:#bfbfbf}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch{background-color:#cac2c2}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch::after{background-color:#ebebeb}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch{background-color:#98d9c9}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{background-color:#f4f4f4}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch{background-color:#41b095}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch::after{background-color:#b4b4b4}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch{background-color:#7aceb9}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch::after{background-color:#e0e0e0}.osano-cm-deny{background:rgba(243,228,126,0.9);color:#151414}.osano-cm-link,.osano-cm-disclosure__toggle{color:#b5e5e1}.osano-cm-link:hover,.osano-cm-disclosure__toggle:hover,.osano-cm-link:active,.osano-cm-disclosure__toggle:active{color:#b5e5e1;outline:none}.osano-cm-link:focus,.osano-cm-disclosure__toggle:focus{color:#97dad5;outline:none}.osano-cm-disclosure__list:first-of-type::after{background-color:#b5e5e1}.osano-cm-button{border-width:thin;border-style:solid;border-radius:0.25em;font-weight:bold;font-size:1em;padding:0.5em 0.75em;margin:0.125em;line-height:1;flex:1 1 auto;min-width:6em;cursor:pointer;transition-duration:200ms;transition-property:background-color;transition-timing-function:ease-out;flex:none;margin:0.125em auto;width:80%}@media screen and (min-width: 768px){.osano-cm-button{flex:1 1 auto;width:auto;margin:0.25em 0.5em}}.osano-cm-button,.osano-cm--borderless .osano-cm-button{border:none;box-shadow:1px 1px 3px rgba(100,100,100,0.7)}.osano-cm-button{background-color:rgba(243,228,126,0.9);border-color:#111010;color:#111010}.osano-cm-button:focus,.osano-cm-button:hover{background:rgba(240,220,89,0.9);outline:none}.osano-cm-toggle__switch{background-color:#ddd8d8}.osano-cm-toggle__switch::after{background-color:#fff}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch{background-color:#a29494}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch::after{background-color:#bfbfbf}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch{background-color:#cac2c2}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch::after{background-color:#ebebeb}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch{background-color:#98d9c9}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{background-color:#f4f4f4}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch{background-color:#41b095}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch::after{background-color:#b4b4b4}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch{background-color:#7aceb9}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch::after{background-color:#e0e0e0}.osano-cm-deny{background:rgba(243,228,126,0.9);color:#151414}.osano-cm-link,.osano-cm-disclosure__toggle{color:#b5e5e1}.osano-cm-link:hover,.osano-cm-disclosure__toggle:hover,.osano-cm-link:active,.osano-cm-disclosure__toggle:active{color:#b5e5e1;outline:none}.osano-cm-link:focus,.osano-cm-disclosure__toggle:focus{color:#97dad5;outline:none}.osano-cm-disclosure__list:first-of-type::after{background-color:#b5e5e1}.osano-cm-toggle{align-items:center;display:flex;justify-content:flex-start;margin:0.25em 0;position:relative}.osano-cm-toggle__label{margin:0 0.5em}.osano-cm-toggle__switch{color:transparent;line-height:0;text-indent:-9999px;width:44px;height:22px;display:block;border-radius:10px;position:relative;transition-duration:200ms;transition-property:background-color;transition-timing-function:ease-out}.osano-cm-toggle__switch:hover{cursor:pointer}.osano-cm-toggle__switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:9px;transition:0.3s}.osano-cm-toggle__switch::after:active{width:26px;transition:0.1s}.osano-cm-toggle__checkbox{height:1px;width:1px;margin:-1px;opacity:0;position:absolute}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{left:calc(100% - 2px);transform:translateX(-100%)}.osano-cm-toggle__checkbox:disabled{cursor:default}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch{cursor:default}.osano-cm-dialog{box-sizing:border-box;font-size:1em;line-height:1.25;align-items:center;background:rgba(76,60,83,0.9);color:#fff;position:fixed;z-index:2147483637;padding:1.5em;overflow:auto;transition-property:opacity, visibility;transition-duration:700ms, 700ms;transition-delay:0ms, 0ms;visibility:visible;display:flex;flex-direction:column;box-sizing:border-box;right:0;left:0;bottom:0;box-shadow:0 4px 8px rgba(0,0,0,0.9)}.osano-cm-dialog--hidden{opacity:0;transition-delay:0ms, 700ms;visibility:hidden}@media screen and (min-width: 768px){.osano-cm-dialog{flex-direction:row}}.osano-cm-dialog-list{margin:0.5em 0 0 0;padding:0;display:flex;flex-direction:column;flex-wrap:wrap;justify-content:flex-start;margin:0.75em auto}@media screen and (min-width: 376px){.osano-cm-dialog-list{flex-direction:row}}@media screen and (min-width: 768px){.osano-cm-dialog-list{margin:0.5em 0 0 auto}}.osano-cm-dialog-list__item{display:flex;margin-top:0;margin-right:0.5em}.osano-cm-dialog-list__item:last-child{margin-bottom:0}.osano-cm-dialog-list__label{margin-left:0.375em;white-space:nowrap;padding-top:0}.osano-cm-dialog__content{flex:5;margin-bottom:0.25em}.osano-cm-storage-policy{display:inline-block;padding:0 0.125em;text-transform:capitalize}.osano-cm-buttons{display:flex;flex-wrap:wrap;flex:1;justify-content:flex-end;width:100%;margin:0}@media screen and (min-width: 768px){.osano-cm-buttons{width:auto;margin:0 0 0 0.5em}}.osano-cm-widget{cursor:pointer;position:fixed;background:none;border:none;bottom:12px;z-index:2147483636;width:40px;height:40px;opacity:0.9;outline:none;padding:0;transition-property:transform, opacity, visibility;transition-duration:100ms, 400ms, 0ms;transition-delay:0ms, 0ms, 0ms;visibility:visible;right:12px}.osano-cm-widget:focus,.osano-cm-widget:hover{opacity:1;transform:scale(1.1)}.osano-cm-widget--hidden{opacity:0;transition-delay:0ms, 0ms, 400ms;visibility:hidden}.osano-cm-widget--hidden:focus,.osano-cm-widget--hidden:hover{opacity:0;transform:scale(1)}.osano-cm-info-dialog-wrapper{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.458824);z-index:2147483638;transition-property:opacity, visibility;transition-duration:200ms, 0ms;transition-delay:0ms, 0ms;visibility:visible}.osano-cm-info-dialog-wrapper--hidden{opacity:0;transition-delay:0ms, 200ms;visibility:hidden}.osano-cm-info__button{font-size:0.875em;width:100%;margin:1em 0 0}.osano-cm-info-dialog{box-sizing:border-box;position:fixed;top:0;background:rgba(47,47,50,0.87);color:#f1f5f4;max-width:20em;height:100vh;transition-property:transform;transition-duration:400ms;padding:1em 0.75em;box-shadow:0 0 2px 2px #ccc;overflow-x:hidden;overflow-y:auto;right:0;transform:translate(100%, 0)}.osano-cm-info-dialog--open{transform:translate(0, 0)}.osano-cm-info-dialog__header{margin:0.25em 0 1em}.osano-cm-info-dialog__header-title{font-size:1em;margin:0 0 1em 0;padding:0.25em 0}.osano-cm-info-dialog__header-description{font-size:0.75em;line-height:1.375}.osano-cm-info-dialog .osano-cm-toggle{flex-direction:row-reverse;justify-content:space-between}.osano-cm-info-dialog .osano-cm-toggle__label{font-size:0.875em;margin:0}.osano-cm-info-dialog-close{cursor:pointer;float:right;text-decoration:none;border:none;padding:0;transition:transform 200ms ease-out;transform:rotate(0deg);margin:0;outline:none}.osano-cm-info-dialog-close .x{transition-property:fill;transition-duration:200ms;transition-timing-function:ease-out;fill:#f1f5f4}.osano-cm-info-dialog-close:focus{transform:rotate(90deg)}.osano-cm-info-dialog-close:focus .x{fill:#fff}.osano-cm-info-dialog-close:hover{transform:rotate(90deg)}.osano-cm-info-dialog-close:hover .x{fill:#fff}.osano-cm-info-list{list-style-type:none;margin:0;padding:0}.osano-cm-info-list__item{margin:1em 0 0;padding:0}.osano-cm-info-list__item-description{font-size:0.75em;font-weight:300;line-height:1.375;margin:1em 0 0}.osano-cm-powered-by{align-items:center;display:flex;flex-direction:column;justify-content:center;margin:1em 0 0}.osano-cm-powered-by__link{font-size:0.625em;text-decoration:none}.osano-cm-button,.osano-cm--borderless .osano-cm-button{border:none;box-shadow:1px 1px 3px rgba(100,100,100,0.7)}.osano-cm-button{background-color:rgba(243,228,126,0.9);border-color:#111010;color:#111010}.osano-cm-button:focus,.osano-cm-button:hover{background:rgba(240,220,89,0.9);outline:none}.osano-cm-toggle__switch{background-color:#ddd8d8}.osano-cm-toggle__switch::after{background-color:#fff}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch{background-color:#a29494}.osano-cm-toggle__checkbox:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:focus:disabled+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:disabled+.osano-cm-toggle__switch::after{background-color:#bfbfbf}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch{background-color:#cac2c2}.osano-cm-toggle__checkbox:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover+.osano-cm-toggle__switch::after{background-color:#ebebeb}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch{background-color:#98d9c9}.osano-cm-toggle__checkbox:checked+.osano-cm-toggle__switch::after{background-color:#f4f4f4}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch{background-color:#41b095}.osano-cm-toggle__checkbox:disabled:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:focus+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:disabled:checked:hover+.osano-cm-toggle__switch::after{background-color:#b4b4b4}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch{background-color:#7aceb9}.osano-cm-toggle__checkbox:focus:checked+.osano-cm-toggle__switch::after,.osano-cm-toggle__checkbox:hover:checked+.osano-cm-toggle__switch::after{background-color:#e0e0e0}.osano-cm-deny{background:rgba(243,228,126,0.9);color:#151414}.osano-cm-link,.osano-cm-disclosure__toggle{color:#b5e5e1}.osano-cm-link:hover,.osano-cm-disclosure__toggle:hover,.osano-cm-link:active,.osano-cm-disclosure__toggle:active{color:#b5e5e1;outline:none}.osano-cm-link:focus,.osano-cm-disclosure__toggle:focus{color:#97dad5;outline:none}.osano-cm-disclosure__list:first-of-type::after{background-color:#b5e5e1}.osano-cm-script-disclosure__title,.osano-cm-cookie-disclosure__title{display:block;flex:0 1 30%;clear:both;font-weight:bold}.osano-cm-script-disclosure__description,.osano-cm-cookie-disclosure__description{font-size:0.875em;margin:0 0 0.5em;flex:0 1 70%}.osano-cm-disclosure{font-size:0.75em;margin:0 -1.5em 0;padding:1.5em 1.5em 0}.osano-cm-disclosure:not([open]),.osano-cm-disclosure--collapse{border-bottom:1px solid rgba(0,0,0,0.1);margin-bottom:0;padding-bottom:1em}.osano-cm-disclosure[open]{border-bottom:none;margin-bottom:0;padding-bottom:0}.osano-cm-disclosure__list{line-height:1.25;list-style:none;margin:0 -1.5em 0;padding:1.25em 1.5em 1em;background-color:rgba(0,0,0,0.1)}.osano-cm-disclosure__list:empty{border:none;padding:0 1.5em}.osano-cm-disclosure__list:first-of-type{margin-top:1em;padding:1.25em 1.5em 1em}.osano-cm-disclosure__list:first-of-type::after{content:'';display:block;transform:translate(0, -50%);width:1em;height:1em;border-radius:100%;animation-name:osano-load-scale;animation-duration:1s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}.osano-cm-disclosure__list:first-of-type:empty{padding:1.75em 1.5em 0.75em}.osano-cm-disclosure__list:not(:first-of-type):not(:empty){border-top:1px solid rgba(0,0,0,0.1)}.osano-cm-disclosure__list:empty+.osano-cm-disclosure__list:not(:empty){border:none;padding:0 1.5em}.osano-cm-disclosure__list:not(:empty) ~ .osano-cm-disclosure__list:empty+.osano-cm-disclosure__list:not(:empty){border-top:1px solid rgba(0,0,0,0.1)}.osano-cm-disclosure__list-item{line-height:1.25}.osano-cm-disclosure__list-item:not(:first-of-type){border-top:1px solid rgba(0,0,0,0.1);margin:1em -1.25em 0;padding:1em 1.25em 0}.osano-cm-disclosure__toggle{cursor:pointer;line-height:1.25;position:relative}.osano-cm-disclosure--loaded .osano-cm-disclosure__list::after{content:none}.osano-cm-disclosure--collapse .osano-cm-disclosure__list::after,.osano-cm-disclosure:not([open]) .osano-cm-disclosure__list::after{content:none}.osano-cm-script-disclosure,.osano-cm-cookie-disclosure{display:flex;flex-wrap:wrap;margin:0}@keyframes osano-load-scale{0%{transform:translate(0, -50%) scale(0)}100%{transform:translate(0, -50%) scale(1);opacity:0}}
+</style>
+    	
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Introduction to linear mixed models</title>
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- CSS -->
+<link rel="stylesheet" href="./Introduction to linear mixed models_files/main.css">
+<link rel="stylesheet" href="./Introduction to linear mixed models_files/owl.carousel.css">
+<link rel="stylesheet" href="./Introduction to linear mixed models_files/ionicons.min.css">
+<link rel="stylesheet" href="./Introduction to linear mixed models_files/font-awesome.min.css">
+<link rel="stylesheet" href="./Introduction to linear mixed models_files/animate.css">
+
+
+<!-- JS -->
+<script src="./Introduction to linear mixed models_files/osano.js.download"></script>
+<script src="./Introduction to linear mixed models_files/jquery-1.12.4.js.download"></script>
+<script src="./Introduction to linear mixed models_files/jquery-ui.js.download"></script>
+<script src="./Introduction to linear mixed models_files/accordion.js.download"></script>
+<script src="./Introduction to linear mixed models_files/owl.carousel.min.js.download"></script>
+<script src="./Introduction to linear mixed models_files/jquery.counterup.js.download"></script>
+<script src="./Introduction to linear mixed models_files/waypoints.min.js.download"></script>
+<script src="./Introduction to linear mixed models_files/ticker.js.download"></script>
+<script src="./Introduction to linear mixed models_files/bootstrap.min.js.download"></script>
+<script src="./Introduction to linear mixed models_files/owl.carousel.js.download"></script>
+<script src="./Introduction to linear mixed models_files/owl.carousel.init.js.download"></script>
+	</head>
+	<body><div class="osano-cm-window"><div role="dialog" aria-live="polite" aria-label="Consent Manager by Osano" aria-describedby="osano-id-cm-dialog" class="osano-cm-dialog osano-cm-dialog--hidden">
+      <!--googleoff: all-->
+      <div class="osano-cm-dialog__content osano-cm-content">
+        <span id="osano-id-cm-dialog" class="osano-cm-content__message osano-cm-message">This website stores data such as cookies to enable important site functionality including analytics, targeting, and personalization. You may alter your preferences at any time or accept the default settings.</span>
+        <a href="https://ourcodingclub.github.io/privacy" class="osano-cm-content__link osano-cm-link osano-cm-storage-policy" target="_blank">data storage policy</a>
+        
+  <ul class="osano-cm-dialog-list">
+    <li class="osano-cm-dialog-list__item">
+      
+    <label class="osano-cm-toggle" title="" for="f2ec2591-f55d-4db0-8987-5cb529f0ceb5">
+        <input class="osano-cm-toggle__checkbox" data-category="MARKETING" id="f2ec2591-f55d-4db0-8987-5cb529f0ceb5" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Marketing</span>
+    </label>
+    
+    </li>
+    <li class="osano-cm-dialog-list__item">
+      
+    <label class="osano-cm-toggle" title="" for="47b7b9ab-b41d-4f93-a33b-da09f31df3b0">
+        <input class="osano-cm-toggle__checkbox" data-category="PERSONALIZATION" id="47b7b9ab-b41d-4f93-a33b-da09f31df3b0" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Personalization</span>
+    </label>
+    
+    </li>
+    <li class="osano-cm-dialog-list__item">
+      
+    <label class="osano-cm-toggle" title="" for="28bfbf02-9df3-482a-b6bd-7a75220d08fd">
+        <input class="osano-cm-toggle__checkbox" data-category="ANALYTICS" id="28bfbf02-9df3-482a-b6bd-7a75220d08fd" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Analytics</span>
+    </label>
+    
+    </li>
+  </ul>
+
+      </div>
+      <div class="osano-cm-buttons"><button class="osano-cm-button osano-cm-save">Save</button><button class="osano-cm-button osano-cm-accept-all">Accept All</button></div>
+      <!--googleon: all-->
+  </div><button class="osano-cm-widget" title="Storage Preferences" aria-label="Storage Preferences">
+    <svg width="40" height="40" viewBox="0 0 71.85 72.23" xmlns="http://www.w3.org/2000/svg"><path d="m67.6 36.73a6.26 6.26 0 0 1 -3.2-2.8 5.86 5.86 0 0 0 -5.2-3.1h-.3a11 11 0 0 1 -11.4-9.5 6 6 0 0 1 -.1-1.4 9.2 9.2 0 0 1 .4-2.9 8.65 8.65 0 0 0 .2-1.6 5.38 5.38 0 0 0 -1.9-4.3 7.3 7.3 0 0 1 -2.5-5.5 3.91 3.91 0 0 0 -3.5-3.9 36.46 36.46 0 0 0 -15 1.5 33.14 33.14 0 0 0 -22.1 22.7 35.62 35.62 0 0 0 -1.5 10.2 34.07 34.07 0 0 0 4.8 17.6.75.75 0 0 0 .07.12c.11.17 1.22 1.39 2.68 3-.36.47 5.18 6.16 5.65 6.52a34.62 34.62 0 0 0 55.6-21.9 4.38 4.38 0 0 0 -2.7-4.74z" fill="#fff" stroke="#29246a" stroke-width="3"></path><path d="m68 41.13a32.37 32.37 0 0 1 -52 20.5l-2-1.56c-2.5-3.28-5.62-7.15-5.81-7.44a32 32 0 0 1 -4.5-16.5 34.3 34.3 0 0 1 1.4-9.6 30.56 30.56 0 0 1 20.61-21.13 33.51 33.51 0 0 1 14.1-1.4 1.83 1.83 0 0 1 1.6 1.8 9.38 9.38 0 0 0 3.3 7.1 3.36 3.36 0 0 1 1.2 2.6 3.37 3.37 0 0 1 -.1 1 12.66 12.66 0 0 0 -.5 3.4 9.65 9.65 0 0 0 .1 1.7 13 13 0 0 0 10.5 11.2 16.05 16.05 0 0 0 3.1.2 3.84 3.84 0 0 1 3.5 2 10 10 0 0 0 4.1 3.83 2 2 0 0 1 1.4 2z" fill="#fff" stroke="#29246a" stroke-width="3"></path><g fill="#37cd8f"><path d="m26.6 31.43a5.4 5.4 0 1 1 5.4-5.43 5.38 5.38 0 0 1 -5.33 5.43z"></path><path d="m25.2 53.13a5.4 5.4 0 1 1 5.4-5.4 5.44 5.44 0 0 1 -5.4 5.4z"></path><path d="m47.9 52.33a5.4 5.4 0 1 1 5.4-5.4 5.32 5.32 0 0 1 -5.24 5.4z"></path></g></svg>
+  </button><div class="osano-cm-info-dialog-wrapper osano-cm-info-dialog-wrapper--hidden">
+    <div class="osano-cm-info-dialog">
+      <div class="osano-cm-info-dialog__header">
+        <button class="osano-cm-info-dialog-close" tabindex="0">
+          <svg aria-role="button" width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 25 25">
+              <title>Close Icon</title>
+              <polygon class="x" points="25 0.71 24.29 0 12.5 11.79 0.71 0 0 0.71 11.79 12.5 0 24.29 0.71 25 12.5 13.21 24.29 25 25 24.29 13.21 12.5 25 0.71"></polygon>
+          </svg>
+        </button>
+        <p class="osano-cm-info-dialog__header-title">Storage Preferences</p>
+        <p class="osano-cm-info-dialog__header-description">When you visit web sites, they may store or retrieve data in your web browser. This storage is often necessary for basic functionality of the web site or the storage may be used for the purposes of marketing, analytics, and personalization of the web site such as storing your preferences. Privacy is important to us so you have the option of disabling certain types of storage that may not be necessary to the basic functioning of the web site. Blocking categories may impact your experience on the web site.</p>
+      </div>
+      <ul class="osano-cm-info-list">
+        <li class="osano-cm-info-list__item">
+            
+    <label class="osano-cm-toggle" title="Locked: Please read description." for="e238c6de-a8e0-4694-bf88-44854f938233">
+        <input class="osano-cm-toggle__checkbox" data-category="ESSENTIAL" id="e238c6de-a8e0-4694-bf88-44854f938233" type="checkbox" checked="" disabled="">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Strictly Necessary</span>
+    </label>
+    
+          <div class="osano-cm-description osano-cm-info-list__item-description">
+            Essential in order to enable you to navigate the website and use its features, such as accessing secure areas of the website.
+          </div>
+          <details data-section="ESSENTIAL" class="osano-cm-disclosure osano-cm-disclosure--collapse">
+            <summary class="osano-cm-disclosure__toggle">Disclosure</summary>
+            <ul data-type="cookies" class="osano-cm-disclosure__list"></ul>
+            <ul data-type="scripts" class="osano-cm-disclosure__list"></ul>
+          </details>
+        </li>
+        <li class="osano-cm-info-list__item">
+            
+    <label class="osano-cm-toggle" title="" for="59e2a942-ed42-43f7-9c06-83675ebbaa26">
+        <input class="osano-cm-toggle__checkbox" data-category="MARKETING" id="59e2a942-ed42-43f7-9c06-83675ebbaa26" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Marketing</span>
+    </label>
+    
+          <div class="osano-cm-description osano-cm-info-list__item-description">
+            Used to deliver advertising that is more relevant to you and your interests. They are also used to limit the number of times you see an advertisement as well as help measure the effectiveness of the advertising campaign. They are usually placed by advertising networks with the website operator’s permission.
+          </div>
+          <details data-section="MARKETING" class="osano-cm-disclosure osano-cm-disclosure--collapse">
+            <summary class="osano-cm-disclosure__toggle">Disclosure</summary>
+            <ul data-type="cookies" class="osano-cm-disclosure__list"></ul>
+            <ul data-type="scripts" class="osano-cm-disclosure__list"></ul>
+          </details>
+        </li>
+        <li class="osano-cm-info-list__item">
+            
+    <label class="osano-cm-toggle" title="" for="52232e89-6db0-419a-9100-c1e49efc01c6">
+        <input class="osano-cm-toggle__checkbox" data-category="PERSONALIZATION" id="52232e89-6db0-419a-9100-c1e49efc01c6" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Personalization</span>
+    </label>
+    
+          <div class="osano-cm-description osano-cm-info-list__item-description">
+            Allows the website to remember choices you make (such as your user name, language or the region you are in) and provide enhanced, more personal features. For example, a website may be able to provide you with local weather reports or traffic news by storing data about the region in which you are currently located.
+          </div>
+          <details data-section="PERSONALIZATION" class="osano-cm-disclosure osano-cm-disclosure--collapse">
+            <summary class="osano-cm-disclosure__toggle">Disclosure</summary>
+            <ul data-type="cookies" class="osano-cm-disclosure__list"></ul>
+            <ul data-type="scripts" class="osano-cm-disclosure__list"></ul>
+          </details>
+        </li>
+        <li class="osano-cm-info-list__item">
+          
+    <label class="osano-cm-toggle" title="" for="c180a375-167f-4b81-ad24-b137641ccfa5">
+        <input class="osano-cm-toggle__checkbox" data-category="ANALYTICS" id="c180a375-167f-4b81-ad24-b137641ccfa5" type="checkbox">
+        <span class="osano-cm-toggle__switch"></span>
+        <span class="osano-cm-toggle__label osano-cm-label">Analytics</span>
+    </label>
+    
+          <div class="osano-cm-description osano-cm-info-list__item-description">
+
+            Provides information about how a web site performs, how each page renders, and whether there are technical issues on the web site to the web site operator. This storage type generally doesn’t collect information that identifies a visitor.
+          </div>
+          <details data-section="ANALYTICS" class="osano-cm-disclosure osano-cm-disclosure--collapse">
+            <summary class="osano-cm-disclosure__toggle">Disclosure</summary>
+            <ul data-type="cookies" class="osano-cm-disclosure__list"></ul>
+            <ul data-type="scripts" class="osano-cm-disclosure__list"></ul>
+          </details>
+        </li>
+        
+      </ul>
+      <button aria-role="button" class="osano-cm-info__button osano-cm-button osano-cm-save">Save</button>
+      <div class="osano-cm-powered-by">
+        <a class="osano-cm-link osano-cm-powered-by__link" href="https://www.osano.com/?utm_campaign=cmp&amp;utm_source=cmp-dialog&amp;utm_medium=drawer">Powered By Osano</a>
+      </div>
+    </div>
+  </div></div>
+		<iframe title="__uspapiLocator" name="__uspapiLocator" style="display: none;" src="./Introduction to linear mixed models_files/saved_resource.html"></iframe><iframe title="__tcfapiLocator" name="__tcfapiLocator" style="display: none;" src="./Introduction to linear mixed models_files/saved_resource(1).html"></iframe><header class="header">
+	<div class="navigation-bar">
+		<div id="navigation-container">
+			
+				<a class="logo" href="https://ourcodingclub.github.io/">
+  <img src="./Introduction to linear mixed models_files/logo_hex.svg" alt="Coding Club logo">
+</a>
+
+			
+			<nav>
+				<label for="hamburger">☰</label>
+				<input type="checkbox" id="hamburger">
+				<ul>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/">Home</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/tutorials.html">Tutorials</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/course.html">Course</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/team.html">Team</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/involve.html">Get involved</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/links.html">Links</a>
+					</li>
+					
+						
+					<li class="item item-nav">
+						<a href="https://ourcodingclub.github.io/contact.html">Contact</a>
+					</li>
+					
+				</ul>
+			</nav>
+		</div>
+	</div>
+</header>
+
+			
+	<div class="banner" style="background-image: url(/assets/img/banner/slider-bg-pale.jpg)">
+	
+		<h1>Introduction to linear mixed models</h1>
+		
+	
+</div>
+
+
+
+
+<div class="content">
+	<p class="author">
+		
+			Created by Gabriela K Hajduk
+		
+		
+			- last updated 9th February 2022
+		
+		
+			by Elise Gallois
+		
+	</p>
+	<hr>
+	<p>This workshop is aimed at people new to mixed modeling and as such, it doesn’t cover all the nuances of mixed models, but hopefully serves as a starting point when it comes to both the concepts and the code syntax in <code class="language-plaintext highlighter-rouge">R</code>. There are no equations used to keep it beginner friendly.</p>
+
+<p><strong>Acknowledgements:</strong> First of all, thanks where thanks are due. This tutorial has been built on the tutorial written by <a href="https://twitter.com/ldbailey255">Liam Bailey</a>, who has been kind enough to let me use chunks of his script, as well as some of the data. Having this backbone of code made my life much, much easier, so thanks Liam, you are a star! The seemingly excessive waffling is mine.</p>
+
+<p>If you are familiar with linear models, aware of their shortcomings and happy with their fitting, then you should be able to very quickly get through the first five sections below. Beginners might want to spend multiple sessions on this tutorial to take it all in.</p>
+
+<p>Similarly, you will find quite a bit of explanatory text: you might choose to just skim it for now and go through the “coding bits” of the tutorial. But it will be here to help you along when you start using mixed models with your own data and you need a bit more context.</p>
+
+<div class="callout ">
+
+  <p>To get all you need for this session, <strong>go to <a href="https://github.com/ourcodingclub/CC-Linear-mixed-models">the repository for this tutorial</a>, click on <code class="language-plaintext highlighter-rouge">Clone/Download/Download ZIP</code> to download the files and then unzip the folder. Alternatively, fork the repository to your own Github account, clone the repository on your computer and start a version-controlled project in RStudio. For more details on how to do this, please check out our <a href="https://ourcodingclub.github.io/tutorials/git/index.html">Intro to Github for Version Control tutorial</a>.</strong></p>
+
+</div>
+
+<p>Alternatively, you can grab the <strong>R script</strong> <a href="http://gkhajduk.d.pr/FG8/2bCpZQuj">here</a> and the <strong>data</strong> from <a href="http://gkhajduk.d.pr/9GPn/3nbbPoK6">here</a>. I might update this tutorial in the future and if I do, the latest version will be <a href="https://gkhajduk.github.io/2017-03-09-mixed-models/">on my website</a>.</p>
+
+<h1 id="tutorial-sections">Tutorial sections:</h1>
+
+<ol>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#what">What is mixed effects modelling and why does it matter?</a></li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#explore-the-data">Explore the data</a></li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#three">Fit all data in one analysis</a></li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#four">Run multiple analyses</a></li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#five">Modify the current model</a></li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#six">Mixed effects models</a>
+    <ul>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#FERE">Fixed and Random effects</a></li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#first">Let’s fit our first mixed model</a></li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#types">Types of random effects</a>
+        <ul>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#crossed">Crossed random effects</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#nested">Nested random effects</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#implicit">Implicit vs. explicit nesting</a></li>
+        </ul>
+      </li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#second">Our second mixed model</a></li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#ranslopes">Introducing random slopes</a></li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#presenting">Presenting your model results</a>
+        <ul>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#plots">Plotting model predictions</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#tables">Tables</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#processing">Further processing</a></li>
+        </ul>
+      </li>
+      <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#extra">EXTRA: P-values and model selection</a>
+        <ul>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#fixedstr">Fixed effects structure</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#randomstr">Random effects structure</a></li>
+          <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#selection">The entire model selection</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="https://ourcodingclub.github.io/tutorials/mixed-models/#end">THE END</a></li>
+</ol>
+
+<h1 id="what">1. What is mixed effects modelling and why does it matter?</h1>
+
+<p>Ecological and biological data are often complex and messy. We can have different <strong>grouping factors</strong> like populations, species, sites where we collect the data, etc. <strong>Sample sizes</strong> might leave something to be desired too, especially if we are trying to fit complicated models with <strong>many parameters</strong>. On top of that, our data points might <strong>not be truly independent</strong>. For instance, we might be using quadrats within our sites to collect the data (and so there is structure to our data: quadrats are nested within the sites).</p>
+
+<p>This is why <strong>mixed models</strong> were developed, to deal with such messy data and to allow us to use all our data, even when we have low sample sizes, structured data and many covariates to fit. Oh, and on top of all that, mixed models allow us to save degrees of freedom compared to running standard linear models! Sounds good, doesn’t it?</p>
+
+<p>We will cover only linear mixed models here, but if you are trying to “extend” your linear model, fear not: there are generalised linear mixed effects models out there, too.</p>
+
+<h1 id="explore-the-data">2. Explore the data</h1>
+
+<p>We are going to focus on a fictional study system, dragons, so that we don’t have to get too distracted with the specifics of this example. Imagine that we decided to train dragons and so we went out into the mountains and collected data on dragon intelligence (<code class="language-plaintext highlighter-rouge">testScore</code>) as a prerequisite. We sampled individuals with a range of body lengths across three sites in eight different mountain ranges. Start by loading the data and having a look at them.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock1">Copy contents</button><pre class="highlight" id="codeblock1"><code><span class="n">load</span><span class="p">(</span><span class="s2">"dragons.RData"</span><span class="p">)</span><span class="w">
+</span><span class="n">head</span><span class="p">(</span><span class="n">dragons</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Let’s say we want to know how the body length of the dragons affects their test scores.</p>
+
+<p>You don’t need to worry about the distribution of your <strong>explanatory</strong> variables. Have a look at the distribution of the response variable:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock2">Copy contents</button><pre class="highlight" id="codeblock2"><code><span class="n">hist</span><span class="p">(</span><span class="n">dragons</span><span class="o">$</span><span class="n">testScore</span><span class="p">)</span><span class="w">  </span><span class="c1"># seems close to a normal distribution - good!</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-1.png" alt="Histogram of Dragon test score"></p>
+
+<p>It is good practice to <strong>standardise</strong> your explanatory variables before proceeding so that they have a mean of zero (“centering”) and standard deviation of one (“scaling”). It ensures that the estimated coefficients are all on the same scale, making it easier to compare effect sizes. You can use <code class="language-plaintext highlighter-rouge">scale()</code> to do that:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock3">Copy contents</button><pre class="highlight" id="codeblock3"><code><span class="n">dragons</span><span class="o">$</span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">scale</span><span class="p">(</span><span class="n">dragons</span><span class="o">$</span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">scale()</code> centers the data (the column mean is subtracted from the values in the column) and then scales it (the centered column values are divided by the column’s standard deviation).</p>
+
+<p>Back to our question: is the test score affected by body length?</p>
+
+<h1 id="three">3. Fit all data in one analysis</h1>
+
+<p>One way to analyse this data would be to fit a linear model to all our data, ignoring the sites and the mountain ranges for now.</p>
+
+<p>Fit the model with <code class="language-plaintext highlighter-rouge">testScore</code> as the response and <code class="language-plaintext highlighter-rouge">bodyLength2</code> as the predictor and have a look at the output:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock4">Copy contents</button><pre class="highlight" id="codeblock4"><code><span class="n">basic.lm</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lm</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">basic.lm</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Let’s plot the data with ggplot2.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock5">Copy contents</button><pre class="highlight" id="codeblock5"><code><span class="n">library</span><span class="p">(</span><span class="n">tidyverse</span><span class="p">)</span><span class="w">  </span><span class="c1"># load the package containing both ggplot2 and dplyr</span><span class="w">
+
+</span><span class="p">(</span><span class="n">prelim_plot</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">testScore</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w">
+  </span><span class="n">geom_point</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w">
+  </span><span class="n">geom_smooth</span><span class="p">(</span><span class="n">method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"lm"</span><span class="p">))</span><span class="w">
+  
+</span></code></pre></div></div>
+
+<p>Note that putting your entire ggplot code in brackets () creates the graph and then shows it in the plot viewer. If you don’t have the brackets, you’ve only created the object, but haven’t visualised it. You would then have to call the object such that it will be displayed by just typing <code class="language-plaintext highlighter-rouge">prelim_plot</code> after you’ve created the “prelim_plot” object.</p>
+
+<p><img src="./Introduction to linear mixed models_files/mm-2.png" alt="Scatter plot of bodyLength vs. testScore"></p>
+
+<p>Okay, so both from the linear model and from the plot, it seems like bigger dragons do better in our intelligence test. That seems a bit odd: size shouldn’t really affect the test scores.</p>
+
+<p>But… are the assumptions met?</p>
+
+<p>Plot the residuals: the red line should be nearly flat, like the dashed grey line:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock6">Copy contents</button><pre class="highlight" id="codeblock6"><code><span class="n">plot</span><span class="p">(</span><span class="n">basic.lm</span><span class="p">,</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w">  </span><span class="c1"># not perfect... </span><span class="w">
+</span><span class="c1">## but since this is a fictional example we will go with it</span><span class="w">
+</span><span class="c1">## for your own data be careful:</span><span class="w">
+</span><span class="c1">## the bigger the sample size, the less of a trend you'd expect to see</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-3.png" alt="Diagnostic plot of residuals vs fitted values"></p>
+
+<p>Have a quick look at the qqplot too: points should ideally fall onto the diagonal dashed line:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock7">Copy contents</button><pre class="highlight" id="codeblock7"><code><span class="n">plot</span><span class="p">(</span><span class="n">basic.lm</span><span class="p">,</span><span class="w"> </span><span class="n">which</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w">  </span><span class="c1"># a bit off at the extremes, but that's often the case; again doesn't look too bad</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-4.png" alt="QQ plot"></p>
+
+<p>However, what about observation independence? Are our data independent?</p>
+
+<p>We collected multiple samples from eight mountain ranges. It’s perfectly plausible that the data from within each mountain range are more similar to each other than the data from different mountain ranges: they are correlated.</p>
+
+<p>Have a look at the data to see if above is true:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock8">Copy contents</button><pre class="highlight" id="codeblock8"><code><span class="n">boxplot</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">mountainRange</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">  </span><span class="c1"># certainly looks like something is going on here</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-5.png" alt="Boxplot of testScore vs. mountainRange"></p>
+
+<p>We could also plot it and colour points by mountain range:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock9">Copy contents</button><pre class="highlight" id="codeblock9"><code><span class="p">(</span><span class="n">colour_plot</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">testScore</span><span class="p">,</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mountainRange</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w">
+  </span><span class="n">geom_point</span><span class="p">(</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">
+  </span><span class="n">theme_classic</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w">
+  </span><span class="n">theme</span><span class="p">(</span><span class="n">legend.position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="p">))</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-6.png" alt="ggplot2 scatter bodyLength vs. testScore"></p>
+
+<p>From the above plots, it looks like our mountain ranges vary both in the dragon body length <strong>AND</strong> in their test scores. This confirms that our observations from within each of the ranges <strong>aren’t independent</strong>. We can’t ignore that: as we’re starting to see, it could lead to a completely erroneous conclusion.</p>
+
+<p>So what do we do?</p>
+
+<h1 id="four">4. Run multiple analyses</h1>
+
+<p>We could run many separate analyses and fit a regression for each of the mountain ranges.</p>
+
+<p>Lets have a quick look at the data split by mountain range.  We use the <code class="language-plaintext highlighter-rouge">facet_wrap</code> to do that:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock10">Copy contents</button><pre class="highlight" id="codeblock10"><code><span class="p">(</span><span class="n">split_plot</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">testScore</span><span class="p">),</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+  </span><span class="n">geom_point</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+  </span><span class="n">facet_wrap</span><span class="p">(</span><span class="o">~</span><span class="w"> </span><span class="n">mountainRange</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="c1"># create a facet for each mountain range</span><span class="w">
+  </span><span class="n">xlab</span><span class="p">(</span><span class="s2">"length"</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+  </span><span class="n">ylab</span><span class="p">(</span><span class="s2">"test score"</span><span class="p">))</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-7.png" alt="ggplot2 facetted scatter length vs. testScore by mountainRange"></p>
+
+<p>That’s eight analyses. Oh wait, we also have different sites in each mountain range, which similarly to mountain ranges aren’t independent… So we could run an analysis for each site in each range separately.</p>
+
+<p>To do the above, we would have to estimate a slope and intercept parameter for <strong>each regression</strong>. That’s two parameters, three sites and eight mountain ranges, which means <strong>48 parameter estimates</strong> (2 x 3 x 8 = 48)! Moreover, the sample size for each analysis would be only 20 (dragons per site).</p>
+
+<p>This presents problems: not only are we <strong>hugely decreasing our sample size</strong>, but we are also <strong>increasing chances of a Type I Error (where you falsely reject the null hypothesis) by carrying out multiple comparisons</strong>. Not ideal!</p>
+
+<h1 id="five">5. Modify the current model</h1>
+
+<p>We want to use all the data, but account for the data coming from different mountain ranges (let’s put sites on hold for a second to make things simpler).</p>
+
+<p>Add mountain range as a fixed effect to our <code class="language-plaintext highlighter-rouge">basic.lm</code></p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock11">Copy contents</button><pre class="highlight" id="codeblock11"><code><span class="n">mountain.lm</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lm</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">mountainRange</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mountain.lm</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Now body length is <u>not</u> significant. But let’s think about what we are doing here for a second. The above model is estimating the difference in test scores between the mountain ranges - we can see all of them in the model output returned by <code class="language-plaintext highlighter-rouge">summary()</code>. But we are not interested in quantifying test scores for each specific mountain range: we just want to know whether body length affects test scores and we want to simply <strong>control for the variation</strong> coming from mountain ranges.</p>
+
+<p>This is what we refer to as <strong>“random factors”</strong> and so we arrive at mixed effects models. Ta-daa!</p>
+
+<h1 id="six">6. Mixed effects models</h1>
+
+<p>A mixed model is a good choice here: it will allow us to <strong>use all the data we have</strong> (higher sample size) and <strong>account for the correlations between data</strong> coming from the sites and mountain ranges. We will also <strong>estimate fewer parameters</strong> and <strong>avoid problems with multiple comparisons</strong> that we would encounter while using separate regressions.</p>
+
+<p>We are going to work in <code class="language-plaintext highlighter-rouge">lme4</code>, so load the package (or use <code class="language-plaintext highlighter-rouge">install.packages</code> if you don’t have <code class="language-plaintext highlighter-rouge">lme4</code> on your computer).</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock12">Copy contents</button><pre class="highlight" id="codeblock12"><code><span class="n">library</span><span class="p">(</span><span class="n">lme4</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="FERE">Fixed and random effects</h2>
+
+<p>Let’s talk a little about the difference between <strong>fixed and random effects</strong> first. It’s important to not that this difference has little to do with the variables themselves, and a lot to do with your research question! In many cases, the same variable could be considered either a random or a fixed effect (and sometimes even both at the same time!) so always refer to your questions and hypotheses to construct your models accordingly.</p>
+
+<div class="callout ">
+
+  <h2 id="should-my-variables-be-fixed-or-random-effects">Should my variables be fixed or random effects?</h2>
+
+  <p>In broad terms, <strong>fixed effects</strong> are variables that we expect will have an effect on the dependent/response variable: they’re what you call <strong>explanatory</strong> variables in a standard linear regression. In our case, we are interested in making conclusions about how dragon body length impacts the dragon’s test score. So body length is a fixed effect and test score is the dependent variable.</p>
+
+  <p>On the other hand, <strong>random effects</strong> are usually <strong>grouping factors</strong> for which we are trying to control. They are always categorical, as you can’t force R to treat a continuous variable as a random effect. A lot of the time we are not specifically interested in their impact on the response variable, but we know that they might be influencing the patterns we see.</p>
+
+  <p>Additionally, the data for our random effect is just <strong>a sample of all the possibilities</strong>: with unlimited time and funding we might have sampled every mountain where dragons live, every school in the country, every chocolate in the box), but we usually tend to generalise results to a whole population based on representative sampling. We don’t care about estimating how much better pupils in school A have done compared to pupils in school B, but we know that their respective teachers might be a reason why their scores would be different, and we’d like to know how much <em>variation</em> is attributable to this when we predict scores for pupils in school Z.</p>
+
+  <div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock13">Copy contents</button><pre class="highlight" id="codeblock13"><code><span class="n">test</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">3</span><span class="w">
+</span></code></pre></div>  </div>
+
+</div>
+
+<p>In our particular case, we are looking to control for the effects of mountain range. We haven’t sampled all the mountain ranges in the world (we have eight) so our data are just a sample of all the existing mountain ranges. We are not really interested in the effect of each specific mountain range on the test score: we hope our model would also be generalisable to dragons from other mountain ranges! However, we know that the test scores from within the ranges might be correlated so we want to control for that.</p>
+
+<p>If we specifically chose eight particular mountain ranges <em>a priori</em> and we were interested in those ranges and wanted to make predictions about them, then mountain range would be fitted as a fixed effect.</p>
+
+<div class="callout important">
+
+  <h2 id="more-about-random-effects">More about random effects</h2>
+
+  <p>Note that the golden rule is that you generally want your random effect to have <strong>at least five levels</strong>. So, for instance, if we wanted to control for the effects of dragon’s sex on intelligence, we would fit sex (a two level factor: male or female) <strong>as a fixed, not random, effect</strong>.</p>
+
+  <p>This is, put simply, because estimating variance on few data points is very imprecise. Mathematically you <em>could</em>, but you wouldn’t have a lot of confidence in it. If you only have two or three levels, the model will struggle to partition the variance - it <em>will</em> give you an output, but not necessarily one you can trust.</p>
+
+  <p>Finally, keep in mind that the name <em>random</em> doesn’t have much to do with <em>mathematical randomness</em>. Yes, it’s confusing. Just think about them as the <em>grouping</em> variables for now. Strictly speaking it’s all about making our models representative of our questions <strong>and getting better estimates</strong>. Hopefully, our next few examples will help you make sense of how and why they’re used.</p>
+
+</div>
+
+<p><strong>In the end, the big questions are:</strong> <em>what are you trying to do? What are you trying to make predictions about? What is just variation (a.k.a “noise”) that you need to control for?</em></p>
+
+<div class="callout ">
+
+  <h2 id="Further_Reading">Further reading for the keen:</h2>
+
+  <ul>
+    <li><a href="https://dynamicecology.wordpress.com/2015/11/04/is-it-a-fixed-or-random-effect/">Is it a fixed or random effect?</a> A useful way to think about fixed <em>vs</em>. random effects is in terms of partitioning the variation and estimating random effects with <strong>partial pooling</strong>. The description <a href="http://stats.stackexchange.com/questions/4700/what-is-the-difference-between-fixed-effect-random-effect-and-mixed-effect-mode">here</a> is the most accessible one I could find for now and you can find more opinions in the comments under the previous link too (search for <em>pooling</em> and <em>shrinkage</em> too if you are very keen).</li>
+    <li><a href="https://dynamicecology.wordpress.com/2015/02/05/how-many-terms-in-your-model-before-statistical-machismo/">How many terms? On model complexity</a></li>
+    <li><a href="https://dynamicecology.wordpress.com/2014/12/02/why-are-your-statistical-models-more-complex-these-days/">More on model complexity</a></li>
+    <li>Have a look at some of the fixed and random effects definitions gathered by Gelman in <a href="http://www.stat.columbia.edu/~gelman/research/published/AOS259.pdf">this paper</a> (you can also find them <a href="http://stats.stackexchange.com/questions/4700/what-is-the-difference-between-fixed-effect-random-effect-and-mixed-effect-mode/4702#4702">here</a> if you can’t access the paper).</li>
+  </ul>
+
+</div>
+
+<h2 id="first">Let’s fit our first mixed model</h2>
+
+<p>Alright! Still with me? We have a response variable, the test score and we are attempting to <strong>explain part of the variation</strong> in test score through fitting body length as a fixed effect. But the response variable has some <strong>residual variation</strong> (<em>i.e.</em> unexplained variation) associated with mountain ranges. By using random effects, we are modeling that unexplained variation through <strong>variance</strong>.</p>
+
+<p>[Sidenote: If you are confused between variation and variance: <strong>variation</strong> is a generic word, similar to dispersion or variability; <strong>variance</strong> is a particular measure of variation; it quantifies the dispersion, if you wish.]</p>
+
+<p>Note that <strong>our question changes slightly here</strong>: while we still want to know whether there is an association between dragon’s body length and the test score, we want to know if that association exists <strong><em>after</em></strong> controlling for the variation in mountain ranges.</p>
+
+<p>We will fit the random effect using the syntax <code class="language-plaintext highlighter-rouge">(1|variableName)</code>:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock14">Copy contents</button><pre class="highlight" id="codeblock14"><code><span class="n">mixed.lmer</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">mountainRange</span><span class="p">),</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mixed.lmer</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Once we account for the mountain ranges, it’s obvious that dragon body length doesn’t actually explain the differences in the test scores. <em>How is it obvious?</em> I hear you say?</p>
+
+<p>Take a look at the summary output: notice how the <strong>model estimate</strong> is smaller than its associated error? That means that the effect, or slope, cannot be distinguised from zero.</p>
+
+<p><img src="./Introduction to linear mixed models_files/mixed-models-output1.png" alt="Summary of lmer console output, annotated"></p>
+
+<p>Keep in mind that the random effect of the mountain range is <strong>meant to capture all the influences of mountain ranges on dragon test scores</strong> - whether we observed those influences explicitly or not, whether those influences are big or small <em>etc</em>. It could be many, many teeny-tiny influences that, when combined, affect the test scores and that’s what we are hoping to control for.</p>
+
+<p>We can see the variance for <code class="language-plaintext highlighter-rouge">mountainRange = 339.7</code>. Mountain ranges are clearly important: they explain a lot of variation. How do we know that? We can take the variance for the <code class="language-plaintext highlighter-rouge">mountainRange</code> and divide it by the total variance:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock15">Copy contents</button><pre class="highlight" id="codeblock15"><code><span class="m">339.7</span><span class="o">/</span><span class="p">(</span><span class="m">339.7</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">223.8</span><span class="p">)</span><span class="w">  </span><span class="c1"># ~60 %</span><span class="w">
+</span></code></pre></div></div>
+
+<p>So the differences between mountain ranges explain ~60% of the variance that’s “left over” <em>after</em> the variance explained by our fixed effects.</p>
+
+<div class="callout ">
+
+  <h2 id="more-reading-on-random-effects">More reading on random effects</h2>
+
+  <p>Still confused about interpreting random effects? These links have neat demonstrations and explanations:</p>
+
+  <p><a href="https://www.r-bloggers.com/making-sense-of-random-effects/">R-bloggers: Making sense of random effects</a></p>
+
+  <p><a href="https://www.theanalysisfactor.com/understanding-random-effects-in-mixed-models/">The Analysis Factor: Understanding random effects in mixed models</a></p>
+
+  <p><a href="http://www.bodowinter.com/tutorial/bw_LME_tutorial.pdf">Bodo Winter: A very basic tutorial for performing linear mixed effect analyses</a></p>
+
+</div>
+
+<p>As always, it’s good practice to have a look at the plots to check our assumptions:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock16">Copy contents</button><pre class="highlight" id="codeblock16"><code><span class="n">plot</span><span class="p">(</span><span class="n">mixed.lmer</span><span class="p">)</span><span class="w">  </span><span class="c1"># looks alright, no patterns evident</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-8.png" alt="lmer fitted values versus residuals diagnostic plot"></p>
+
+<p>and <code class="language-plaintext highlighter-rouge">qqplot</code>:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock17">Copy contents</button><pre class="highlight" id="codeblock17"><code><span class="n">qqnorm</span><span class="p">(</span><span class="n">resid</span><span class="p">(</span><span class="n">mixed.lmer</span><span class="p">))</span><span class="w">
+</span><span class="n">qqline</span><span class="p">(</span><span class="n">resid</span><span class="p">(</span><span class="n">mixed.lmer</span><span class="p">))</span><span class="w">  </span><span class="c1"># points fall nicely onto the line - good!</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-9.png" alt="lmer QQ plot"></p>
+
+<h2 id="types">Types of random effects</h2>
+
+<p>Before we go any further, let’s review the syntax above and chat about crossed and nested random effects. It’s useful to get those clear in your head.</p>
+
+<p><strong>Reminder</strong>: a factor is just any categorical independent variable.</p>
+
+<p>Above, we used <code class="language-plaintext highlighter-rouge">(1|mountainRange)</code> to fit our random effect. Whatever is on the right side of the <code class="language-plaintext highlighter-rouge">|</code> operator is a factor and referred to as a “grouping factor” for the term.</p>
+
+<p><strong>Random effects (factors) can be crossed or nested</strong> - it depends on the relationship between the variables. Let’s have a look.</p>
+
+<h3 id="crossed">Crossed random effects</h3>
+
+<p>Be careful with the nomenclature. There are <strong>“hierarchical linear models”</strong> (HLMs) or <strong>“multilevel models”</strong> out there, but while all HLMs are mixed models, <strong>not all mixed models are hierarchical</strong>. That’s because you can have <strong>crossed (or partially crossed) random factors</strong> that do not represent levels in a hierarchy.</p>
+
+<p>Think for instance about our study where you monitor dragons (subject) across different mountain ranges (context) and imagine that we collect <strong>multiple observations per dragon</strong> by giving it the test multiple times (and risking <strong>pseudoreplication</strong> - but more on that later). Since our dragons can fly, it’s easy to imagine that <strong>we might observe the same dragon across different mountain ranges</strong>, but also that we might not see all the dragons visiting all of the mountain ranges. Therefore, we can potentially observe every dragon in every mountain range (<strong>crossed</strong>) or at least observe some dragons across some of the mountain ranges (<strong>partially crossed</strong>). We would then fit the identity of the dragon and mountain range as (partially) crossed random effects.</p>
+
+<p>Let’s repeat with another example: an effect is <strong>(fully) crossed</strong> when <em>all the subjects</em> have experienced <em>all the levels</em> of that effect. For instance, if you had a fertilisation experiment on seedlings growing in a seasonal forest and took repeated measurements over time (say 3 years) in each season, you may want to have a crossed factor called <code class="language-plaintext highlighter-rouge">season</code> (Summer1, Autumn1, Winter1, Spring1, Summer2, …, Spring3), i.e. a factor for each season of each year. This grouping factor would account for the fact that all plants in the experiment, regardless of the fixed (treatment) effect (i.e. fertilised or not), may have experienced a very hot summer in the second year, or a very rainy spring in the third year, and those conditions could cause interference in the expected patterns. You don’t even need to have associated climate data to account for it! You just know that all observations from spring 3 may be more similar to each other because they experienced the same environmental quirks rather than because they’re responding to your treatment.</p>
+
+<p>If this sounds confusing, not to worry - <code class="language-plaintext highlighter-rouge">lme4</code> handles partially and fully crossed factors well. Now, let’s look at <strong>nested</strong> random effects and how to specify them.</p>
+
+<h2 id="nested">Nested random effects</h2>
+
+<p>If you’re not sure what nested random effects are, think of those Russian nesting dolls. We’ve already hinted that we call these models <strong>hierarchical</strong>: there’s often an element of scale, or sampling stratification in there.</p>
+
+<p>Take our fertilisation experiment example again; let’s say you have 50 seedlings in each bed, with 10 control and 10 experimental beds. That’s 1000 seedlings altogether. And let’s say you went out collecting once in each season in each of the 3 years. On each plant, you measure the length of 5 leaves. That’s….(lots of maths)…5 leaves x 50 plants x 20 beds x 4 seasons x 3 years….. 60 000 measurements!</p>
+
+<p>But if you were to run the analysis using a simple linear regression, eg. <code class="language-plaintext highlighter-rouge">leafLength ~ treatment </code>, you would be committing the crime (!!) of <strong>pseudoreplication</strong>, or massively increasing your sampling size by using non-independent data. With a sample size of 60,000 you would almost certainly get a “significant” effect of treatment which may have no ecological meaning at all. And it violates the <strong>assumption of independance of observations</strong> that is central to linear regression.</p>
+
+<p>This is where our nesting dolls come in; leaves within a plant and plants within a bed may be more similar to each other (e.g. for genetic and environmental reasons, respectively). You could therefore add a random effect structure that accounts for this nesting:</p>
+
+<p><code class="language-plaintext highlighter-rouge">leafLength ~ treatment + (1|Bed/Plant/Leaf)</code></p>
+
+<p>This way, the model will account for non independence in the data: the same leaves have been sampled repeatedly, multiple leaves were measured on an individual, and plants are grouped into beds which may receive different amounts of sun, etc.</p>
+
+<p>What about the crossed effects we mentioned earlier? If all the leaves have been measured in all seasons, then your model would become something like:</p>
+
+<p><code class="language-plaintext highlighter-rouge">leafLength ~ treatment + (1|Bed/Plant/Leaf) + (1|Season)</code></p>
+
+<p>Phew!</p>
+
+<div class="callout important">
+
+  <h3 id="implicit">Implicit <em>vs</em>. explicit nesting</h3>
+
+  <p>To make things easier for yourself, code your data properly and <strong>avoid implicit nesting</strong>.</p>
+
+  <p>To tackle this, let’s look at another aspect of our study: we collected the data on dragons not only across multiple mountain ranges, but also across several sites within those mountain ranges. If you don’t remember have another look at the data:</p>
+
+  <div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock18">Copy contents</button><pre class="highlight" id="codeblock18"><code><span class="n">head</span><span class="p">(</span><span class="n">dragons</span><span class="p">)</span><span class="w">  </span><span class="c1"># we have site and mountainRange</span><span class="w">
+</span><span class="n">str</span><span class="p">(</span><span class="n">dragons</span><span class="p">)</span><span class="w">  </span><span class="c1"># we took samples from three sites per mountain range and eight mountain ranges in total</span><span class="w">
+</span></code></pre></div>  </div>
+
+  <p>Just like we did with the mountain ranges, we have to assume that data collected within our sites might be <strong>correlated</strong> and so we should include sites as <strong>an additional random effect</strong> in our model.</p>
+
+  <p>Our site variable is a three-level factor, with sites called <code class="language-plaintext highlighter-rouge">a</code>, <code class="language-plaintext highlighter-rouge">b</code> and <code class="language-plaintext highlighter-rouge">c</code>. The nesting of the site within the mountain range is <strong>implicit</strong> - our sites are meaningless without being assigned to specific mountain ranges, i.e. there is nothing linking site <code class="language-plaintext highlighter-rouge">b</code> of the <code class="language-plaintext highlighter-rouge">Bavarian</code> mountain range with site <code class="language-plaintext highlighter-rouge">b</code> of the <code class="language-plaintext highlighter-rouge">Central</code> mountain range. To avoid future confusion we should create a new variable that is <strong>explicitly nested</strong>. Let’s call it <code class="language-plaintext highlighter-rouge">sample</code>:</p>
+
+  <div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock19">Copy contents</button><pre class="highlight" id="codeblock19"><code><span class="n">dragons</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">within</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">sample</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">factor</span><span class="p">(</span><span class="n">mountainRange</span><span class="o">:</span><span class="n">site</span><span class="p">))</span><span class="w">
+</span></code></pre></div>  </div>
+
+  <p>Now it’s obvious that we have 24 samples (8 mountain ranges x 3 sites) and not just 3: our <code class="language-plaintext highlighter-rouge">sample</code> is a 24-level factor and we should use that instead of using <code class="language-plaintext highlighter-rouge">site</code> in our models: each site belongs to a specific mountain range.</p>
+
+  <p><strong>To sum up:</strong> for <strong>nested random effects</strong>, the factor appears <strong>ONLY</strong> within a particular level of another factor (each site belongs to a specific mountain range and only to that range); for <strong>crossed effects</strong>, a given factor appears in more than one level of another factor (dragons appearing within more than one mountain range). <strong>Or you can just remember that if your random effects aren’t nested, then they are crossed!</strong></p>
+
+</div>
+
+<h2 id="second">Our second mixed model</h2>
+
+<p>Based on the above, using following specification would be <strong>**wrong**</strong>, as it would imply that there are only three sites with observations at <em>each</em> of the 8 mountain ranges (crossed):</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock20">Copy contents</button><pre class="highlight" id="codeblock20"><code><span class="n">mixed.WRONG</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">mountainRange</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">site</span><span class="p">),</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">  </span><span class="c1"># treats the two random effects as if they are crossed</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mixed.WRONG</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mixed-models-output-wrong.png" alt="lmer console output incorrect grouping of observations, annotated"></p>
+
+<p>But we can go ahead and fit a new model, one that takes into account both the differences between the mountain ranges, as well as the differences between the sites within those mountain ranges by using our <code class="language-plaintext highlighter-rouge">sample</code> variable.</p>
+
+<p>Our question gets <strong>adjusted slightly again</strong>: Is there an association between body length and intelligence in dragons <strong><em>after</em></strong> controlling for variation in mountain ranges and sites within mountain ranges?</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock21">Copy contents</button><pre class="highlight" id="codeblock21"><code><span class="n">mixed.lmer2</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">mountainRange</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">sample</span><span class="p">),</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w">  </span><span class="c1"># the syntax stays the same, but now the nesting is taken into account</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mixed.lmer2</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mixed-models-output-right.png" alt="correct factor nesting"></p>
+
+<p>Here, we are trying to account for <strong>all the mountain-range-level</strong> <em>and</em> <strong>all the site-level influences</strong> and we are hoping that our random effects have soaked up all these influences so we can control for them in the model.</p>
+
+<p>For the record, you could also use the below syntax, and you will often come across it if you read more about mixed models:</p>
+
+<p><code class="language-plaintext highlighter-rouge">(1|mountainRange/site)</code>  or even
+<code class="language-plaintext highlighter-rouge">(1|mountainRange) + (1|mountainRange:site)</code></p>
+
+<p>However, it is advisable to set out your variables properly and make sure nesting is stated explicitly within them, that way you don’t have to remember to specify the nesting.</p>
+
+<p>Let’s plot this again - visualising what’s going on is always helpful. You should be able to see eight mountain ranges with three sites (different colour points) within them, with a line fitted through each site.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock22">Copy contents</button><pre class="highlight" id="codeblock22"><code><span class="p">(</span><span class="n">mm_plot</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">testScore</span><span class="p">,</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">site</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">facet_wrap</span><span class="p">(</span><span class="o">~</span><span class="n">mountainRange</span><span class="p">,</span><span class="w"> </span><span class="n">nrow</span><span class="o">=</span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">   </span><span class="c1"># a panel for each mountain range</span><span class="w">
+      </span><span class="n">geom_point</span><span class="p">(</span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">theme_classic</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">geom_line</span><span class="p">(</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">pred</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">predict</span><span class="p">(</span><span class="n">mixed.lmer2</span><span class="p">)),</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pred</span><span class="p">),</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="c1"># adding predicted line from mixed model </span><span class="w">
+      </span><span class="n">theme</span><span class="p">(</span><span class="n">legend.position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w">
+            </span><span class="n">panel.spacing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unit</span><span class="p">(</span><span class="m">2</span><span class="p">,</span><span class="w"> </span><span class="s2">"lines"</span><span class="p">))</span><span class="w">  </span><span class="c1"># adding space between panels</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-10.png" alt="ggplot2 facetted scatter with groups of testScore vs. bodyLength by mountainRange"></p>
+
+<h2 id="ranslopes">Introducing random slopes</h2>
+
+<p>You might have noticed that all the lines on the above figure are parallel: that’s because so far, we have only fitted <strong>random-intercept models</strong>. A random-intercept model allows the intercept to vary for each level of the random effects, but keeps the slope constant among them. So in our case, using this model means that we expect dragons in all mountain ranges to exhibit the same relationship between body length and intelligence (fixed slope), although we acknowledge that some populations may be smarter or dumber to begin with (random intercept).</p>
+
+<p>You can find an excellent visualisation of random intercepts and slopes <a href="https://mfviz.com/hierarchical-models/">at this website</a></p>
+
+<p>Now, in the life sciences, we perhaps more often assume that not all populations would show the exact same relationship, for instance if your study sites/populations are very far apart and have some relatively important environmental, genetic, etc differences. Therefore, we often want to fit a <strong>random-slope and random-intercept model</strong>. Maybe the dragons in a very cold vs a very warm mountain range have evolved different body forms for heat conservation and may therefore be smart even if they’re smaller than average.</p>
+
+<p>We only need to make one change to our model to allow for random slopes as well as intercept, and that’s adding the fixed variable into the random effect brackets:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock23">Copy contents</button><pre class="highlight" id="codeblock23"><code><span class="n">mixed.ranslope</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">bodyLength2</span><span class="o">|</span><span class="n">mountainRange</span><span class="o">/</span><span class="n">site</span><span class="p">),</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">)</span><span class="w"> 
+
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mixed.ranslope</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Here, we’re saying, let’s model the intelligence of dragons as a function of body length, knowing that populations have different intelligence baselines <strong>and</strong> that the relationship may vary among populations.</p>
+
+<p>Let’s see that with a quick plot (we’ll plot predictions in more detail in the next section). Notice how the slopes for the different sites and mountain ranges are not parallel anymore?</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock24">Copy contents</button><pre class="highlight" id="codeblock24"><code><span class="c1">### plot</span><span class="w">
+</span><span class="p">(</span><span class="n">mm_plot</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bodyLength</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">testScore</span><span class="p">,</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">site</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">facet_wrap</span><span class="p">(</span><span class="o">~</span><span class="n">mountainRange</span><span class="p">,</span><span class="w"> </span><span class="n">nrow</span><span class="o">=</span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">   </span><span class="c1"># a panel for each mountain range</span><span class="w">
+      </span><span class="n">geom_point</span><span class="p">(</span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">theme_classic</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w">
+      </span><span class="n">geom_line</span><span class="p">(</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">pred</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">predict</span><span class="p">(</span><span class="n">mixed.ranslope</span><span class="p">)),</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pred</span><span class="p">),</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="c1"># adding predicted line from mixed model </span><span class="w">
+      </span><span class="n">theme</span><span class="p">(</span><span class="n">legend.position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w">
+            </span><span class="n">panel.spacing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unit</span><span class="p">(</span><span class="m">2</span><span class="p">,</span><span class="w"> </span><span class="s2">"lines"</span><span class="p">))</span><span class="w">  </span><span class="c1"># adding space between panels</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-ranslopes.png" alt="ggplot2 facetted scatter with groups of testScore vs. bodyLength by mountainRange with random slopes"></p>
+
+<p><strong>Well done for getting here!</strong> You have now fitted random-intercept and random-slopes, random-intercept mixed models and you know how to account for hierarchical and crossed random effects. You saw that failing to account for the correlation in data might lead to misleading results - it seemed that body length affected the test score until we accounted for the variation coming from mountain ranges. We can see now that body length doesn’t influence the test scores - great! We can pick smaller dragons for any future training - smaller ones should be more manageable!</p>
+
+<p>If you are particularly keen, the next section gives you a few options when it comes to <strong>presenting your model results</strong> and in the last “extra” section you  can learn about the <strong>model selection conundrum</strong>. There is just a little bit more code there to get through if you fancy those.</p>
+
+<h2 id="presenting">Presenting your model results</h2>
+
+<p>Once you get your model, you have to <strong>present</strong> it in a nicer form.</p>
+
+<h3 id="plots">Plotting model predictions</h3>
+
+<p>Often you will want to visualise your model as a regression line with some error around it, just like you would a simple linear model. However, <code class="language-plaintext highlighter-rouge">ggplot2</code> stats options are not designed to estimate mixed-effect model objects correctly, so we will use the <code class="language-plaintext highlighter-rouge">ggeffects</code> package to help us draw the plots.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock25">Copy contents</button><pre class="highlight" id="codeblock25"><code><span class="n">library</span><span class="p">(</span><span class="n">ggeffects</span><span class="p">)</span><span class="w">  </span><span class="c1"># install the package first if you haven't already, then load it</span><span class="w">
+
+</span><span class="c1"># Extract the prediction data frame</span><span class="w">
+</span><span class="n">pred.mm</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">ggpredict</span><span class="p">(</span><span class="n">mixed.lmer2</span><span class="p">,</span><span class="w"> </span><span class="n">terms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="s2">"bodyLength2"</span><span class="p">))</span><span class="w">  </span><span class="c1"># this gives overall predictions for the model</span><span class="w">
+
+</span><span class="c1"># Plot the predictions </span><span class="w">
+
+</span><span class="p">(</span><span class="n">ggplot</span><span class="p">(</span><span class="n">pred.mm</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+   </span><span class="n">geom_line</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">predicted</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w">          </span><span class="c1"># slope</span><span class="w">
+   </span><span class="n">geom_ribbon</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">ymin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">predicted</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">std.error</span><span class="p">,</span><span class="w"> </span><span class="n">ymax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">predicted</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">std.error</span><span class="p">),</span><span class="w"> 
+               </span><span class="n">fill</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"lightgrey"</span><span class="p">,</span><span class="w"> </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="c1"># error band</span><span class="w">
+   </span><span class="n">geom_point</span><span class="p">(</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">,</span><span class="w">                      </span><span class="c1"># adding the raw data (scaled values)</span><span class="w">
+              </span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bodyLength2</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">testScore</span><span class="p">,</span><span class="w"> </span><span class="n">colour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mountainRange</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+   </span><span class="n">labs</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Body Length (indexed)"</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Test Score"</span><span class="p">,</span><span class="w"> 
+        </span><span class="n">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Body length does not affect intelligence in dragons"</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> 
+   </span><span class="n">theme_minimal</span><span class="p">()</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mixed-models-ggpredict1.jpeg" alt="ggplot2 lmer model predictions"></p>
+
+<p>What if you want to visualise how the relationships vary according to different levels of random effects? You can specify <code class="language-plaintext highlighter-rouge">type = "re"</code> (for “random effects”) in the <code class="language-plaintext highlighter-rouge">ggpredict()</code> function, and add the random effect name to the <code class="language-plaintext highlighter-rouge">terms</code> argument.</p>
+
+<p>We also demonstrate a way to plot the graph quicker with the <code class="language-plaintext highlighter-rouge">plot()</code> function of <code class="language-plaintext highlighter-rouge">ggEffects</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock26">Copy contents</button><pre class="highlight" id="codeblock26"><code>ggpredict(mixed.lmer2, terms = c("bodyLength2", "mountainRange"), type = "re") %&gt;% 
+   plot() +
+   labs(x = "Body Length", y = "Test Score", title = "Effect of body size on intelligence in dragons") + 
+   theme_minimal()
+</code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mixed-models-ggpredict2.jpeg" alt="ggpredict model predictions random intercepts"></p>
+
+<p>You can clearly see the random intercepts and fixed slopes from this graph. When assessing the quality of your model, it’s always a good idea to look at the raw data, the summary output, and the predictions all together to make sure you understand what is going on (and that you have specified the model correctly).</p>
+
+<p>Another way to visualise mixed model results, if you are interested in showing the variation among levels of your random effects, is to plot the <em>departure from the overall model estimate</em> for intercepts - and slopes, if you have a random slope model:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock27">Copy contents</button><pre class="highlight" id="codeblock27"><code><span class="n">library</span><span class="p">(</span><span class="n">sjPlot</span><span class="p">)</span><span class="w">
+
+</span><span class="c1"># Visualise random effects </span><span class="w">
+</span><span class="p">(</span><span class="n">re.effects</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">plot_model</span><span class="p">(</span><span class="n">mixed.ranslope</span><span class="p">,</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"re"</span><span class="p">,</span><span class="w"> </span><span class="n">show.values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">))</span><span class="w">
+
+</span><span class="c1"># show summary</span><span class="w">
+</span><span class="n">summary</span><span class="p">(</span><span class="n">mixed.ranslope</span><span class="p">)</span><span class="w">
+
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/sjplot.png" alt="sjplot random effects interval plot"></p>
+
+<p><strong>Careful here!</strong> The values you see are <strong>NOT</strong> <em>actual</em> values, but rather the <em>difference</em> between the general intercept or slope value found in your model summary and the estimate for this <em>specific level</em> of random effect. For instance, the relationship for dragons in the Maritime mountain range would have a slope of <code class="language-plaintext highlighter-rouge">(-2.91 + 0.67) = -2.24</code> and an intercept of <code class="language-plaintext highlighter-rouge">(20.77 + 51.43) = 72.20</code>.</p>
+
+<p>If you are looking for more ways to create plots of your results, check out <code class="language-plaintext highlighter-rouge">dotwhisker</code> and <a href="https://cran.r-project.org/web/packages/dotwhisker/vignettes/dotwhisker-vignette.html">this tutorial</a>.</p>
+
+<h3 id="tables">Tables</h3>
+
+<p>For <code class="language-plaintext highlighter-rouge">lme4</code>, if you are looking for a table, I’d recommend that you have a look at the <code class="language-plaintext highlighter-rouge">stargazer</code> package.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock28">Copy contents</button><pre class="highlight" id="codeblock28"><code><span class="n">library</span><span class="p">(</span><span class="n">stargazer</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">stargazer</code>is very nicely annotated and there are lots of resources (e.g. <a href="https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf">this</a>) out there and a <a href="http://jakeruss.com/cheatsheets/stargazer.html">great cheat sheet</a> so I won’t go into too much detail, as I’m confident you will find everything you need.</p>
+
+<p>Here is a quick example - simply plug in your model name, in this case <code class="language-plaintext highlighter-rouge">mixed.lmer2</code> into the <code class="language-plaintext highlighter-rouge">stargazer</code> function. I set <code class="language-plaintext highlighter-rouge">type</code> to <code class="language-plaintext highlighter-rouge">"text"</code> so that you can see the table in your console. I usually tweak the table like this until I’m happy with it and then export it using  <code class="language-plaintext highlighter-rouge">type = "latex"</code>, but <code class="language-plaintext highlighter-rouge">"html"</code> might be more useful for you if you are not a LaTeX user.</p>
+
+<p>If you are keen, explore this table a little further - what would you change? What would you get rid off?</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock29">Copy contents</button><pre class="highlight" id="codeblock29"><code><span class="n">stargazer</span><span class="p">(</span><span class="n">mixed.lmer2</span><span class="p">,</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"text"</span><span class="p">,</span><span class="w">
+          </span><span class="n">digits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">
+          </span><span class="n">star.cutoffs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="m">0.05</span><span class="p">,</span><span class="w"> </span><span class="m">0.01</span><span class="p">,</span><span class="w"> </span><span class="m">0.001</span><span class="p">),</span><span class="w">
+          </span><span class="n">digit.separator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">""</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img src="./Introduction to linear mixed models_files/mm-tab.png" alt="stargazer formatted lmer model output"></p>
+
+<h3 id="processing">Further processing</h3>
+
+<p>If you’d like to be able <strong>to do more with your model results</strong>, for instance process them further, collate model results from multiple models or plot, them have a look at the <code class="language-plaintext highlighter-rouge">broom</code> package. This <a href="http://varianceexplained.org/r/broom-intro/">tutorial</a> is a great start.</p>
+
+<h2 id="extra">EXTRA: P-values and model selection</h2>
+
+<p>Please be <strong>very, very careful</strong> when it comes to model selection. Focus on your <strong>question</strong>, don’t just plug in and drop variables from a model haphazardly until you make something “significant”. Always choose variables based on biology/ecology: I might use model selection to check a couple of non-focal parameters, but I keep the “core” of the model untouched in most cases. <strong>Define your goals and questions and focus on that.</strong> Also, don’t just put all possible variables in (i.e. don’t <strong>overfit</strong>). Remember that as a rule of thumb, <strong>you need 10 times more data than parameters</strong> you are trying to estimate.</p>
+
+<p>For more info on overfitting check out this <a href="https://ourcodingclub.github.io/2017/02/28/modelling.html">tutorial</a>.</p>
+
+<h2 id="fixedstr">Fixed effects structure</h2>
+
+<p><strong>Before we start, again: think twice before trusting model selection!</strong></p>
+
+<p>Most of you are probably going to be predominantly interested in your fixed effects, so let’s start here. <code class="language-plaintext highlighter-rouge">lme4</code> doesn’t spit out p-values for the parameters by default. This is a conscious choice made by the authors of the package, as there are many problems with p-values (I’m sure you are aware of the debates!).</p>
+
+<p>You will inevitably look for a way to assess your model though so here are a few solutions on how to go about hypothesis testing in linear mixed models (LMMs):</p>
+
+<p><strong>From worst to best:</strong></p>
+
+<ul>
+  <li>Wald Z-tests</li>
+  <li>Wald t-tests (but LMMs need to be balanced and nested)</li>
+  <li>Likelihood ratio tests (via <code class="language-plaintext highlighter-rouge">anova()</code> or <code class="language-plaintext highlighter-rouge">drop1()</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">MCMC</code> or parametric bootstrap confidence intervals</li>
+</ul>
+
+<p>See <a href="http://stats.stackexchange.com/questions/95054/how-to-get-an-overall-p-value-and-effect-size-for-a-categorical-factor-in-a-mi">this link</a> for more information and further reading.</p>
+
+<p>I think that <code class="language-plaintext highlighter-rouge">MCMC</code> and bootstrapping are a bit out of our reach for this workshop so let’s have a quick go at <strong>likelihood ratio tests</strong> using <code class="language-plaintext highlighter-rouge">anova()</code>. With large sample sizes, p-values based on the likelihood ratio are generally considered okay. <strong>NOTE:</strong> With small sample sizes, you might want to look into deriving p-values using the Kenward-Roger or Satterthwaite approximations (for <code class="language-plaintext highlighter-rouge">REML</code> models). Check out the <code class="language-plaintext highlighter-rouge">pbkrtest</code> package.</p>
+
+<p>Fit the models, a full model and a reduced model in which we dropped our fixed effect (<code class="language-plaintext highlighter-rouge">bodyLength2</code>):</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock30">Copy contents</button><pre class="highlight" id="codeblock30"><code><span class="n">full.lmer</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">bodyLength2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">mountainRange</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">sample</span><span class="p">),</span><span class="w"> 
+				  </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">REML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span><span class="w">
+</span><span class="n">reduced.lmer</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">lmer</span><span class="p">(</span><span class="n">testScore</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">mountainRange</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">sample</span><span class="p">),</span><span class="w"> 
+					     </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dragons</span><span class="p">,</span><span class="w"> </span><span class="n">REML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Compare them:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><button class="copy-button" data-clipboard-target="#codeblock31">Copy contents</button><pre class="highlight" id="codeblock31"><code><span class="n">anova</span><span class="p">(</span><span class="n">reduced.lmer</span><span class="p">,</span><span class="w"> </span><span class="n">full.lmer</span><span class="p">)</span><span class="w">  </span><span class="c1"># the two models are not significantly different</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Notice that we have fitted our models with <code class="language-plaintext highlighter-rouge">REML = FALSE</code>.</p>
+
+<p><strong>REML</strong> stands for <strong>restricted (or “residual”) maximum likelihood</strong> and it is the default parameter estimation criterion for linear mixed models. As you probably guessed, <strong>ML</strong> stands for  <strong>maximum likelihood</strong> - you can set  <code class="language-plaintext highlighter-rouge">REML = FALSE</code> in your call to <code class="language-plaintext highlighter-rouge">lmer</code> to use ML estimates. However, <strong>ML estimates are known to be biased</strong> and with REML being usually less biased, <strong>REML estimates of variance components are generally preferred.</strong> This is why in our previous models we skipped setting <code class="language-plaintext highlighter-rouge">REML</code> - we just left it as default (i.e. <code class="language-plaintext highlighter-rouge">REML = TRUE</code>).</p>
+
+<p><strong>REML</strong> assumes that the fixed effects structure is correct. You <strong>should use maximum likelihood when comparing models with different fixed effects</strong>, as <strong>ML</strong> doesn’t rely on the coefficients of the fixed effects - and that’s why we are refitting our full and reduced models above with the addition of <code class="language-plaintext highlighter-rouge">REML = FALSE</code> in the call.</p>
+
+<p>Even though you <strong>use ML to compare models</strong>, you should <strong>report parameter estimates from your final “best” REML model</strong>, as ML may underestimate variance of the random effects.</p>
+
+<p><strong>NOTE 2:</strong> Models can also be compared using the <code class="language-plaintext highlighter-rouge">AICc</code> function from the <code class="language-plaintext highlighter-rouge">AICcmodavg</code> package. The Akaike Information Criterion (AIC) is a measure of model quality. AICc corrects for bias created by small sample size when estimating AIC. Generally, if models are within 2 AICc units of each other they are very similar. Within 5 units they are quite similar, over 10 units difference and you can probably be happy with the model with lower AICc. As with p-values though, there is no “hard line” that’s always correct.</p>
+
+<p><strong>NOTE 3:</strong> There isn’t really an agreed upon way of dealing with the variance from the random effects in mixed models when it comes to assessing significance. Both <strong>p-values</strong> and <strong>effect sizes</strong> have issues, although from what I gather, p-values seem to cause more disagreement than effect sizes, at least in the R community.</p>
+
+<h3 id="randomstr">Random effects structure</h3>
+
+<p>Now you might wonder about selecting your random effects. In general, I’d advise you to think about your <strong>experimental design, your system and data collected, as well as your questions</strong>.</p>
+
+<p>If your random effects are there to deal with <strong>pseudoreplication</strong>, then it doesn’t really matter whether they are “significant” or not: they <strong>are part of your design</strong> and have to be included. Imagine we tested our dragons multiple times - we then <em>have to</em> fit dragon identity as a random effect.</p>
+
+<p>On the other hand, if you are trying to account for other variability that you think might be important, it becomes a bit harder. Imagine we measured the mass of our dragons over their lifespans (let’s say 100 years). We might then want to fit year as a random effect to account for any temporal variation - maybe some years were affected by drought, the resources were scarce and so dragon mass was negatively impacted. Year would definitely be a sensible random effect, although strictly speaking not a must.</p>
+
+<p>When it comes to such random effects you can use <strong>model selection</strong> to help you decide what to keep in. Following Zuur’s advice, we <strong>use <code class="language-plaintext highlighter-rouge">REML</code> estimators for comparison of models with different random effects</strong> (we keep fixed effects constant). (Zuur: “Two models with nested random structures cannot be done with ML because the estimators for the variance terms are biased.” )</p>
+
+<p><strong>NOTE:</strong> Do <strong>NOT</strong> vary random and fixed effects at the same time - either deal with your random effects structure or with your fixed effects structure at any given point.</p>
+
+<p><strong>NOTE 2:</strong> Do <strong>NOT</strong> compare <code class="language-plaintext highlighter-rouge">lmer</code> models with <code class="language-plaintext highlighter-rouge">lm</code> models (or <code class="language-plaintext highlighter-rouge">glmer</code> with <code class="language-plaintext highlighter-rouge">glm</code>).</p>
+
+<h3 id="selection">Entire model selection</h3>
+
+<p>A few notes on the process of model selection. There are two ways here: (i) <strong>“top-down”</strong>, where you start with a complex model and gradually reduce it, and (ii) <strong>“step up”</strong>, where you start with a simple model and add new variables to it. Unfortunately, you might arrive at different final models by using those strategies and so you need to be careful.</p>
+
+<p>The model selection process recommended by Zuur <em>et al.</em> (2009) is a top-down strategy and goes as follows:</p>
+
+<ol>
+  <li>fit a <strong>full model</strong> (he even recommends “beyond optimal” i.e. more complex than you’d expect or want it to be)</li>
+  <li>sort out the <strong>random effects structure</strong> (use <code class="language-plaintext highlighter-rouge">REML</code> likelihoods or <code class="language-plaintext highlighter-rouge">REML</code> AIC or BIC)</li>
+  <li>sort out <strong>fixed effects structure</strong> (either use <code class="language-plaintext highlighter-rouge">REML</code> the F-statistic or the t-statistic or compare nested <code class="language-plaintext highlighter-rouge">ML</code> models - keep your random effects constant)</li>
+  <li>once you arrive at the <strong>final model present it using <code class="language-plaintext highlighter-rouge">REML</code> estimation</strong></li>
+</ol>
+
+<p><strong>NOTE:</strong> At the risk of sounding like a broken record: I think it’s best to decide on what your model is based on biology/ecology/data structure <em>etc</em>. than through following model selection blindly. Additionally, just because something is non-significant doesn’t necessarily mean you should always get rid of it.</p>
+
+<h1 id="end">7. THE END</h1>
+
+<p><strong>Well done for getting through this!</strong> As you probably gather, mixed effects models can be a bit tricky and often there isn’t much consensus on the best way to tackle something within them. The coding bit is actually the (relatively) easy part here. Be mindful of what you are doing, prepare the data well and things should be alright.</p>
+
+<h4 id="keen-to-take-your-modelling-skills-to-the-next-level-if-you-want-to-learn-hierarchical-spatial-modelling-and-accounting-for-spatial-autocorrelation-check-out-our-tutorial-on-inla">Keen to take your modelling skills to the next level? If you want to learn hierarchical <strong>spatial</strong> modelling and accounting for spatial autocorrelation, <a href="https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/">check out our tutorial on INLA</a>!</h4>
+
+<p><br></p>
+
+<section id="portfolio-work" style="background-color: #a0a2cb; padding-bottom:20px">
+<div class="content-new-streams">
+<a href="https://ourcodingclub.github.io/course/stats-scratch/index.html" target="_blank"><img src="./Introduction to linear mixed models_files/DL_stream1.png" style="width:30%; height:auto; padding:20px;20px;20px;80px;" alt="Stats from Scratch stream"></a>
+<h4>Doing this tutorial as part of our Data Science for Ecologists and Environmental Scientists online course?</h4>
+<p><big>This tutorial is part of the <b><a href="https://ourcodingclub.github.io/course/stats-scratch/index.html" target="_blank">Stats from Scratch stream</a></b> from our online course. Go to the stream page to find out about the other tutorials part of this stream!</big></p>
+<p>If you have already signed up for our course and you are ready to take the quiz, go to our quiz centre.<b> Note that you need to <a href="https://ourcodingclub.github.io/course_info" target="_blank">sign up first</a> before you can take the quiz.</b> If you haven't heard about the course before and want to learn more about it, check out the <a href="https://ourcodingclub.github.io/course" target="_blank">course page.</a></p>
+
+
+<form class="form-group" action="https://coding-club.shinyapps.io/test-centre/" method="get">
+	<button type="submit" style="">Launch Quiz Centre</button>
+</form>
+
+
+</div>
+</section>
+
+	<div class="survey">
+		<h5>Stay up to date and learn about our newest resources by following us on <a href="https://twitter.com/our_codingclub" target="_blank">Twitter</a>!</h5>	
+	
+		<h5><a href="https://ourcodingclub.github.io/tutorials/mixed-models/" target="_blank">We would love to hear your feedback, please fill out our survey!</a></h5>
+	
+	<h5>Contact us with any questions on <a href="mailto:ourcodingclub@gmail.com?Subject=Tutorial%20question" target="_top">ourcodingclub@gmail.com</a></h5>	
+    
+    
+	
+	<h3>Related tutorials:</h3>
+	
+	
+		
+    		<ul>
+  				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/anova/">ANOVA from A to (XY)Z</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/modelling/">From distributions to linear models</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/data-clustering/">Intro to data clustering</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/time/">Analysing Time Series Data</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/mcmcglmm/">Meta-analysis for biologists using MCMCglmm</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/model-design/">Intro to model design</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/stan-intro/">Intro to Stan</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/stan-2/">Generalised linear models in Stan</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/machine-learning/">Intro to Machine Learning in R (K Nearest Neighbours Algorithm)</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/inla/">Intro to modelling using INLA</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/">Hierarchical modelling of spatial data</a></li>
+  					
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/data-scaling/">Transforming and scaling data</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+						<li><a href="https://ourcodingclub.github.io/tutorials/brms/">Bayesian modelling using the brms package</a></li>
+  					
+				
+			</ul>
+		
+	
+		
+    		<ul>
+  				
+    				
+				
+    				
+				
+    				
+				
+			</ul>
+		
+	
+</div>
+
+</div>
+
+    	<footer class="footer">
+	<hr>
+	<div class="footer-container">
+    	<ul class="footer-link-list">
+        	<li><a href="https://ourcodingclub.github.io/tutorials">Tutorials</a></li>
+        	<li><a href="https://ourcodingclub.github.io/team">About Us</a></li>
+        	<li><a href="https://ourcodingclub.github.io/contact">Contact us</a></li>
+	    	<li><a href="https://twitter.com/our_codingclub">Follow us on Twitter</a></li>
+    	</ul>
+    	<div class="footer-text">
+			<p>We are happy for people to use and further develop our tutorials - please give credit to Coding Club by linking to <a href="https://ourcodingclub.github.io/">our website</a>. We are also happy to discuss possible collaborations, so get in touch at <b>ourcodingclub(at)gmail.com</b></p>
+    		<p>See our <a href="https://ourcodingclub.github.io/terms">Terms of Use</a> and our <a href="https://ourcodingclub.github.io/privacy">Data Privacy policy</a>.</p>
+		<p>Disclaimer: All Coding Club tutorials are created for teaching purposes. We do our best to maintain the content and to provide updates, but sometimes package updates break the code and not all code works on all operating systems. Please note that how you use our tutorials is ultimately up to you. We do not carry responsibility for whether the tutorial code will work at the time you use the tutorial. We do not carry responsibility for whether the approaches used in the tutorials are appropriate for your own analyses. We encourage users to engage and updating tutorials by using <a href="https://github.com/ourcodingclub/ourcodingclub.github.io" target="_blank">pull requests in GitHub</a>.</p>	
+		<p>This work is licensed under a <a href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a></p>
+			<a href="https://creativecommons.org/licenses/by-sa/4.0/"><img class="license" src="./Introduction to linear mixed models_files/80x15.png" alt="CC-by-sa-4.0"></a>
+    	</div>
+    </div>
+</footer>
+
+<!-- JS -->
+<script src="./Introduction to linear mixed models_files/owl.carousel.js.download"></script>
+<script src="./Introduction to linear mixed models_files/owl.carousel-init.js.download"></script>
+<script src="./Introduction to linear mixed models_files/clipboard.min.js.download"></script>
+<script src="./Introduction to linear mixed models_files/codeselect.js.download"></script>
+<script src="./Introduction to linear mixed models_files/hide-back.js.download"></script>
+
+
+	
+    	<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[1];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-92956541-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+    
+	
+
+</body><div id="vimeo-record-extension"></div></html>
