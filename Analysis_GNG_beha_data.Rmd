@@ -48,7 +48,7 @@ valence effect for Go only; valence effect for NoGo
 
 ***Algermissen et al. 2021*** see S02 p.37 Model of stay behavior. 
 
-              QUESTION - not sure how they did it. Different datasets?
+              QUESTION - not sure how they did it - for the salient - Different datasets?
 EFFECT
 - Valence                     45.59 1 < .001
 - Salience * Valence          30.95 1 < .001
@@ -110,20 +110,17 @@ Pvalues are computed using likelihood ratio tests using the mixed-function (opti
 
 #all fixed effects
 ```{r}
-pilot_full <- glmer(correct ~ req_action + OutValence + Cue +feedback + block + (1|ID), 
+pilot_full <- glmer(correct ~ req_action + OutValence  + block + (1|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (pilot_full) # block does not seem to affect so I drop it. 
+summary (pilot_full) # block does not seem to affect so I drop it. (add full model as random slop)
+#req_actionnoGo -0.90862    0.06823 -13.317  < 2e-16 *** for the requried
+report(pilot_full)
 
-
-pilot_no_block <- glmer(correct ~ req_action + OutValence + Cue +feedback + (1|ID), 
+pilot_fullt <- glmer(correct ~ req_action + OutValence  + block + TrialCount +(1|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary(pilot_no_block) # what the intercept represents here? What condition?
-
-anova (pilot_full, pilot_no_block) # no significant difference -
-
-
+summary (pilot_fullt) # learnigng = trial count p goes up 
 ```
 
 
