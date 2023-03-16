@@ -20,10 +20,10 @@ theme_APA <- theme_bw()+
           panel.border = element_blank(),
           axis.line = element_line(size = 1),                                        
           text = element_text(
-              size = 16,
+              size = 20,
               face="bold"), 
           axis.text = element_text(
-              size = 16,
+              size = 20,
               face="plain",
               colour="black"),
           legend.title = element_blank(),
@@ -32,9 +32,9 @@ theme_APA <- theme_bw()+
           legend.text = element_text(
               face="plain",
               colour="black",
-              size=16),
+              size=20),
           strip.text.x = element_text(
-              size = 16,
+              size = 20,
               face = "bold"),
           panel.background = element_rect(
               fill='white',
@@ -45,13 +45,14 @@ theme_APA <- theme_bw()+
           axis.title.x = element_text(
               margin = margin(t = 10)),
           plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
-          plot.caption = element_text(size=8)
+          plot.caption = element_text(size=15)
           )
 ```
 
 ```{r}
 pilot <- read.csv(file = 'pilot.csv')
 pilot_dropped <- read.csv(file = 'df.csv') #dropped NAs
+View(pilot)
 ```
 
   
@@ -77,7 +78,7 @@ MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_a
 yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
                   data = MeanRTpersub,           
                   theme = 2,
-                  main = "Condtion",
+                  main = "Condition",
                   ylab = "Reaction Time (ms)",
                   ylim = c(400, 1000),
                   bean.f.o = .4, # Bean fill
@@ -119,6 +120,26 @@ yarrr::pirateplot(formula = RT ~ Cue,    # DV = reaction time, IV1 = Cue
                   point.pch = 21,
                   point.bg = "white",
                   point.cex = .7)
+
+#RT go vs noGO
+# get mean RT per Cue per participant
+MeanRTreq_act<- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action,    # 
+                  data = MeanRTreq_act,           
+                  theme = 2,
+                  main = "RT per required action",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(450, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
 ```
 
 #RTs Block
@@ -154,6 +175,42 @@ yarrr::pirateplot(formula = RT ~ block + Cue,    # DV = reaction time, IV1= bloc
                   point.pch = 21,
                   point.bg = "white",
                   point.cex = .7)
+
+MeanRTvalence <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~  OutValence,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTvalence,           
+                  theme = 2,
+                  main = "RT  per Valence",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
+
+MeanRTcuevalence <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ Cue + OutValence,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTcuevalence,           
+                  theme = 2,
+                  main = "RT  per Valence",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
 ```
 
           ***
@@ -187,16 +244,41 @@ ggplot(MeanCorrect) +
 #proportion of GO response per condition
 ```{r}
 # compute proportion of go responses for each participant
-MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResppersub)
 # compute mean proportion of go responses 
-MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResp)
 
 #plot
 ggplot(MeanGoResp) + 
   geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
   scale_colour_brewer(palette = "Set1") +
   theme_bw() +
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") + theme_APA
+
+#plot RT
+# compute RT  for each participant
+MeanRTResppersub <- pilot %>% filter(response == "press")%>%group_by(RT, ID, Cue, block, TrialCount, OutValence) %>% summarise(RT = mean(RT))
+# compute mean proportion of go responses 
+MeanRTResp <- MeanRTResppersub %>% group_by(RT, block,Cue, TrialCount, OutValence) %>% summarise(RT = mean(RT))
+ggplot(MeanRTResp) + 
+  geom_smooth(aes(TrialCount,RT,colour=OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for responses") +theme_APA
+
+
+
+
+#plot RT on trial
+
+
+ggplot(MeanRTResp) + 
+  geom_smooth(aes(TrialCount, RT)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for responses") +theme_APA
+
+
 
 #plot Go responses per block
 ggplot(MeanGoResp) + 
@@ -407,14 +489,16 @@ ggplot(pilot,
    stat_summary(fun.data = "mean_se", geom = "errorbar")
 
 #How good per block
-ggplot(pilot,
-        aes(x = block,                                 
+ggplot(data = pilot,
+        aes(x = block,                          
             y =  correct,                                
             group = block,                                 
-           color = block)) +                              
+           color = block)) +
    stat_summary(fun = "mean", geom = "point") +        
    stat_summary(fun = "mean", geom = "line") +        
-   stat_summary(fun.data = "mean_se", geom = "errorbar")
+   stat_summary(fun.data = "mean_se", geom = "errorbar") + theme_APA
+
+
 
 ```
 

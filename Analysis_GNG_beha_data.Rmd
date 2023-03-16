@@ -113,14 +113,44 @@ Pvalues are computed using likelihood ratio tests using the mixed-function (opti
 pilot_full <- glmer(correct ~ req_action + OutValence  + block + (1|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (pilot_full) # block does not seem to affect so I drop it. (add full model as random slop)
+summary (pilot_full) # block does not seem to affect so I dropped it. 
 #req_actionnoGo -0.90862    0.06823 -13.317  < 2e-16 *** for the requried
 report(pilot_full)
 
-pilot_fullt <- glmer(correct ~ req_action + OutValence  + block + TrialCount +(1|ID), 
+pilot_fullt <- glmer(correct ~ req_action + OutValence + TrialCount +(1|ID) + (req_action + OutValence + TrialCount|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (pilot_fullt) # learnigng = trial count p goes up 
+summary (pilot_fullt) # learnigng = trial count p goes up (also added full model as random)) --> valence not significant!!!! when full model as random effect
+
+##not fittin full model as random
+pilot_f <- glmer(correct ~ req_action + OutValence + TrialCount +(1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (pilot_f) # learnigng = trial count performance goes up 
+
+
+##model for salient feedback - correct
+pilot_s <- glmer(correct ~ req_action + salient + TrialCount + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (pilot_s) 
+
+```
+
+
+
+
+###RTs
+```{r}
+pilot_rt <- lmer(RT ~ req_action + OutValence + TrialCount +(1|ID), 
+                 data  = pilot, REML = FALSE) #REML = FALSE
+summary (pilot_rt) 
+report (pilot_rt)
+
+##model for salient feedback - rt
+pilot_rt_s <- lmer(RT ~ req_action + salient + TrialCount +(1|ID), 
+                 data  = pilot) #REML = TRUE
+summary (pilot_rt_s)
 ```
 
 
@@ -340,15 +370,14 @@ GO responses vs. NoGo responses [valence*response] ???NOT clear. the opposite he
 
     interaction OutValence*response is significant
 ```{r}
-pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
+pilot.or.m1 <- glmer(correct ~ OutValence*req_action + block + (1|ID), 
                  data  = pilot, family="binomial",
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-pilot.or.m0 <- glmer(correct ~ OutValence + response + (1|ID), 
+pilot.or.m0 <- glmer(correct ~ OutValence*req_action + block + TrialCount +(1|ID), 
                  data  = pilot, family="binomial",
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-summary(pilot.or.m1)
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) # ============================================================that is my full model. also add as random slope the full model 
+summary(pilot.or.m1) #when add interaction no main effect odf 
 
 report::report(pilot.or.m1)
 
