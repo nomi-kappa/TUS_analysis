@@ -1,0 +1,329 @@
+---
+title: "GNG_TUS_Study_1"
+author: "nomi"
+date: "2023-04-05"
+output: html_document
+---
+
+
+#### LOAD LIBRARIES
+```{r}
+library(pacman)
+
+p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
+
+```
+
+
+```{r}
+theme_APA <- theme_bw()+
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          axis.line = element_line(size = 1),                                        
+          text = element_text(
+              size = 20,
+              face="bold"), 
+          axis.text = element_text(
+              size = 20,
+              face="plain",
+              colour="black"),
+          legend.title = element_blank(),
+          legend.position = 'top',
+          legend.direction = "horizontal",
+          legend.text = element_text(
+              face="plain",
+              colour="black",
+              size=20),
+          strip.text.x = element_text(
+              size = 20,
+              face = "bold"),
+          panel.background = element_rect(
+              fill='white',
+              colour='white'),
+          strip.background = element_rect(
+              fill='white',
+              colour='white'),
+          axis.title.x = element_text(
+              margin = margin(t = 10)),
+          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+          plot.caption = element_text(size=15)
+          )
+```
+
+####insert .txt files
+```{r}
+sham<- tibble(filename = list.files("1.SHAM", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+ai<- tibble(filename = list.files("2.AI", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+dacc<- tibble(filename = list.files("3.dACC", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+```
+
+####add condition column
+
+```{r}
+sham <- sham %>%
+      mutate (condition="sham")
+ai <- ai %>%
+      mutate (condition="ai")
+dacc <- dacc %>%
+      mutate (condition="dacc")
+```
+
+#### Set variable names
+```{r}
+sham <- sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+
+dacc <- dacc %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+ai <- ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+```
+
+
+####combine datasets
+```{r}
+tus <-bind_rows(sham, ai, dacc)
+```
+
+
+#### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
+```{r}
+tus <- tus %>%
+      mutate_at("ID", str_replace, "1.SHAM/", "")# & "log.txt", "")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "2.AI/", "")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "3.dACC/", "")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_2", "_sham")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_3", "_sham")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_1", "_sham")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM__1", "_sham")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_2", "_dACC")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_3", "_dACC")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_1", "_dACC")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_ACC_2", "_dACC")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_ACC_1", "_dACC")
+
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_2", "_AI")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_3", "_AI")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_1", "_AI")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_log.txt", "")
+
+tus <- tus %>%
+      mutate_at("ID", str_replace, "SINB_0180", "SINB0180")
+```
+
+
+#### Add response col (press - no_press)
+```{r}
+tus$response <- with(tus, ifelse(RT>0, "press", "no_press"))
+tus$GoResponse <- with(tus, ifelse(RT>0, 1, 0)) 
+```
+
+### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+tus$Cue <- ifelse(tus$stim_ID == tus$NGL, 'NGL',
+                ifelse(tus$stim_ID == tus$NGW, 'NGW', 
+                ifelse(tus$stim_ID == tus$GW, 'GW', 
+              ifelse(tus$stim_ID == tus$GAL, 'GAL', NA))))
+    ```
+
+#### Add GNG col (Go-noGO)
+```{r}
+tus$req_action <- ifelse(tus$stim_ID == tus$NGL, 'noGo',
+                ifelse(tus$stim_ID == tus$NGW, 'noGo', 'Go'))   
+#NB's way: 
+#pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
+            #       ifelse(pilot$Cue == 'NGW', 'NoGo',
+             #      ifelse(pilot$Cue == 'GW', 'Go',
+              #      felse(pilot$Cue == 'GAL', 'Go', NA))))
+```
+ 
+#### Add correct column (0-1)  
+```{r}
+tus <- tus %>%
+  mutate(correct = ifelse(req_action == "noGo", ifelse(response == "no_press", 1, 0), 
+         
+                    ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
+```
+        
+        
+#### Add win_lose column (win - lose) 
+```{r}
+tus$feedback <- recode_factor(tus$outcomefeed, "-1" = "lose", 
+                                "1" = "win", "0"= "neutral")
+```
+      
+### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
+                   ifelse(tus$Cue == 'NGW', 'Win',
+                   ifelse(tus$Cue == 'GW', 'Win',
+                   ifelse(tus$Cue == 'GAL', 'Avoid', NA))))
+```
+
+#### Add salient feedback column only
+```{r}
+tus <- tus %>%
+  mutate(salient = ifelse(feedback == "win","win",
+                      ifelse(feedback == "lose", "lose", NA)));View(tus)
+
+```
+        
+        
+        ###Trial column & block column
+```{r}
+#1,2,3...100...320
+tus <- tus %>%
+  group_by(ID) %>%
+  mutate(trial_number = row_number());View(tus)
+
+#block 1, 2, 3, 4   =====sos with the trials that have 400 instead of 320
+tus$block <- ifelse(tus$trial_number == 1:80, '1',
+                ifelse(tus$trial_number == 81:160, '2', 
+                ifelse(tus$trial_number == 161:240, '3', 
+              ifelse(tus$trial_number == 241:320, '4', NA)))); View(tus)
+
+# counts trials of the same condition within each block
+count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a function 
+#into a rolling version of itself for use inside of a call to dplyr::mutate() ,
+# however it works equally as well when called from purrr::map()
+
+tus <- tus %>%
+  group_by(ID, block) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
+
+View(tus)
+```
+
+#MEAN RT - PRESSES (distribution of RT)
+```{r}
+tus_presses <- subset(tus, RT != "0") # exlude 0s (no presses)
+RT_presses <-tus_presses%>%  group_by(condition) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+
+```
+
+```{r}
+# get mean RT per participant
+MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence,condition) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action + OutValence + condition,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condtion",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(400, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7) + theme_APA
+
+
+
+# get mean RT per participant
+MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence,condition, correct) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~  OutValence + condition + correct,    
+                  data = MeanRTpersub,           
+                  theme = 2,
+                 # main = "Condition",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(300, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7) 
+```
+
+#proportion of GO response per condition -----------need to choose correct responses (320 trials)
+```{r}
+
+# compute proportion of go responses for each participant
+MeanGoResppersub <- tus %>% group_by(ID, OutValence, Cue, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, OutValence, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
++ theme_bw() 
+
+#plot Go responses per block
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
+```
+
+```{r}
+ggplot(tus,
+       aes(x=condition, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#presses for noGos 
+ggplot(tus,
+       aes(x=condition, y= correct, color = condition, fill= condition)) + 
+  geom_bar(stat = "identity") +
+  facet_grid(~response +req_action)
+
+#errors
+ggplot(tus,
+       aes(x=condition, y= correct, color = condition, fill= condition)) + 
+  geom_bar(stat = "identity") +
+  facet_grid(~req_action)
+
+
+
+#correct counts per Cue
+ccc<-tus %>% group_by (req_action, condition)%>% count (correct);View (ccc)
+
+```
+
