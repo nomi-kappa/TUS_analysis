@@ -127,13 +127,16 @@ pilot_f <- glmer(correct ~ req_action + OutValence + TrialCount +(1|ID),
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (pilot_f) # learnigng = trial count performance goes up 
-
-
+library(jtools)
+summ(pilot_f)
+library (huxtable)
+export_summs (pilot_f)
 ##model for salient feedback - correct
 pilot_s <- glmer(correct ~ req_action + salient + TrialCount + (1|ID), 
                  data  = pilot, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (pilot_s) 
+summ(pilot_s)
 
 ```
 
@@ -146,6 +149,8 @@ pilot_rt <- lmer(RT ~ req_action + OutValence + TrialCount +(1|ID),
                  data  = pilot, REML = FALSE) #REML = FALSE
 summary (pilot_rt) 
 report (pilot_rt)
+summ(pilot_rt)
+
 
 ##model for salient feedback - rt
 pilot_rt_s <- lmer(RT ~ req_action + salient + TrialCount +(1|ID), 
