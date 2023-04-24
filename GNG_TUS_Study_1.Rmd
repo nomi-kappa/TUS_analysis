@@ -1,3 +1,4 @@
+
 ---
 title: "GNG_TUS_Study_1"
 author: "nomi"
@@ -8,10 +9,26 @@ output: html_document
 
 #### LOAD LIBRARIES
 ```{r}
-library(pacman)
+#library(Rccp)
+#library(rlang)
+library(tibbletime)
+library(purr)
+library(rstanarm)
+library(stringr)
+library(report)
+library(ggplot)
+library(ggplot2)
+library(dplyr)
+library(lmer)
+library(lmerTest)
+library(BayesFactor)
+library(tidyverse)
 
-p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
-
+install.packages("devtools")
+devtools::install_github("mikabr/ggpirate")
+library(ggpirate)
+#p_load ( rms, htmltools, bridgesampling, rstanarm, magrittr, scales, RColorBrewer, 
+# parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
 ```
 
 
@@ -56,14 +73,13 @@ theme_APA <- theme_bw()+
 sham<- tibble(filename = list.files("1.SHAM", "*.txt", full.names=TRUE)) %>% 
     group_by(filename) %>% 
     do(read.table(.$filename))
-
 ai<- tibble(filename = list.files("2.AI", "*.txt", full.names=TRUE)) %>% 
     group_by(filename) %>% 
     do(read.table(.$filename))
-
 dacc<- tibble(filename = list.files("3.dACC", "*.txt", full.names=TRUE)) %>% 
     group_by(filename) %>% 
     do(read.table(.$filename))
+
 
 ```
 
@@ -82,7 +98,6 @@ dacc <- dacc %>%
 ```{r}
 sham <- sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
               "jitter2", "RT", "outcomefeed", "condition"))
-
 dacc <- dacc %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
               "jitter2", "RT", "outcomefeed", "condition"))
 ai <- ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
@@ -100,13 +115,10 @@ tus <-bind_rows(sham, ai, dacc)
 ```{r}
 tus <- tus %>%
       mutate_at("ID", str_replace, "1.SHAM/", "")# & "log.txt", "")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "2.AI/", "")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "3.dACC/", "")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "_SHAM_2", "_sham")
 tus <- tus %>%
@@ -121,25 +133,23 @@ tus <- tus %>%
       mutate_at("ID", str_replace, "_dACC_3", "_dACC")
 tus <- tus %>%
       mutate_at("ID", str_replace, "_dACC_1", "_dACC")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "_ACC_2", "_dACC")
 tus <- tus %>%
       mutate_at("ID", str_replace, "_ACC_1", "_dACC")
-
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "_AI_2", "_AI")
 tus <- tus %>%
       mutate_at("ID", str_replace, "_AI_3", "_AI")
 tus <- tus %>%
       mutate_at("ID", str_replace, "_AI_1", "_AI")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "_log.txt", "")
-
 tus <- tus %>%
       mutate_at("ID", str_replace, "SINB_0180", "SINB0180")
+#copied
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_Copy", "")
 ```
 
 
@@ -196,7 +206,6 @@ tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
 tus <- tus %>%
   mutate(salient = ifelse(feedback == "win","win",
                       ifelse(feedback == "lose", "lose", NA)));View(tus)
-
 ```
         
         
@@ -206,24 +215,20 @@ tus <- tus %>%
 tus <- tus %>%
   group_by(ID) %>%
   mutate(trial_number = row_number());View(tus)
-
 #block 1, 2, 3, 4   =====sos with the trials that have 400 instead of 320
 tus$block <- ifelse(tus$trial_number == 1:80, '1',
                 ifelse(tus$trial_number == 81:160, '2', 
                 ifelse(tus$trial_number == 161:240, '3', 
-              ifelse(tus$trial_number == 241:320, '4', NA)))); View(tus)
-
+              ifelse(tus$trial_number == 241:320, '4', NA))))
 # counts trials of the same condition within each block
 count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a function 
 #into a rolling version of itself for use inside of a call to dplyr::mutate() ,
 # however it works equally as well when called from purrr::map()
-
 tus <- tus %>%
   group_by(ID, block) %>%
   mutate(TrialCount = count_trials(Cue)) %>%
   group_by(ID, block, Cue) %>%
   mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
-
 View(tus)
 ```
 
@@ -234,16 +239,26 @@ RT_presses <-tus_presses%>%  group_by(condition) %>%
   summarise(Mean_RT = mean(RT, na.rm = TRUE))
 RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
   summarise(Mean_RT = mean(RT, na.rm = TRUE))
-
 ```
+
+#MEAN CORRECT
+```{r}
+#tus_presses <- subset(tus, RT != "0") # exlude 0s (no presses)
+correct_res <-tus%>%  group_by(condition, ID) %>% 
+  summarise(correct = mean(correct))
+RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+```
+
 
 ```{r}
 # get mean RT per participant
 MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence,condition) %>% summarise(RT = mean(RT))
+
 yarrr::pirateplot(formula = RT ~ req_action + OutValence + condition,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
                   data = MeanRTpersub,           
                   theme = 2,
-                  main = "Condtion",
+                  main = "Condition",
                   ylab = "Reaction Time (ms)",
                   ylim = c(400, 1000),
                   bean.f.o = .4, # Bean fill
@@ -256,17 +271,14 @@ yarrr::pirateplot(formula = RT ~ req_action + OutValence + condition,    # DV = 
                   point.pch = 21,
                   point.bg = "white",
                   point.cex = .7) + theme_APA
-
-
-
-# get mean RT per participant
-MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence,condition, correct) %>% summarise(RT = mean(RT))
-yarrr::pirateplot(formula = RT ~  OutValence + condition + correct,    
-                  data = MeanRTpersub,           
+#---------------------------- get mean RT per participant - probability of correct instead
+tus_correct<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
+yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,    
+                  data = tus_correct,           
                   theme = 2,
-                 # main = "Condition",
-                  ylab = "Reaction Time (ms)",
-                  ylim = c(300, 1000),
+                 #main = "Probability of being correct per condition",
+                  ylab = " (p) of correct",
+                  ylim = c(0.1, 1.0),
                   bean.f.o = .4, # Bean fill
                   bean.b.o = .2, # Light bean border
                   point.o = .5, # Points (opacity)
@@ -276,24 +288,21 @@ yarrr::pirateplot(formula = RT ~  OutValence + condition + correct,
                   avg.line.o = 0, # Average line
                   point.pch = 21,
                   point.bg = "white",
-                  point.cex = .7) 
+                  point.cex = .7) ;View(tus_correct)
 ```
 
-#proportion of GO response per condition -----------need to choose correct responses (320 trials)
+#proportion of GO response per condition 
 ```{r}
-
 # compute proportion of go responses for each participant
-MeanGoResppersub <- tus %>% group_by(ID, OutValence, Cue, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+tus_correct_sub<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
 # compute mean proportion of go responses 
-MeanGoResp <- MeanGoResppersub %>% group_by(Cue, OutValence, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
-
+tus_correct <- MeanGoResppersub %>% group_by(Cue, OutValence, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
 #plot
 ggplot(MeanGoResp) + 
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
 + theme_bw() 
-
 #plot Go responses per block
 ggplot(MeanGoResp) + 
   geom_smooth(aes(TrialCount,GoResponse,colour=OutValence, lty = req_action)) +
@@ -303,27 +312,113 @@ ggplot(MeanGoResp) +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
 ```
 
+
+#proportion of correct per condition 
+```{r}
+# compute proportion of go responses for each participant
+tus_correct_sub <- tus %>% group_by(ID, OutValence, condition, req_action) %>% summarise(correct = mean(correct))
+# compute mean proportion of go responses 
+tus_correct <- tus_correct_sub %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
+
+
+pirateplot(formula = correct ~ condition  +req_action +OutValence,
+           data = tus_correct,
+           theme = 1,
+           bar.f.o = .5, 
+           point.o = .5, 
+          ylim = c(0.1, 1.0))
+
+         #breaks = seq(from = 0, to = 1, by = 0.1))
+```
+
+
+
+#presses for correct - might wrong
+```{r}
+presses <- subset(tus, response != "no_press") # exlude 0s (no presses)
+  
+press_mean<-presses %>% group_by(OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
+pirateplot(formula = n ~ condition  +req_action +OutValence,
+           data = presess,
+           theme = 2,
+           bar.f.o = .5)
+#errors
+press_mean<-presses %>% group_by(OutValence, condition, req_action) %>% count(correct = "0")%>%summarize (n=mean(n))
+pirateplot(formula = n ~ condition  +req_action +OutValence,
+           data = presess,
+           theme = 2,
+           bar.f.o = .5)
+
+
+
+#means
+----
+  press_mean_ID<-presses %>% group_by(ID, OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
+  press_mean  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
+  
+  pirateplot(formula = n ~ condition  + req_action +OutValence,
+           main = "presses",
+             data = press_mean,
+           theme = 2,
+           bar.f.o = .5,
+           ylim = c(0, 80),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.5, # Inference fill
+                  inf.b.o = 0.5, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "black",
+                  point.cex = 1) 
+  
+  #means errors
+   press_mean_ID<-presses %>% group_by(ID, OutValence, condition, req_action) %>% 
+     count(correct ="0")%>%
+     summarize(n=mean(n))
+  press_mean  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (mean_errors=mean(n))
+  
+  pirateplot(formula = mean_errors ~ condition  + req_action +OutValence,
+           main = "presses_errors",
+             data = press_mean,
+           theme = 2,
+           bar.f.o = .5,
+           ylim = c(0, 80),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.5, # Inference fill
+                  inf.b.o = 0.5, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "black",
+                  point.cex = 1) 
+```
+
+#Salient outcomes only
+```{r}
+
+```
+
+
+
+#needs
 ```{r}
 ggplot(tus,
        aes(x=condition, y= correct, color = Cue, fill= Cue)) + 
   geom_bar(stat = "identity")
-
-#presses for noGos 
+#presses 
 ggplot(tus,
        aes(x=condition, y= correct, color = condition, fill= condition)) + 
   geom_bar(stat = "identity") +
   facet_grid(~response +req_action)
-
-#errors
+#errors - nop
 ggplot(tus,
        aes(x=condition, y= correct, color = condition, fill= condition)) + 
   geom_bar(stat = "identity") +
   facet_grid(~req_action)
-
-
-
 #correct counts per Cue
 ccc<-tus %>% group_by (req_action, condition)%>% count (correct);View (ccc)
-
 ```
-
