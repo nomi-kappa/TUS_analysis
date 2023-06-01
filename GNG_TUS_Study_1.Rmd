@@ -247,7 +247,10 @@ tus <- tus %>%
 ```
         
         
+write.csv
+```{r}
 
+```
 
 
             ######Processing
@@ -472,7 +475,7 @@ Analysis
 
 #Accuracy
 ```{r}
-model_acc <- glmer(correct ~ req_action  + trial_number +OutValence*condition + req_action*condition +(1|ID) , 
+model_acc <- glmer(correct ~ req_action  + trial_number  + req_action*condition +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
@@ -494,6 +497,18 @@ ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
 geom_smooth(method= "lm", se = TRUE)
 
 
+#BF
+tus$ID <- as.factor(tus$ID)
+tus$req_action <- as.factor(tus$req_action)
+tus$condition <- as.factor(tus$condition)
+tus$trial_number <- as.factor(tus$trial_number)
+tus$OutValence <- as.factor(tus$OutValence)
+
+
+
+ accu <-anovaBF(correct ~ req_action*condition + trial_number +OutValence + ID, data = tus, whichRandom = "ID",
+   progress=FALSE)
+accu[4]/accu[3]
 ```
 
 #RTs
@@ -509,7 +524,10 @@ report_table(model_rt)
 report_performance(model_rt)
 report_parameters(model_rt)
 
-lm(RT ~ condition, data=tus)
+
+rt <-anovaBF(RT ~ req_action*condition + trial_number +OutValence + ID, data = tus, whichRandom = "ID",
+   progress=TRUE)
+rt[4]/rt[3]
 ```
 
 
