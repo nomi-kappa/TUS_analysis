@@ -249,7 +249,7 @@ tus <- tus %>%
         
 write.csv
 ```{r}
-
+write.csv(tus, "GNG_TUS_S1.csv")
 ```
 
 
