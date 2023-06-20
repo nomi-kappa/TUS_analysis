@@ -1,6 +1,6 @@
 # TUS_analysis
 
-    ## Go-noGo task
+## Go-noGo task
      
 Equiprobable Go/NoGo learning task (i.e. the ratio Go cues: NoGo cues is 50:50) featuring Win cues (chance for winning points/ money vs. neutral outcome) and Avoid cues (chance for neutral outcome vs. losing points/money).
 The task features 4 conditions (at least 1 cue per condition):
@@ -17,7 +17,7 @@ Outcomes are usually probabilistic (e.g. 80% valid feedback, i.e. correct respon
 The task is used to measure Pavlovian biases/ motivational biases, i.e. the tendency to show more Go responses (and faster reaction times) to Win cues than Avoid cues.
 
 
-	## Go-noGo task - current study
+## Go-noGo task - current study
 
      Participants are looking gems on the screen and they need to decide whether they should:
       - press to Win (GW)
@@ -27,7 +27,7 @@ The task is used to measure Pavlovian biases/ motivational biases, i.e. the tend
       
 
       
-     		###PILOT GNG 
+### PILOT GNG 
      
      Full tasks consists of 400 trials split into 4 blocks each.
      
@@ -39,10 +39,11 @@ The task is used to measure Pavlovian biases/ motivational biases, i.e. the tend
      4 gems per block (presented 25 times each, per block)
      1 block = 100 trials
      4 blocks = 400 trials  
-     ***To avoid running preprocessing download the pilot.csv file.***
+     
+***To avoid running preprocessing download the pilot.csv file.***
 
 
-     		###ACTUAL GNG 
+###ACTUAL GNG 
 
      Full tasks consists of 320 trials split into 4 blocks each.
      
@@ -54,4 +55,5 @@ The task is used to measure Pavlovian biases/ motivational biases, i.e. the tend
      4 gems per block (presented 20 times each, per block)
      1 block = 80 trials
      4 blocks = 320 trials
-     ***To avoid running preprocessing download the GNG_TUS_S1.csv file.***
+   
+***To avoid running preprocessing download the GNG_TUS_S1.csv file.***
