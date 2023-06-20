@@ -111,7 +111,7 @@ c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter
 
 ####combine datasets
 ```{r}
-tus <-bind_rows(a.sham, c.ai, b.dacc); View(tus)
+tus <-bind_rows(a.sham, c.ai, b.dacc)
 ```
 
 
@@ -124,29 +124,29 @@ tus <- tus %>%
 tus <- tus %>%
       mutate_at("ID", str_replace, "2.dACC/", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_2", "_sham")
+      mutate_at("ID", str_replace, "_SHAM_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_3", "_sham")
+      mutate_at("ID", str_replace, "_SHAM_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_1", "_sham")
+      mutate_at("ID", str_replace, "_SHAM_1", "")
 #tus <- tus %>%
    #   mutate_at("ID", str_replace, "_SHAM__1", "_sham")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_2", "_dACC")
+      mutate_at("ID", str_replace, "_dACC_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_3", "_dACC")
+      mutate_at("ID", str_replace, "_dACC_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_1", "_dACC")
+      mutate_at("ID", str_replace, "_dACC_1", "")
 #tus <- tus %>%
     #  mutate_at("ID", str_replace, "_ACC_2", "_dACC")
 #tus <- tus %>%
 #      mutate_at("ID", str_replace, "_ACC_1", "_dACC")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_2", "_AI")
+      mutate_at("ID", str_replace, "_AI_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_3", "_AI")
+      mutate_at("ID", str_replace, "_AI_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_1", "_AI")
+      mutate_at("ID", str_replace, "_AI_1", "")
 tus <- tus %>%
       mutate_at("ID", str_replace, "_log.txt", "")
 #tus <- tus %>%
@@ -157,6 +157,7 @@ tus <- tus %>%
 
 View(tus)
 ```
+
 
 
 #### Add response col (press - no_press)
@@ -198,7 +199,7 @@ tus <- tus %>%
 #1,2,3...100...320
 tus <- tus %>%
   group_by(ID) %>%
-  mutate(trial_number = row_number());View(tus)
+  mutate(trial_number = row_number())
 ```
 
 
@@ -220,7 +221,6 @@ tus <- tus %>%
   mutate(TrialCount = count_trials(Cue)) %>%
   group_by(ID, block, Cue) %>%
   mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
-View(tus)
 ```
 
 
@@ -243,7 +243,7 @@ tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
 ```{r}
 tus <- tus %>%
   mutate(salient = ifelse(feedback == "win","win",
-                      ifelse(feedback == "lose", "lose", NA)));View(tus)
+                      ifelse(feedback == "lose", "lose", NA)))
 ```
         
         
@@ -325,9 +325,10 @@ yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,
 #proportion of GO response per condition 
 ```{r}
 # compute proportion of go responses for each participant
-tus_correct_sub<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
-# compute mean proportion of go responses 
-tus_correct <- MeanGoResppersub %>% group_by(Cue, OutValence, req_action, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub <- na.omit(MeanGoResppersub)
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResp)
+
 #plot
 ggplot(MeanGoResp) + 
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
@@ -341,6 +342,139 @@ ggplot(MeanGoResp) +
   facet_grid(~block)+
   theme_bw() +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
+```
+
+
+
+          #proportion of GO response per type f Stimulation (sham, ai, dACC) - NADEIDE  and ELSA to check
+```{r}
+
+    #AI - it does not summarize find why --> I excluded the block. Not sure it did not like it
+ai <- subset(tus, condition == "c.ai")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_ai <- ai %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+MeanGoResp.ai <- MeanGoResppersub_ai %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp.ai) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for AI") +
+   xlim(NA, 20)+
+ theme_bw() 
+
+
+    #dACC - 
+dacc <- subset(tus, condition == "b.dacc")
+#dacc <- na.omit(dacc)
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_dacc <- dacc %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResp.dacc <- MeanGoResppersub_dacc %>% group_by(Cue, req_action, OutValence, TrialCount ) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp.dacc) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for dACC")+
+   xlim(NA, 20)+ theme_bw() 
+
+
+
+    #Sham
+sham <- subset(tus, condition == "a.sham")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_sham <- sham %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+MeanGoResp.sham <- MeanGoResppersub_sham %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp.sham) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for sham") +
+   xlim(NA, 20)+
+ theme_bw() 
+```
+
+     #rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
+
+```{r}
+#GW
+GW <- subset(tus, Cue == "GW")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_gw <- GW %>% group_by(ID, req_action, OutValence, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_gw <- na.omit(MeanGoResppersub_gw)
+MeanGoResp_gw <- MeanGoResppersub_gw %>% group_by(req_action, OutValence, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+GW<-ggplot(MeanGoResp_gw) + 
+  geom_smooth(aes(TrialCount, GoResponse, color="red" )) +
+  scale_colour_brewer(palette = "Set1") +
+   facet_grid(~condition)+
+   xlim(NA, 20)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
+
+#GAL
+GAL <- subset(tus, Cue == "GAL")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_gal <- GAL %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_gal <- na.omit(MeanGoResppersub_gal)
+MeanGoResp_gal <- MeanGoResppersub_gal %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+GAL<-ggplot(MeanGoResp_gal) + 
+  geom_smooth(aes(TrialCount, GoResponse)) +
+  scale_colour_brewer(palette = "Set1") +
+   facet_grid(~condition)+
+   xlim(NA, 20)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
+
+#NGW
+NGW <- subset(tus, Cue == "NGW")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_NGW <- NGW %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_NGW <- na.omit(MeanGoResppersub_NGW)
+MeanGoResp_NGW <- MeanGoResppersub_NGW %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot - need to work on linetype
+NGW<-ggplot(MeanGoResp_NGW) + 
+  geom_smooth(aes(TrialCount, GoResponse, color="red")) +
+  scale_colour_brewer(palette = "Set1") +
+   facet_grid(~condition)+
+   xlim(NA, 20)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
+
+
+
+#NGW
+NGL <- subset(tus, Cue == "NGL")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_NGL <- NGL %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_NGL <- na.omit(MeanGoResppersub_NGL)
+MeanGoResp_NGL <- MeanGoResppersub_NGL %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+NGL<-ggplot(MeanGoResp_NGL) + 
+  geom_smooth(aes(TrialCount, GoResponse)) +
+  scale_colour_brewer(palette = "Set1") +
+   facet_grid(~condition)+
+   xlim(NA, 20)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
+
+
+
+#CUES PER CONDITION
+cues <- ggarrange(GW, GAL, NGW, NGL,
+                    labels = c("GW", "GAL", "NGW", "NGL"), 
+                  ncol = 2, nrow = 2)
 ```
 
 
@@ -440,6 +574,81 @@ presses_for_error <- subset(tus, response == "press" & correct == "0")
 
 ```
 
+##performance per participant
+
+```{r}
+
+ggplot(tus,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#correct counts per Cue
+ccc<-tus %>% group_by (Cue)%>% count (correct);View (ccc)
+
+#correct counts per Cue per ID
+ccc_id<-tus %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
+
+#correct per ID
+c<-tus %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
+
+#response per ID
+response_per_ppt <-tus %>% group_by (ID)%>% count (response);View (response_per_ppt)
+
+mean(c$n) #avg of 294 correct responses--> 
+          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+
+   
+
+#PROPORTIONs - correct PER PARTCIPANT
+
+
+#the proportion of 1s by participant, + more i.e. sound, and language.
+#Because the proportion of 1s in a vector with only 0s and 1s is just the mean, this should work:
+
+aggregate(data=tus, correct ~ ID, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df <- aggregate(data=tus, correct ~ ID, FUN="mean")
+p <- ggplot(df)
+p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')+
+  geom_vline(xintercept = 0.53, col = "red")+ 
+  geom_vline(xintercept = 0.50, col = "grey")+
+   geom_vline(xintercept = 0.80, col = "green")+
+  geom_text(aes(x=0.54, label="53%", y=4), colour="black", angle=90) +
+geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
+  geom_text(aes(x=0.79, label="80%", y=6), colour="black", angle=90) 
+p + ylab('ID')
+
+#same as above but with stat_summary
+ggplot(tus) + 
+  stat_summary(aes(x = ID, y = correct), 
+               geom = "bar")
+
+#performance per participant and condition
+aggregate(data=tus, correct ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_c <- aggregate(data=tus, correct ~ ID +condition, FUN="mean")
+ 
+ggplot(data = df_c) + 
+  geom_bar(mapping = aes(fill = condition, x = ID, y = correct), stat = "identity", position = "dodge")
+
+#performance per  condition
+aggregate(data=tus, correct ~ condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_con <- aggregate(data=tus, correct ~ condition, FUN="mean")
+ 
+ggplot(data = df_con) + 
+  geom_bar(mapping = aes(fill = condition, x = condition, y = correct), stat = "identity", position = "dodge")
+
+
+#rt per participant per condition
+aggregate(data=tus, RT ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_rt <- aggregate(data=tus, RT ~ ID +condition, FUN="mean")
+ 
+ggplot(data = df_rt) + 
+  geom_bar(mapping = aes(fill = condition, x = ID, y = RT), stat = "identity", position = "dodge")
+
+```
 
 
 #needs - ignore now
@@ -509,6 +718,12 @@ tus$OutValence <- as.factor(tus$OutValence)
  accu <-anovaBF(correct ~ req_action*condition + trial_number +OutValence + ID, data = tus, whichRandom = "ID",
    progress=FALSE)
 accu[4]/accu[3]
+
+#Cue impact
+model_acc_cue <- glmer(correct ~ Cue*condition +(1|ID) , 
+                 data  = tus, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc_cue) 
 ```
 
 #RTs
@@ -517,17 +732,11 @@ accu[4]/accu[3]
 model_rt <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition +(1|ID), 
                  data  = tus, REML = FALSE) #REML = FALSE
 summary (model_rt) 
-summ(model_rt, exp = T)
-report(model_rt)
-report(model_rt) %>% summary()
-report_table(model_rt)
-report_performance(model_rt)
-report_parameters(model_rt)
 
-
-rt <-anovaBF(RT ~ req_action*condition + trial_number +OutValence + ID, data = tus, whichRandom = "ID",
-   progress=TRUE)
-rt[4]/rt[3]
+#Cue impact
+model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
+                 data  = tus,REML = FALSE) #REML = FALSE
+summary (model_rt_cue) 
 ```
 
 
@@ -535,9 +744,11 @@ rt[4]/rt[3]
 ```{r}
 #select salient only (win, lose) and keep variables ID through block and all columns between them
 tus_salient <- subset(tus, salient=!"neutral",
-select=ID:salient);  View(tus_salient)
+select=ID:salient);  
 
-salient_df <-tus_salient %>% drop_na();  View(salient_df); View(tus)
+salient_df <-tus_salient %>% drop_na();  
+
+
 ```  
 
         
@@ -548,15 +759,22 @@ model_acc_sal <- glmer(correct ~ req_action  + trial_number + OutValence*conditi
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc_sal) 
 
-
-
+#Cue impact
+sal_cue_accu <- glmer(correct ~ Cue*condition +(1|ID) , 
+                 data  = salient_df, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (sal_cue_accu) 
 
 ```
 
 #RTs
 
 ```{r}
-model_rt_sal <- lmer(RT ~ req_action  + trial_number +OutValence*condition+ req_action*condition(1|ID), 
+model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition+(1|ID), 
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (model_rt_sal) 
+
+sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
+                 data  = salient_df, REML = FALSE) #REML = FALSE
+summary (sal_cue_rt) 
 ```
