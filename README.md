@@ -57,3 +57,7 @@ The task is used to measure Pavlovian biases/ motivational biases, i.e. the tend
      4 blocks = 320 trials
    
 ***To avoid running preprocessing download the GNG_TUS_S1.csv file.***
+
+
+*Both PILOT and ACTUAL GNG task are probabilistic; that is 80% valid feedback, i.e. correct responses lead to winning money for Win cues and neutral outcomes for Avoid cues in only 80% of trials, 
+otherwise to invalid feedback; reversed probabilities for incorrect responses.*
