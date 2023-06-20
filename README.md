@@ -43,7 +43,7 @@ The task is used to measure Pavlovian biases/ motivational biases, i.e. the tend
 ***To avoid running preprocessing download the pilot.csv file.***
 
 
-###ACTUAL GNG 
+### ACTUAL GNG 
 
      Full tasks consists of 320 trials split into 4 blocks each.
      
