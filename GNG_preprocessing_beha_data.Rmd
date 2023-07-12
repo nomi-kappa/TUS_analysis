@@ -1,0 +1,1099 @@
+---
+title: "TUS_analysis_behavioral data"
+author: "nomi"
+date: '2022-09-23'
+output: html_document
+---
+
+                ### PREPROCESSING
+  
+#### LOAD LIBRARIES
+```{r}
+library(pacman)
+
+p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
+
+```
+
+
+#### Insert .txt files
+```{r}
+pilot<- tibble(filename = list.files("pilot data_400trials", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+#log <- read.table(file = "MRGI0033_log.txt", header = FALSE)
+```
+
+#### Set variable names
+```{r}
+pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed"))
+
+```
+
+
+#### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
+```{r}
+pilot <- pilot %>%
+      mutate_at("ID", str_replace, "pilot data_400trials/", "")# & "log.txt", "")
+
+pilot <- pilot %>%
+      mutate_at("ID", str_replace, "_log.txt", "")
+```
+
+#### Add response col (press - no_press)
+```{r}
+pilot$response <- with(pilot, ifelse(RT>0, "press", "no_press"))
+pilot$GoResponse <- with(pilot, ifelse(RT>0, 1, 0))
+```
+
+### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$Cue <- ifelse(pilot$stim_ID == pilot$NGL, 'NGL',
+                ifelse(pilot$stim_ID == pilot$NGW, 'NGW', 
+                ifelse(pilot$stim_ID == pilot$GW, 'GW', 
+              ifelse(pilot$stim_ID == pilot$GAL, 'GAL', NA))))
+    ```
+
+#### Add GNG col (Go-noGO)
+```{r}
+pilot$req_action <- ifelse(pilot$stim_ID == pilot$NGL, 'noGo',
+                ifelse(pilot$stim_ID == pilot$NGW, 'noGo', 'Go'))   
+
+#NB's way: 
+#pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
+            #       ifelse(pilot$Cue == 'NGW', 'NoGo',
+             #      ifelse(pilot$Cue == 'GW', 'Go',
+              #      felse(pilot$Cue == 'GAL', 'Go', NA))))
+```
+ 
+#### Add correct column (0-1)  
+```{r}
+pilot <- pilot %>%
+  mutate(correct = ifelse(req_action == "noGo", ifelse(response == "no_press", 1, 0), 
+         
+                    ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
+```
+        
+#### Add win_lose column (win - lose) 
+```{r}
+pilot$feedback <- recode_factor(pilot$outcomefeed, "-1" = "lose", 
+                                "1" = "win", "0"= "neutral")
+```
+      
+### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+pilot$OutValence <- ifelse(pilot$Cue == 'NGL', 'Avoid',
+                   ifelse(pilot$Cue == 'NGW', 'Win',
+                   ifelse(pilot$Cue == 'GW', 'Win',
+                   ifelse(pilot$Cue == 'GAL', 'Avoid', NA))))
+```
+
+#### Add salient feedback column only
+```{r}
+pilot <- pilot %>%
+  mutate(salient = ifelse(feedback == "win","win",
+                      ifelse(feedback == "lose", "lose", NA)))
+
+```
+        
+###Trial column & block column
+```{r}
+#1,2,3...100...400
+pilot <- pilot %>%
+  group_by(ID) %>%
+  mutate(trial_number = row_number())
+
+#block 1, 2, 3, 4
+pilot$block <- ifelse(pilot$trial_number == 1:100, '1',
+                ifelse(pilot$trial_number == 101:200, '2', 
+                ifelse(pilot$trial_number == 201:300, '3', 
+              ifelse(pilot$trial_number == 301:400, '4', NA))))
+
+# counts trials of the same condition within each block
+count_trials <- rollify(function(x) sum(last(x) == x), window=100)#turns a function 
+#into a rolling version of itself for use inside of a call to dplyr::mutate() ,
+# however it works equally as well when called from purrr::map()
+
+pilot <- pilot %>%
+  group_by(ID, block) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
+
+View(pilot)
+
+#pilot$per_20trials <- ifelse(pilot$trial_number == 1:20, 'a.20',
+ #               ifelse(pilot$trial_number == 21:40, 'b.40', 
+  #              ifelse(pilot$trial_number == 41:60, 'c.60', 
+   #           ifelse(pilot$trial_number == 61:80, 'd.80',
+    #            ifelse(pilot$trial_number == 81:100, 'e.100',
+     #                  ifelse(pilot$trial_number == 101:120, 'a.20',
+      #          ifelse(pilot$trial_number == 121:140, 'b.40', 
+       #         ifelse(pilot$trial_number == 141:160, 'c.60', 
+        #      ifelse(pilot$trial_number == 161:180, 'd.80',
+         #       ifelse(pilot$trial_number == 181:200, 'e.100',
+          #             ifelse(pilot$trial_number == 201:220, 'a.20',
+           #     ifelse(pilot$trial_number == 221:240, 'b.40', 
+            #    ifelse(pilot$trial_number == 241:260, 'c.60', 
+             # ifelse(pilot$trial_number == 261:280, 'd.80',
+              #  ifelse(pilot$trial_number == 281:300, 'e.100',
+               #        ifelse(pilot$trial_number == 301:320, 'a.20',
+                #ifelse(pilot$trial_number == 321:340, 'b.40', 
+                #ifelse(pilot$trial_number == 341:360, 'c.60', 
+              #ifelse(pilot$trial_number == 361:380, 'd.80',
+               # ifelse(pilot$trial_number == 381:400, 'e.100', NA))))))))))))))))))))
+                       
+#I want to divide each participants' trials into chunks of 5
+          #n_chunks = 80
+
+        #pilot<-pilot %>% 
+        #group_by(ID) %>% 
+        #mutate(per_5trials = rep(1:n_chunks, 
+                       # each = ceiling(n() / n_chunks))[1:n()]) #rep=repeat
+#ceiling() is the function that takes two parameters one parameter that is vector with sequence along to divide the vector sequentially and second is chunk length, which represents the length of chunk to be divided
+
+
+#I want to divide each participants' trials into chunks of 5
+          #_chunks = 20
+
+            #pilot<-pilot %>% 
+            # group_by(ID) %>% 
+            #mutate(per_20trials = rep(1:n_chunks, 
+           #each = ceiling(n() / n_chunks))[1:n()])
+```
+
+#write .csv file
+```{r}
+write.csv(x=pilot, "pilot.csv") 
+          #How to import:
+            #pilot <- read.csv(file = 'pilot.csv')
+
+#drop NAs
+df <- na.omit(pilot)
+
+write.csv(x=df, "df.csv") 
+```
+
+          
+          ### PROCESSING - COUNTS AND PLOTS
+
+
+      *****RTs
+ 
+#Distribution of RT for presses
+```{r}
+ #MEAN RT - PRESSES (distribution of RT)
+pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
+RT_presses <-pilot_presses%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE));RT_presses #%>%
+ # filter(CorrectResponse == "Correct")
+
+ggplot(data = RT_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()+ ggtitle ("Distribution of RT for presses") +theme_APA
+
+# get mean RT per participant
+MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condtion",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(400, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7) + theme_APA
+```
+
+#RTs Cue
+```{r}
+# RTs for each Cue
+ggplot(data = MeanRTpersub,
+        aes(x = Cue,                                 
+            y =  RT)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+# get mean RT per Cue per participant
+MeanRTcue <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ Cue,    # DV = reaction time, IV1 = Cue
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "RT per Cue",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(450, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
+
+#RTs Block
+```{r}
+#Cue per block per RT
+ggplot(pilot%>%  
+         filter(response != "no_press")%>%
+         group_by(Cue),
+        aes(x = block,                                 
+            y =  RT,                                  
+            group = Cue,                                 
+            color = Cue)) + 
+          facet_grid (~Cue)+
+     stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+####try number of times == press / times cue presented!!!!
+
+# get mean RT per block per participant 
+MeanRTcueblock <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ block + Cue,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTcueblock,           
+                  theme = 2,
+                  main = "RT cue per block",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
+
+             #!!!!!!Repeated measures so we need to measure per participant first.
+
+
+#Correct counts per Cue, per ID
+```{r}
+# compute proportion of correct response for each participant
+MeanCorrectpersub <- pilot %>% group_by(ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue, block,req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+View(MeanCorrect)
+# plot
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount,correct*100, colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_dark() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+# plot correct per block
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+```
+
+#proportion of GO response per condition
+```{r}
+# compute proportion of go responses for each participant
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
+
+#plot Go responses per block
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
+```
+
+
+
+```{r}
+
+ggplot(pilot,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#correct counts per Cue
+ccc<-pilot %>% group_by (Cue)%>% count (correct);View (ccc)
+
+#correct counts per Cue per ID
+ccc_id<-pilot %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
+
+#correct per ID
+c<-pilot %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
+
+#response per ID
+response_per_ppt <-pilot %>% group_by (ID)%>% count (response);View (response_per_ppt)
+
+mean(c$n) #avg of 294 correct responses--> 
+          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+
+   
+
+#PROPORTIONs - correct PER PARTCIPANT
+
+
+#the proportion of 1s by participant, + more i.e. sound, and language.
+#Because the proportion of 1s in a vector with only 0s and 1s is just the mean, this should work:
+
+aggregate(data=pilot, correct ~ ID, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df <- aggregate(data=pilot, correct ~ ID, FUN="mean")
+p <- ggplot(df)
+p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')+
+  geom_vline(xintercept = 0.53, col = "red")+ 
+  geom_vline(xintercept = 0.50, col = "grey")+
+   geom_vline(xintercept = 0.80, col = "green")+
+  geom_text(aes(x=0.54, label="53%", y=4), colour="black", angle=90) +
+geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
+  geom_text(aes(x=0.79, label="80%", y=6), colour="black", angle=90) 
+p + ylab('ID')
+
+#same as above but with stat_summary
+ggplot(pilot) + 
+  stat_summary(aes(x = ID, y = correct), 
+               geom = "bar")
+```
+
+# trials playing with correct
+```{r}
+#Correct per Cue
+pilot %>% group_by (Cue)%>% count (correct)
+
+
+ggplot(pilot, aes(x = Cue, y = response, color = Cue, fill = Cue))+
+               geom_bar(stat = "identity")+
+  facet_grid(~correct)
+
+
+#Cue per response (percentage) - NICE one
+pilot %>% 
+  group_by(correct, trial_number)%>%
+  count(Cue) %>% 
+  mutate(perc_presses=n/900)-> pilot_1 #
+
+ ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
+   geom_bar(stat = "identity")+
+     scale_y_continuous(labels = scales::percent)+
+     facet_grid(~correct)
+ 
+ 
+                     ???@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      
+  MeanCorrectpersub <- pilot %>% group_by(trial_number, ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue,trial_number, block,req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# plot @@@@@@@@@Is that all the trials indeed?
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(trial_number,correct*100, colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_dark() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+
+# plot correct per block
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(trial_number, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+  
+  # plot correct per block
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+  
+  
+  
+          ***wrong***
+            @@@@@@@@@do per participant first like above nadeige
+  
+    #with facets = CANNOT do the % (I WANT ALL RESPONSE 0 AND 1S TO APPEAR)
+ pilot_1 <- pilot %>% group_by(ID, correct, trial_number, response, Cue)%>% count(Cue)
+ 
+ ggplot(pilot_1%>% group_by (Cue), 
+       aes(x = trial_number, y = Cue, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_smooth()+
+  facet_grid(response~correct)
+```
+
+
+# Number of presses vs no_presses 
+```{r}
+pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
+
+
+presses_per_Cue<- pilot%>% group_by (Cue, ID)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue) #presses for the noGo responses fluctuate a lot per participant  
+
+presses_per_Cue_block<- pilot%>% group_by (Cue, block)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue_block)
+
+ #plot presses per Cue
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=Cue, y= response, color = Cue, fill = Cue)) + 
+  geom_bar(stat = "identity") + theme_APA
+
+ #plot presses per Cue
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=req_action, y= response, color = req_action, fill = req_action)) + 
+  geom_bar(stat = "identity") + theme_APA
+
+# plot press vs no press, per Cue better
+ggplot(pilot %>%
+         group_by(Cue),
+         aes(x=response,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
+          geom_bar(stat = "count") +theme_APA
+
+# press per Cue per block
+ggplot(pilot %>%
+        filter(response == "press"),
+         aes(y = block,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
+     # facet_grid(Cue~paste("cue", Cue), scales="free")
+          geom_bar(stat = "count") + theme_APA
+```
+
+
+
+#Neutral > win > lose
+```{r}
+#number of win_lose_neutral instances (valence?)
+pilot%>% group_by(win_lose_neutral) %>%dplyr::count(win_lose_neutral) 
+
+ 
+ggplot(pilot,#%>%
+        # group_by(GNG),
+       aes(x=win_lose_neutral, y= req_action))+ 
+  geom_bar(stat = "identity") #normal for neutral to be more.
+
+
+
+#presses vs no_presses per cue valence (win, lose, neutral)
+pilot%>% group_by(win_lose_neutral, response) %>%dplyr::count(win_lose_neutral) 
+
+ggplot(pilot,
+       aes(x=win_lose_neutral,
+           color = response, fill = response))+ 
+  geom_bar(stat = "count")
+```
+
+#Presses per correctness and blocks and response (press vs no_press)
+```{r}
+#presses per correct and blocks--> they are doing good so far. they learn fast
+pilot%>% group_by(correct, response) %>%dplyr::count(correct) 
+pilot%>% group_by(correct, block) %>%dplyr::count(correct) # 1st block OK, 2nd block better, 3rd block tired, 4th block better
+
+#How good per block and per response (press vs no_press)
+ggplot(pilot,
+        aes(x = response,                                 
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+#How good per block
+ggplot(pilot,
+        aes(x = block,                                 
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+```
+
+
+
+   **ANALYSES**
+```{r}
+pilot <-read.csv("pilot.csv")
+```
+   
+      
+```{r}
+library (GGally)
+ggpairs(pilot[, c("response", "req_action")])
+
+ggpairs(pilot[, c("correct", "req_action", "OutValence", "block")])
+ggpairs(pilot[, c("correct", "req_action", "OutValence")])
+ggpairs(pilot[, c("correct", "req_action", "response")])
+
+
+ggpairs(pilot[, c("correct", "req_action")])
+ggpairs(pilot[, c("correct", "req_action", "block")])
+ggpairs(pilot[, c("response", "req_action", "block")])
+
+xtabs(~ correct + req_action, data=pilot) # "req_action" seems to be a good predictor
+```
+   
+
+   
+   
+   
+   ###Frequentist
+   *correct is a binary response (binomial proportion in blocks for example)*
+
+
+                        **GLMM - correct approach**
+              
+
+    ###Learning - main effect of required action Go vs noGo on correct response
+
+#main effect of required action - CORRECT
+```{r}
+library(lmerTest)
+
+#pilot <- elm_test %>% 
+#  filter(trial_type=="noGo") %>% 
+ # group_by(experimental_condition, block, subj, test3or7) %>% 
+ # summarise(exposure=n(), is_slip=sum(is_slip)/exposure)#exposure?
+  
+pilot.m1 <- glmer(correct ~ req_action + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.m1)
+summary(pilot.m1)
+report::report(pilot.m1)
+
+print(pilot.m1)
+
+#TRYING TO FIND DEGREES OF FREEDOM - not working
+library (afex)
+lmermodg <- lme4::lmer(correct ~ req_action + (1 + correct||req_action), data=pilot)
+
+afmodr <- mixed(correct ~ req_action + (1 + correct||req_action), data=pilot, check_contrasts = FALSE, test_intercept = TRUE, expand_re = TRUE, method="KR")
+
+
+library(aod)
+#not working
+wald.test(b = coef(pilot.m1), Sigma = vcov(pilot.m1), Terms = 2:2)
+
+
+## odds ratios and 95% CI - not working
+exp(cbind(OR = coef(pilot.m1), confint(pilot.m1)))
+     
+
+####PSEUDO R-SQUARED FOR LOGISTIC/BINOMIAL - DOES not MAKE SENSE MUCH FOR LOGISTIC
+r2_tjur(pilot.m1)#0.1367558 
+
+
+#########RESIDUALS
+plot(pilot.m1,which=1)#If we use R's diagnostic plot, the first one is the 
+#scatterplot of the residuals, against predicted values (the score actually)
+
+plot(predict(pilot.m1),residuals(pilot.m1))
+abline(h=0,lty=2,col="grey")
+
+#Why do we have those two lines of points ? Because we predict a probability for a variable taking values 0 or 1. If the tree value is 0, then we always predict more, and residuals have to be negative (the blue points) and if the true value is 1, then we underestimate, and residuals have to be positive (the red points). And of course, there is a monotone relationship. We can see more clearly what's going on when we use colors
+
+plot(predict(pilot.m1),residuals(pilot.m1),col=c("blue","red"))
+abline(h=0,lty=2,col="grey")
+
+#run a local regression, to see what's going on,
+lines(lowess(predict(pilot.m1),residuals(pilot.m1)),col="black",lwd=2)
+
+library (splines)
+rl=lm(residuals(pilot.m1)~bs(predict(pilot.m1),8))
+#rl=loess(residuals(reg)~predict(reg))
+y=predict(rl,se=TRUE)
+segments(predict(pilot.m1),y$fit+2*y$se.fit,predict(pilot.m1),y$fit-2*y$se.fit,col="green")
+
+
+#Predicted probability working but not good
+data <- data.frame(actual= pilot$req_action, predicted=predict(pilot.m1))
+
+glimpse(data)
+data$predicted <-as.numeric(data$predicted)
+
+ggplot(data, aes(x=actual, y= predicted)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  labs(x='Actual Values', y='Predicted Values', title='Predicted vs. Actual Values')
+
+ggplot(data=data, aes(x=actual, y=predicted)) +
+  geom_point(aes(color=actual), size=4) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+```
+
+
+    ### Biased-responding - responses biased by Cue valence (win/avoid) of prospective outcomes,i.e. favouring win? 
+      =  motivational bias -  more presses to win than to avoid
+
+#main effect of CUE valence (WIN OR AVOID) - CORRECT
+```{r}
+pilot.valence.m1 <- glmer(correct ~ OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~  + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.valence.m1)
+summary(pilot.valence.m1)
+report::report(pilot.valence.m1)
+print (pilot.valence.m1)
+
+# The effect of cue valence was highly significant 
+```
+
+
+#req_action*valence to show between go vs noGo????????? Is what is written in purple correct?
+```{r}
+pilot.vgng.m1 <- glmer(correct ~ req_action*OutValence  + (1|ID), 
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.m1.0 <- glmer(correct ~ req_action + (1|ID),
+                 data  = pilot, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(pilot.m1.0, pilot.vgng.m1)
+summary(pilot.vgng.m1)
+print (pilot.vgng.m1)
+
+report::report(pilot.vgng.m1)
+report::report(pilot.m1.0)
+
+#The effect of cue valence was marginally stronger for the Go cues (Req_ction x Valence). 
+#Because each Go cue was associated with only one correct Go response, we confirmed that this 
+#motivational bias was present for both correct and incorrect Go responses. 
+
+```
+
+#Feedback was significant when it was Win and neutral ?????
+```{r}
+pilot.feed.m1 <- glmer(correct ~ feedback + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.fr.m1 <- glmer(correct ~ feedback*req_action + (1|ID), 
+                 data  = pilot, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+summary(pilot.feed.m1)
+summary(pilot.fr.m1)
+
+anova(pilot.feed.m1, pilot.fr.m1)
+
+report::report(pilot.fr.m1)
+report::report(pilot.feed.m1)
+```
+
+
+#Salient outcomes only - rewards led to more choice repetitions following 
+GO responses vs. NoGo responses [valence*response] ???NOT clear.
+```{r}
+pilot.or.m1 <- glmer(correct ~ OutValence*response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+pilot.r.m1 <- glmer(correct ~ response + (1|ID), 
+                 data  = df, family="binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+summary(pilot.or.m1)
+
+report::report(pilot.or.m1)
+
+summary(pilot.r.m1)
+report::report(pilot.r.m1)
+anova(pilot.or.m1, pilot.r.m1 )
+```
+
+
+
+
+
+
+
+
+                *****Ignore for others not myself
+
+GLM -Good for the extras...chi, plots, probabilities etc.
+https://github.com/StatQuest/logistic_regression_demo/blob/master/logistic_regression_demo.R
+```{r}
+
+logistic <- glm(correct ~ req_action, data = pilot) #famlily= "binomial")
+summary(logistic) #requested action is a useful predictor
+
+logistic_0 <- glm(correct ~ 1, data = pilot) 
+summary(logistic_0)
+
+anova(logistic, logistic_0)
+
+report::report(logistic)
+
+
+## Now calculate the overall "Pseudo R-squared" and its p-value
+ll.null <- logistic$null.deviance/-2;ll.null
+ll.proposed <- logistic$deviance/-2; ll.proposed
+
+## McFadden's Pseudo R^2 = [ LL(Null) - LL(Proposed) ] / LL(Null)
+(ll.null - ll.proposed) / ll.null # !!!!!OVERAL effect size
+## The p-value for the R^2 
+1 - pchisq(2*(ll.proposed - ll.null), df=(length(logistic$coefficients)-1))
+ 
+## chi-square value  
+2*(ll.proposed - ll.null) #or
+
+
+## p-value = 1 - pchisq(chi-square value, df = 2-1)
+1 - pchisq(2*(ll.proposed - ll.null), df=1); p=1.20128e-08
+1 - pchisq((logistic$null.deviance - logistic$deviance), df=1)
+
+
+## Lastly, let's  see what this logistic regression predicts, given
+## that a patient is either female or male (and no other data about them).
+predicted.data <- data.frame(
+  probability.of.correct=logistic$fitted.values,
+ req_action=pilot$req_action)
+
+
+## We can plot the data...
+ggplot(data=predicted.data, aes(x=req_action, y=probability.of.correct)) +
+  geom_point(aes(color=req_action), size=10) +
+  xlab("req_action") +
+  ylab("Predicted probability of being correct") #noGo 64%, Go 81%
+
+
+#Residuals
+#get list of residuals #not notmally distributed as we deal with Go vs nogo -->One reason for heavy tails. The residuals come from TWO groups with different variances. Always leads to heavy tails. Interpretation: two different volatility regimes, low and high.
+#The volatility regime model, in which trades take place at different rates over the course of a day, relies on knowing the key facts that
+res <- resid(logistic);res
+head(res)
+#produce residual vs. fitted plot
+plot(fitted(logistic), res)
+
+#add a horizontal line at 0 
+abline(0,0)
+
+#create Q-Q plot for residuals
+qqnorm(res)
+
+#add a straight diagonal line to the plot
+qqline(res) #We can see that the residuals tend to stray from the line quite a bit near the tails, which could indicate that they're not normally distributed.
+
+#Create density plot of residuals
+plot(density(res))
+```
+
+
+lm
+```{r} 
+library (report)
+m0.lm <- lm(correct ~ 1, data = pilot)
+summary(m0.lm)
+
+
+m1.lm<-lm(correct ~ req_action, data = pilot)
+summary(m1.lm)
+
+anova(m1.lm, m0.lm, test = "F")
+
+report::report(m1.lm)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ***IGNORE***
+
+
+
+
+
+## Percentages plots per trial per block -- a bit confused about the percentages, still
+
+           #OK  % per Cue per block
+```{r}
+pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
+
+
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(block)%>%
+  count(Cue) %>% 
+  mutate(perc_presses=n/900)-> pilot_1 # I believe this is the correct calculation (about 50% GW ifyou sum up the percentages, the other half no presses)
+                   #each Cue 25%, 100 in 400trials, 900 in 3600 trials (3600=9participants)
+   #here for 9ppts GW:801 in 3600 = 22.25%
+
+ ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
+   geom_bar(stat = "identity")+
+     scale_y_continuous(labels = scales::percent)+
+     facet_grid(~block)
+```
+   
+ #per Cue per block per 20 trials (increments of 20 on every block)
+```{r}
+t20<-pilot%>% filter(response == "press") %>%group_by(response, per_20trials)%>% count(response) 
+sum(t20$n/20) #2015 times appeared / 180
+
+
+
+
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(block, Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / 180) -> pilot_0 #5 chunks of 20trials for 10 participants = 5*10=50 = now i have 9 ppt so wrong logic
+
+
+
+ggplot(pilot_0, aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+  geom_bar(stat = "identity") +
+  facet_grid(Cue~block) +
+  scale_y_continuous(labels = scales::percent)
+
+
+
+```
+
+                    ##OK, per block of 20 trials but not sure why n/250 and not n/50 works here 
+```{r}
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / 250) -> pilot_2
+
+                #bar plot Cues in chunk of 20 trials
+ggplot(pilot_2, aes(x = per_20trials, y = perc_presses, color = per_20trials, fill = per_20trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+
+                 #%per 5 trials
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 25) -> pilot_10 
+
+ggplot(pilot_10, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+```
+
+
+              #NK: #percentage presses in 20 trial increments 
+              
+              !!!!!!!these are the best so far   - #################################################################################################################################################################again percentages are wrong
+```{r}
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_20trials) %>% 
+  mutate(perc_presses = n / 180) -> pilot_11 #5 chunks of 20 in 100, in 400 (20), in 3600 (180)
+
+         #with facets
+g20<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  facet_grid(~Cue)+
+ scale_y_continuous(labels = scales::percent)
+g20 + geom_smooth()
+
+
+
+#For all trials for all trial_numbers
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(trial_number) %>% 
+  mutate(perc_presses = n / 900) -> pilot_111 #5 chunks of 20 in 100, in 400 (20), in 3600 (180)
+
+         #with facets
+g20<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = trial_number, y = perc_presses, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  #geom_point () +
+ # geom_line ()+
+  facet_grid(~Cue)+
+ scale_y_continuous(labels = scales::percent)
+g20 + geom_smooth()
+```
+
+```{r}
+        #without facets
+
+f<-ggplot(pilot_11%>% group_by (Cue), 
+       aes(x = per_20trials, y = perc_presses, color = Cue, fill = Cue)) +
+# xlim(c(0, 80)) + ylim(c(0, 70)) +
+  #geom_point () +
+  #geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+ f + geom_smooth ()
+ 
+  
+ # for all trial numbers
+f<-ggplot(pilot_111%>% group_by (Cue), 
+       aes(x = trial_number, y = perc_presses, color = Cue, fill = Cue)) +
+# xlim(c(0, 80)) + ylim(c(0, 70)) +
+  #geom_point () +
+  #geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+ f + geom_smooth ()
+```
+
+       !!!!!!!these are the best so far   - #################################################################################################################################################################again percentages are wrong
+```{r}
+ 
+              #NK: #percentage presses in 5 trial increments
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 80) -> pilot_10 
+
+         #with facets
+g<-ggplot(pilot_4%>% group_by (Cue), 
+       aes(x = per_5trials, y = perc_presses, color = Cue, fill = Cue)) +
+  xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+g1 <- g + geom_smooth ()
+
+plot(g1)
+```
+
+```{r}
+        #without facets  - i think the best one so far!!!!!!!!!
+
+gg<-ggplot(pilot_4%>% group_by (Cue), 
+       aes(x = per_5trials, y = perc_presses, color = Cue, fill = Cue)) +
+  xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_point () +
+  geom_line ()+
+  scale_y_continuous(labels = scales::percent)
+
+
+
+ gg + geom_smooth ()
+
+
+#gg1 +                                              # Zoom without cutting values
+  #coord_cartesian(ylim = c(0.75, 0.09999999))
+```
+
+          #====% wrong===== bar plot + hist per 5 trials (I have created an extra column above "per_5trials"
+```{r}
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(per_5trials) %>% 
+  mutate(perc_presses = n / 18) -> pilot_4
+
+ggplot(pilot_4, aes(x = per_5trials, y = perc_presses, color = per_5trials, fill = per_5trials)) +
+  geom_bar(stat = "identity") +
+  facet_grid(~Cue) +
+  scale_y_continuous(labels = scales::percent)
+
+#something is wrong with the percentages.
+ggplot(pilot_4, aes(x = per_5trials)) +   
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="white", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+
+
+            #histogram for all trials 1-400 per cue in sequence
+
+pilot %>% 
+  filter(response == "press")%>%
+  group_by(Cue)%>%
+    count(trial_number) %>% 
+  mutate(perc_presses = n / nrow(pilot)) -> pilot_3
+
+                       #not good at the moment        #close to what we need hist (bindwith = 5 means for every 5 trials)
+ggplot(pilot_3, aes(x = trial_number)) +
+  facet_grid(~Cue) +
+   scale_y_continuous(labels = scales::percent)+
+  geom_histogram(aes(y=..density..), colour="black", fill="green", binwidth=5)+
+ geom_density(alpha=.2, fill="#FF6666") 
+```
+
+
+
+
+

@@ -358,7 +358,7 @@ MeanGoResppersub_ai <- ai %>% group_by(ID, Cue, req_action, OutValence, TrialCou
 MeanGoResp.ai <- MeanGoResppersub_ai %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
 
 #plot
-ggplot(MeanGoResp.ai) + 
+ai_rolavg<- ggplot(MeanGoResp.ai) + 
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for AI") +
@@ -375,7 +375,7 @@ MeanGoResppersub_dacc <- dacc %>% group_by(ID, Cue, req_action, OutValence, Tria
 MeanGoResp.dacc <- MeanGoResppersub_dacc %>% group_by(Cue, req_action, OutValence, TrialCount ) %>% summarise(GoResponse = mean(GoResponse))
 
 #plot
-ggplot(MeanGoResp.dacc) + 
+dacc_rolavg<- ggplot(MeanGoResp.dacc) + 
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for dACC")+
@@ -392,12 +392,17 @@ MeanGoResppersub_sham <- sham %>% group_by(ID, Cue, req_action, OutValence, Tria
 MeanGoResp.sham <- MeanGoResppersub_sham %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
 
 #plot
-ggplot(MeanGoResp.sham) + 
+sham_rolavg<- ggplot(MeanGoResp.sham) + 
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for sham") +
    xlim(NA, 20)+
  theme_bw() 
+
+#roll avg per CONDITION
+rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
+                    #labels = c("GW", "GAL", "NGW", "NGL"), 
+                  ncol = 2, nrow = 2); plot (rol_avg)
 ```
 
      #rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
@@ -418,7 +423,7 @@ GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condi
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-  ylim(0,1)+
+  ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
 
 #GAL
@@ -435,7 +440,7 @@ GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=con
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-    ylim(0,1)+
+     ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
 
 #NGW
@@ -452,7 +457,7 @@ NGW<-ggplot(MeanGoResp_NGW) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-    ylim(0,1)+
+     ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
 
 
@@ -471,7 +476,7 @@ NGL<-ggplot(MeanGoResp_NGL) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(0,1)+
+      ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
 
 
@@ -479,7 +484,9 @@ NGL<-ggplot(MeanGoResp_NGL) +
 #CUES PER CONDITION
 cues <- ggarrange(GW, GAL, NGW, NGL,
                     #labels = c("GW", "GAL", "NGW", "NGL"), 
-                  ncol = 2, nrow = 2)
+                  ncol = 2, nrow = 2);
+   #ylim(0.05, 0.9); 
+  plot (cues)
 
 ```
 
@@ -773,14 +780,18 @@ summary (model_acc_cue)
 #RTs
 
 ```{r}
-model_rt <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition +(1|ID), 
+model_rt <- lmer(RT ~ req_action  + trial_number + OutValence + req_action*condition +(1|ID), 
                  data  = tus, REML = FALSE) #REML = FALSE
 summary (model_rt) 
+    #print(model_rt, correlation=FALSE)
 
-#Cue impact
+
+ #Cue impact
 model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
                  data  = tus,REML = FALSE) #REML = FALSE
+anova(model_rt)
 summary (model_rt_cue) 
+
 ```
 
 
@@ -817,6 +828,7 @@ model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + re
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (model_rt_sal) 
 
+#Cue impact
 sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (sal_cue_rt) 
