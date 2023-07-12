@@ -28,8 +28,8 @@ library(ggpubr)
 library(jtools) #for explanation of lmer
 
 
-install.packages("devtools")
-devtools::install_github("mikabr/ggpirate")
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
 library(ggpirate)
 #p_load ( rms, htmltools, bridgesampling, rstanarm, magrittr, scales, RColorBrewer, 
 # parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
@@ -112,6 +112,7 @@ c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter
 ####combine datasets
 ```{r}
 tus <-bind_rows(a.sham, c.ai, b.dacc)
+
 ```
 
 
@@ -154,8 +155,6 @@ tus <- tus %>%
 #copied
 #tus <- tus %>%
    #   mutate_at("ID", str_replace, "_Copy", "")
-
-View(tus)
 ```
 
 
@@ -198,7 +197,7 @@ tus <- tus %>%
 ```{r}
 #1,2,3...100...320
 tus <- tus %>%
-  group_by(ID) %>%
+  group_by(ID, condition) %>%
   mutate(trial_number = row_number())
 ```
 
@@ -215,11 +214,12 @@ count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a functi
 # however it works equally as well when called from purrr::map()
 ```
 
+#trial_count
 ```{r}
 tus <- tus %>%
-  group_by(ID, block) %>%
+  group_by(ID, block, condition) %>%
   mutate(TrialCount = count_trials(Cue)) %>%
-  group_by(ID, block, Cue) %>%
+  group_by(ID, block,condition, Cue) %>%
   mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
 ```
 
@@ -319,7 +319,7 @@ yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,
                   avg.line.o = 0, # Average line
                   point.pch = 21,
                   point.bg = "white",
-                  point.cex = .7) ;View(tus_correct)
+                  point.cex = .7)
 ```
 
 #proportion of GO response per condition 
@@ -402,6 +402,7 @@ ggplot(MeanGoResp.sham) +
 
      #rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
 
+  ***it looks like stimulation to ACC increases the propensity to press in the go condition. And stim to both areas slows down learning in the nogo condition***
 ```{r}
 #GW
 GW <- subset(tus, Cue == "GW")
@@ -411,12 +412,13 @@ MeanGoResppersub_gw <- GW %>% group_by(ID, req_action, OutValence, TrialCount, c
 MeanGoResppersub_gw <- na.omit(MeanGoResppersub_gw)
 MeanGoResp_gw <- MeanGoResppersub_gw %>% group_by(req_action, OutValence, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
 
-#plot
-GW<-ggplot(MeanGoResp_gw) + 
-  geom_smooth(aes(TrialCount, GoResponse, color="red" )) +
+#plot######################play with lines
+GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
+  geom_smooth(linetype = "longdash") +
   scale_colour_brewer(palette = "Set1") +
-   facet_grid(~condition)+
+   #facet_grid(~condition)+
    xlim(NA, 20)+
+  ylim(0,1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
 
 #GAL
@@ -428,11 +430,12 @@ MeanGoResppersub_gal <- na.omit(MeanGoResppersub_gal)
 MeanGoResp_gal <- MeanGoResppersub_gal %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
 
 #plot
-GAL<-ggplot(MeanGoResp_gal) + 
-  geom_smooth(aes(TrialCount, GoResponse)) +
+GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
+  geom_smooth(linetype = "longdash") +
   scale_colour_brewer(palette = "Set1") +
-   facet_grid(~condition)+
+   #facet_grid(~condition)+
    xlim(NA, 20)+
+    ylim(0,1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
 
 #NGW
@@ -445,10 +448,11 @@ MeanGoResp_NGW <- MeanGoResppersub_NGW %>% group_by(TrialCount, condition) %>% s
 
 #plot - need to work on linetype
 NGW<-ggplot(MeanGoResp_NGW) + 
-  geom_smooth(aes(TrialCount, GoResponse, color="red")) +
+  geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
   scale_colour_brewer(palette = "Set1") +
-   facet_grid(~condition)+
+  # facet_grid(~condition)+
    xlim(NA, 20)+
+    ylim(0,1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
 
 
@@ -463,18 +467,20 @@ MeanGoResp_NGL <- MeanGoResppersub_NGL %>% group_by(TrialCount, condition) %>% s
 
 #plot
 NGL<-ggplot(MeanGoResp_NGL) + 
-  geom_smooth(aes(TrialCount, GoResponse)) +
+  geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
   scale_colour_brewer(palette = "Set1") +
-   facet_grid(~condition)+
+  # facet_grid(~condition)+
    xlim(NA, 20)+
+     ylim(0,1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
 
 
 
 #CUES PER CONDITION
 cues <- ggarrange(GW, GAL, NGW, NGL,
-                    labels = c("GW", "GAL", "NGW", "NGL"), 
+                    #labels = c("GW", "GAL", "NGW", "NGL"), 
                   ncol = 2, nrow = 2)
+
 ```
 
 
@@ -631,6 +637,15 @@ df_c <- aggregate(data=tus, correct ~ ID +condition, FUN="mean")
 ggplot(data = df_c) + 
   geom_bar(mapping = aes(fill = condition, x = ID, y = correct), stat = "identity", position = "dodge")
 
+#same but with lines and dots
+ df_c %>%ggplot(aes(condition, correct, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ # scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+#ggsave("#performance per participant and condition.png")
+
+
 #performance per  condition
 aggregate(data=tus, correct ~ condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
 
@@ -639,15 +654,44 @@ df_con <- aggregate(data=tus, correct ~ condition, FUN="mean")
 ggplot(data = df_con) + 
   geom_bar(mapping = aes(fill = condition, x = condition, y = correct), stat = "identity", position = "dodge")
 
-
+ 
 #rt per participant per condition
 aggregate(data=tus, RT ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
 
 df_rt <- aggregate(data=tus, RT ~ ID +condition, FUN="mean")
  
 ggplot(data = df_rt) + 
-  geom_bar(mapping = aes(fill = condition, x = ID, y = RT), stat = "identity", position = "dodge")
+  geom_bar(mapping = aes(fill = condition, x = ID, y = RT), stat = "identity", position = "dodge") 
+  
 
+#same but with lines and dots
+  df_rt %>%ggplot(aes(condition, RT, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+  
+  
+  #for NGW only - NO POINT
+  ngwin <- subset(tus, Cue == "NGW")
+
+  ngwin_cr <- aggregate(data=ngwin, correct ~ ID +condition, FUN="mean")
+
+ngwin_cr %>%ggplot(aes(condition, correct, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+
+
+
+ngwin_rt <- aggregate(data=ngwin, RT ~ ID +condition, FUN="mean")
+
+ngwin_rt %>%ggplot(aes(condition, RT, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
 ```
 
 
@@ -746,8 +790,7 @@ summary (model_rt_cue)
 tus_salient <- subset(tus, salient=!"neutral",
 select=ID:salient);  
 
-salient_df <-tus_salient %>% drop_na();  
-
+salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC AS WELL
 
 ```  
 
