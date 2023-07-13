@@ -402,7 +402,7 @@ sham_rolavg<- ggplot(MeanGoResp.sham) +
 #roll avg per CONDITION
 rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
                     #labels = c("GW", "GAL", "NGW", "NGL"), 
-                  ncol = 2, nrow = 2); plot (rol_avg)
+                  ncol = 2, nrow = 2)
 ```
 
      #rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
@@ -486,7 +486,7 @@ cues <- ggarrange(GW, GAL, NGW, NGL,
                     #labels = c("GW", "GAL", "NGW", "NGL"), 
                   ncol = 2, nrow = 2);
    #ylim(0.05, 0.9); 
-  plot (cues)
+ 
 
 ```
 
@@ -735,7 +735,7 @@ Analysis
 
 #Accuracy
 ```{r}
-model_acc <- glmer(correct ~ req_action  + trial_number  + req_action*condition +(1|ID) , 
+model_acc <- glmer(correct ~ req_action  + trial_number +OutValence + req_action*condition +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
