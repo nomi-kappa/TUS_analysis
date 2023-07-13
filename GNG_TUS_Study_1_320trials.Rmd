@@ -536,7 +536,7 @@ pirateplot(formula = correct ~ condition  +req_action +OutValence,
 #           bar.f.o = .5,
 #           main = "presses for Os")
 #
------------------------------
+#-----------------------------
 
 
 #means - PRESSES FOR CORRECT
@@ -751,9 +751,16 @@ report_parameters(model_acc)
 lm(correct ~ condition, data=tus)
 
 
+#Cue impact
+model_acc_cue <- glmer(correct ~ Cue*condition +(1|ID) , 
+                 data  = tus, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc_cue) 
+
+#visualize how spread accuracy is 
 ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
                geom_jitter(stat = "identity")+
-    facet_grid(~condition)#
+    facet_grid(~condition)
 geom_smooth(method= "lm", se = TRUE)
 
 
@@ -764,17 +771,28 @@ tus$condition <- as.factor(tus$condition)
 tus$trial_number <- as.factor(tus$trial_number)
 tus$OutValence <- as.factor(tus$OutValence)
 
-
-
- accu <-anovaBF(correct ~ req_action*condition + trial_number +OutValence + ID, data = tus, whichRandom = "ID",
+#drop NAs
+df <- na.omit(tus)
+df$ID <- as.factor(df$ID)
+df$correct <- as.integer(df$correct)
+df$req_action <- as.factor(df$req_action)
+df$condition <- as.factor(df$condition)
+df$trial_number <- as.factor(df$trial_number)
+df$OutValence <- as.factor(df$OutValence)
+#run anovaBF (not the correct analysis as the DV is categorical - just trying)
+ accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 accu[4]/accu[3]
 
-#Cue impact
-model_acc_cue <- glmer(correct ~ Cue*condition +(1|ID) , 
-                 data  = tus, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc_cue) 
+#banova!!!!!!!! - not working atm
+# Making sure JAGS is installed
+# It can be downloaded here http://mcmc-jags.sourceforge.net (the size is only 2.3 MB)
+library(BANOVA)
+library (rstan)
+
+tus_acc <-  BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_name = 'Binomial', id = 'ID',
+                        as.integer(16), num_trials = as.integer(16), iter = 100, thin = 5, chains = 2)
+
 ```
 
 #RTs
@@ -784,6 +802,11 @@ model_rt <- lmer(RT ~ req_action  + trial_number + OutValence + req_action*condi
                  data  = tus, REML = FALSE) #REML = FALSE
 summary (model_rt) 
     #print(model_rt, correlation=FALSE)
+
+#run anovaBF 
+ rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+   progress=FALSE)
+accu[4]/accu[3]
 
 
  #Cue impact
