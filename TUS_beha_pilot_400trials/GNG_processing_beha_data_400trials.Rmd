@@ -1,0 +1,504 @@
+---
+title: "GNG_processing_beha_data"
+author: "nomi"
+date: "2023-02-20"
+output: html_document
+---
+
+#### LOAD LIBRARIES
+```{r}
+library(pacman)
+
+p_load (tidyverse, BayesFactor, lmerTest, rms, htmltools, bridgesampling, rstanarm,dplyr, magrittr, ggplot2, scales, RColorBrewer, parsnip, zoo, tibbletime, wesanderson, stringr, yarr, BiocManager, afex, lmer, GGally, lmerTest, aod, splines, report)
+
+```
+
+```{r}
+theme_APA <- theme_bw()+
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          axis.line = element_line(size = 1),                                        
+          text = element_text(
+              size = 20,
+              face="bold"), 
+          axis.text = element_text(
+              size = 20,
+              face="plain",
+              colour="black"),
+          legend.title = element_blank(),
+          legend.position = 'top',
+          legend.direction = "horizontal",
+          legend.text = element_text(
+              face="plain",
+              colour="black",
+              size=20),
+          strip.text.x = element_text(
+              size = 20,
+              face = "bold"),
+          panel.background = element_rect(
+              fill='white',
+              colour='white'),
+          strip.background = element_rect(
+              fill='white',
+              colour='white'),
+          axis.title.x = element_text(
+              margin = margin(t = 10)),
+          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+          plot.caption = element_text(size=15)
+          )
+```
+
+```{r}
+pilot <- read.csv(file = 'pilot.csv')
+pilot_dropped <- read.csv(file = 'df.csv') #dropped NAs
+View(pilot)
+```
+
+  
+  ### PROCESSING - COUNTS AND PLOTS
+
+
+      *****RTs
+ 
+#Distribution of RT for presses
+```{r}
+ #MEAN RT - PRESSES (distribution of RT)
+pilot_presses <- subset(pilot, RT != "0") # exlude 0s (no presses)
+RT_presses <-pilot_presses%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE));RT_presses #%>%
+ # filter(CorrectResponse == "Correct")
+
+ggplot(data = RT_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()+ ggtitle ("Distribution of RT for presses") +theme_APA
+
+# get mean RT per participant
+MeanRTpersub <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action + OutValence,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "Condition",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(400, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7) + theme_APA
+```
+
+#RTs Cue
+```{r}
+# RTs for each Cue
+ggplot(data = MeanRTpersub,
+        aes(x = Cue,                                 
+            y =  RT)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+# get mean RT per Cue per participant
+MeanRTcue <- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ Cue,    # DV = reaction time, IV1 = Cue
+                  data = MeanRTpersub,           
+                  theme = 2,
+                  main = "RT per Cue",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(450, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+
+#RT go vs noGO
+# get mean RT per Cue per participant
+MeanRTreq_act<- pilot %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ req_action,    # 
+                  data = MeanRTreq_act,           
+                  theme = 2,
+                  main = "RT per required action",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(450, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
+```
+
+#RTs Block
+```{r}
+#Cue per block per RT
+ggplot(pilot%>%  
+         filter(response != "no_press")%>%
+         group_by(Cue),
+        aes(x = block,                                 
+            y =  RT,                                  
+            group = Cue,                                 
+            color = Cue)) + 
+          facet_grid (~Cue)+
+     stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+####try number of times == press / times cue presented!!!!
+
+# get mean RT per block per participant 
+MeanRTcueblock <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ block + Cue,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTcueblock,           
+                  theme = 2,
+                  main = "RT cue per block",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+
+MeanRTvalence <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~  OutValence,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTvalence,           
+                  theme = 2,
+                  main = "RT  per Valence",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
+
+MeanRTcuevalence <- pilot %>% filter(response == "press")%>% group_by(block, Cue, ID, req_action, OutValence) %>% summarise(RT = mean(RT))
+yarrr::pirateplot(formula = RT ~ Cue + OutValence,    # DV = reaction time, IV1= block, IV2 = Cue
+                  data = MeanRTcuevalence,           
+                  theme = 2,
+                  main = "RT  per Valence",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(350, 1200),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)+theme_APA
+```
+
+          ***
+             #!!!!!!Repeated measures so we need to measure per participant first
+          ***
+
+#Correct counts per Cue, per ID
+```{r}
+# compute proportion of correct response for each participant
+MeanCorrectpersub <- pilot %>% group_by(ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue, block,req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+View(MeanCorrect)
+# plot
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount,correct*100, colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_dark() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+# plot correct per block
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+```
+
+#proportion of GO response per condition
+```{r}
+# compute proportion of go responses for each participant
+MeanGoResppersub <- pilot %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResppersub)
+# compute mean proportion of go responses 
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResp)
+
+#plot
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") + theme_APA
+
+#plot RT
+# compute RT  for each participant
+MeanRTResppersub <- pilot %>% filter(response == "press")%>%group_by(RT, ID, Cue, block, TrialCount, OutValence) %>% summarise(RT = mean(RT))
+# compute mean proportion of go responses 
+MeanRTResp <- MeanRTResppersub %>% group_by(RT, block,Cue, TrialCount, OutValence) %>% summarise(RT = mean(RT))
+ggplot(MeanRTResp) + 
+  geom_smooth(aes(TrialCount,RT,colour=OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for responses") +theme_APA
+
+
+
+
+#plot RT on trial
+
+
+ggplot(MeanRTResp) + 
+  geom_smooth(aes(TrialCount, RT)) +
+  scale_colour_brewer(palette = "Set1") +
+  theme_bw() +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for responses") +theme_APA
+
+
+
+#plot Go responses per block
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +theme_APA
+```
+
+
+
+```{r}
+
+ggplot(pilot,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#correct counts per Cue
+ccc<-pilot %>% group_by (Cue)%>% count (correct);View (ccc)
+
+#correct counts per Cue per ID
+ccc_id<-pilot %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
+
+#correct per ID
+c<-pilot %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
+
+#response per ID
+response_per_ppt <-pilot %>% group_by (ID)%>% count (response);View (response_per_ppt)
+
+mean(c$n) #avg of 294 correct responses--> 
+          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+
+   
+
+#PROPORTIONs - correct PER PARTCIPANT
+
+
+#the proportion of 1s by participant, + more i.e. sound, and language.
+#Because the proportion of 1s in a vector with only 0s and 1s is just the mean, this should work:
+
+aggregate(data=pilot, correct ~ ID, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df <- aggregate(data=pilot, correct ~ ID, FUN="mean")
+p <- ggplot(df)
+p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')+
+  geom_vline(xintercept = 0.53, col = "red")+ 
+  geom_vline(xintercept = 0.50, col = "grey")+
+   geom_vline(xintercept = 0.80, col = "green")+
+  geom_text(aes(x=0.54, label="53%", y=4), colour="black", angle=90) +
+geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
+  geom_text(aes(x=0.79, label="80%", y=6), colour="black", angle=90) 
+p + ylab('ID')
+
+#same as above but with stat_summary
+ggplot(pilot) + 
+  stat_summary(aes(x = ID, y = correct), 
+               geom = "bar")
+```
+
+# trials playing with correct
+```{r}
+#Correct per Cue
+pilot %>% group_by (Cue)%>% count (correct)
+
+
+ggplot(pilot, aes(x = Cue, y = response, color = Cue, fill = Cue))+
+               geom_bar(stat = "identity")+
+  facet_grid(~correct)
+
+
+#Cue per response (percentage) - NICE one
+pilot %>% 
+  group_by(correct, trial_number)%>%
+  count(Cue) %>% 
+  mutate(perc_presses=n/900)-> pilot_1 #
+
+ ggplot(pilot_1, aes(x = Cue, y = perc_presses , color = Cue, fill = Cue)) +
+   geom_bar(stat = "identity")+
+     scale_y_continuous(labels = scales::percent)+
+     facet_grid(~correct)
+ 
+ 
+                    ***not correct ???@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      
+  MeanCorrectpersub <- pilot %>% group_by(trial_number, ID, Cue,block, req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# compute mean proportion of correct response
+MeanCorrect <- MeanCorrectpersub %>% group_by(Cue,trial_number, block,req_action, OutValence, TrialCount) %>% summarise(correct = mean(correct))
+# plot @@@@@@@@@Is that all the trials indeed? all not repeated
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(trial_number,correct*100, colour=req_action, lty = OutValence)) +
+  scale_colour_brewer(palette = "Set3") +
+  theme_dark() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+
+# plot correct per block --not good
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(trial_number, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+  
+  # plot correct per block - not bad
+ggplot(MeanCorrect) + 
+  geom_smooth(aes(TrialCount, correct*100, colour=req_action, lty = OutValence)) +
+  #scale_colour_brewer(palette = "Set3") +
+  facet_grid(~block)+
+  theme_light() +
+  labs(y = "% correct", x = "Trial", title = "Trial-by-trial behaviour")
+
+  
+  
+  
+          ***wrong***
+            @@@@@@@@@do per participant first like above nadeige
+  
+    #with facets = CANNOT do the % (I WANT ALL RESPONSE 0 AND 1S TO APPEAR)
+ pilot_1 <- pilot %>% group_by(ID, correct, trial_number, response, Cue)%>% count(Cue)
+ 
+ ggplot(pilot_1%>% group_by (Cue), 
+       aes(x = trial_number, y = Cue, color = Cue, fill = Cue)) +
+  #xlim(c(0, 80)) + ylim(c(0, 50)) +
+  geom_smooth()+
+  facet_grid(response~correct)
+```
+
+
+# Number of presses vs no_presses 
+```{r}
+pilot%>% group_by (Cue)%>% dplyr::count(response) %>% filter(response == "press")
+
+
+presses_per_Cue<- pilot%>% group_by (Cue, ID)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue) #presses for the noGo responses fluctuate a lot per participant  
+
+presses_per_Cue_block<- pilot%>% group_by (Cue, block)%>% dplyr::count(response) %>% filter(response == "press")
+View (presses_per_Cue_block)
+
+ #plot presses per Cue
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=Cue, y= response, color = Cue, fill = Cue)) + 
+  geom_bar(stat = "identity") + theme_APA
+
+ #plot presses per Cue
+ggplot(pilot %>% 
+   filter(response == "press"), aes(x=req_action, y= response, color = req_action, fill = req_action)) + 
+  geom_bar(stat = "identity") + theme_APA
+
+# plot press vs no press, per Cue better
+ggplot(pilot %>%
+         group_by(Cue),
+         aes(x=response,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
+          geom_bar(stat = "count") +theme_APA
+
+# press per Cue per block
+ggplot(pilot %>%
+        filter(response == "press"),
+         aes(y = block,
+             group = Cue,                                 
+            color = Cue, fill = Cue)) + 
+     # facet_grid(Cue~paste("cue", Cue), scales="free")
+          geom_bar(stat = "count") + theme_APA
+```
+
+
+
+#Neutral > win > lose - feedback
+```{r}
+#number of feedback instances (valence?)
+pilot%>% group_by(feedback) %>%dplyr::count(feedback) 
+
+ 
+ggplot(pilot,#%>%
+        # group_by(GNG),
+       aes(x=feedback, y= req_action))+ 
+  geom_bar(stat = "identity") #normal for neutral to be more.
+
+
+
+#presses vs no_presses per cue feedback (win, lose, neutral) ***better***
+pilot%>% group_by(feedback, response) %>%dplyr::count(feedback) 
+
+ggplot(pilot,
+       aes(x=feedback,
+           color = response, fill = response))+ 
+  geom_bar(stat = "count")
+```
+
+#Presses per correctness and blocks and response (press vs no_press)
+```{r}
+#presses per correct and blocks--> they are doing good so far. they learn fast
+pilot%>% group_by(correct, response) %>%dplyr::count(correct) 
+pilot%>% group_by(correct, block) %>%dplyr::count(correct) # 1st block OK, 2nd block better, 3rd block tired, 4th block better
+
+#How good per block and per response (press vs no_press)
+ggplot(pilot,
+        aes(x = response,                                 
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +                              
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +         
+   stat_summary(fun.data = "mean_se", geom = "errorbar")
+
+#How good per block
+ggplot(data = pilot,
+        aes(x = block,                          
+            y =  correct,                                
+            group = block,                                 
+           color = block)) +
+   stat_summary(fun = "mean", geom = "point") +        
+   stat_summary(fun = "mean", geom = "line") +        
+   stat_summary(fun.data = "mean_se", geom = "errorbar") + theme_APA
+
+
+
+```
+

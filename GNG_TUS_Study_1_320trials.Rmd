@@ -807,7 +807,7 @@ summary (model_rt)
  rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 accu[4]/accu[3]
-
+summary(rt)
 
  #Cue impact
 model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 

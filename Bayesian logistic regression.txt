@@ -1,0 +1,26 @@
+For a Bayesian, fit basically the same model using the rstanarm package and then use "bridge sampling" to compare them to get a Bayes Factor for the interaction (again code shown).
+
+I think it might actually be better to use posterior predictions from these models to quantify the size of the effect (ie. how many more/less error in sham/ai/acc cond do we expect)
+and to plot the effect, rather than use a Bayes Factor, but I know some people prefer that as a simpler summary of whether the effect is "really there".
+ 
+ #correct with rstarm + bridging
+
+# install htmltools
+install.packages("htmltools", type = "source")
+options(mc.cores = 4)
+
+
+cor.m1.stan <- rstanarm::stan_glmer(correct ~ condition * OutValence * req_action + (1|ID), 
+                weights=exposure, data  = tus, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__tus1.csv")
+
+cor.m1.0.stan <- rstanarm::stan_glmer(correct ~  condition + (1|ID), 
+                weights=exposure, data  = elm_test.byblock, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__tus0.csv")
+
+bridge_1 <-bridgesampling::bridge_samplercor.m1.stan 
+bridge_0 <- bridgesampling::bridge_samplercor.m1.0.stan 
+
+bayes_factor(bridge_1, bridge_0, log = FALSE)
+
+

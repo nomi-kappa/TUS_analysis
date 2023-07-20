@@ -1,0 +1,64 @@
+/* Author: Joe Gilbert,  Starrie Williamson - University of Virginia Library */
+
+jQuery(document).ready(function() {
+  jQuery('#menu-sidebar-menu > .menu-item:has(.sub-menu) > a').click(function() {
+    var submenu = jQuery(this).siblings('.sub-menu');
+    jQuery('.sub-menu').not(submenu).slideUp();
+    submenu.slideToggle();
+    return false;
+  });
+
+
+
+
+
+var maxItems = 2;
+jQuery(".wrapper li").each(function(i){
+	if(i%maxItems == 0 && i>=maxItems){ jQuery(".wrapper")
+.append("<ul class='productfeaturelist'></ul>");}
+	jQuery(".wrapper .productfeaturelist").last().append(this);
+});
+
+/* ADD NEXT AND PREVIOUS BUTTON ONLY IF JAVASCRIPT ENABLED */
+jQuery("#featuredProducts").append('<a id="archiveNext" class="fixPNG archiveNext" href="javascript:;">NEXT</a><a id="archivePrev" class="fixPNG archivePrev" href="javascript:;">PREVIOUS</a>');
+
+jQuery('.wrapper').cycle({
+	fx:     'scrollHorz',
+	speed:  '600',
+	timeout: 0,
+	next:   '.archiveNext',
+	prev:   '.archivePrev'
+});
+
+
+
+	var maxItems = 1;
+	jQuery(".imageryWrapper li").each(function(i){
+		if(i%maxItems == 0 && i>=maxItems){ jQuery(".imageryWrapper")
+	.append("<ul class='productfeaturelist'></ul>");}
+		jQuery(".imageryWrapper .productfeaturelist").last().append(this);
+	});
+
+	/* ADD NEXT AND PREVIOUS BUTTON ONLY IF JAVASCRIPT ENABLED */
+	jQuery("#imageryFeaturedProducts").append('<a id="archiveNext" class="fixPNG archiveNext" href="javascript:;">NEXT</a><a id="archivePrev" class="fixPNG archivePrev" href="javascript:;">PREVIOUS</a>');
+
+	jQuery('.imageryWrapper').cycle({
+		fx:     'scrollHorz',
+		speed:  '600',
+		timeout: 0,
+		next:   '.archiveNext',
+		prev:   '.archivePrev'
+	});
+
+
+
+
+    jQuery('.slideshow').cycle({
+		fx: 'fade', // choose your transition type, ex: fade, scrollUp, shuffle, etc...
+	});
+
+
+    // size the text inputs so that the placeholder text fits
+    jQuery('input[placeholder]').css('width','auto').each(function(){ jQuery(this).attr('size',jQuery(this).attr('placeholder').length+2) });
+
+});
