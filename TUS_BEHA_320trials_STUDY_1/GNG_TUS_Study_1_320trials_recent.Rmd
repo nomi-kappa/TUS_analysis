@@ -491,7 +491,7 @@ cues <- ggarrange(GW, GAL, NGW, NGL,
 ```
 
 
-#proportion of correct per condition 
+#proportion of correct per condition ***IMPORTANT FOR THE GW FOR THE AI***
 ```{r}
 # compute proportion of go responses for each participant
 tus_correct_sub <- tus %>% group_by(ID, OutValence, condition, req_action) %>% summarise(correct = mean(correct))
@@ -499,7 +499,7 @@ tus_correct_sub <- tus %>% group_by(ID, OutValence, condition, req_action) %>% s
 tus_correct <- tus_correct_sub %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
 
 
-pirateplot(formula = correct ~ condition  +req_action +OutValence,
+pirateplot(formula = correct ~ condition  + req_action +OutValence,
            data = tus_correct,
            theme = 1,
            bar.f.o = .5, 
@@ -511,7 +511,7 @@ pirateplot(formula = correct ~ condition  +req_action +OutValence,
 
 
 
-#presses for correct  and presses for incorrect (nogos)
+#presses for correct  and presses for incorrect (nogos) - ***SEE COMMENTS FOR FURTHER EXPLANATION***
 ```{r}
 
 
@@ -539,14 +539,14 @@ pirateplot(formula = correct ~ condition  +req_action +OutValence,
 #-----------------------------
 
 
-#means - PRESSES FOR CORRECT
+#means - PRESSES FOR GOs (that is pressed when they supposed to be pressing or else pressed for the Go conditions)
 
-presses_for_correct <- subset(tus, response != "no_press" & correct == "1") #for both Goes (GW and GAL)
+presses_for_correct <- subset(tus, response != "no_press"& correct == "1") # that is for both Goes (GW and GAL)
   press_mean_ID<-presses_for_correct %>% group_by(ID, OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
   press_mean_cr  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
   
 pirateplot(formula = n ~ condition  + req_action + OutValence,
-           main = "presses for correct res",
+           main = "presses for GAL(left) and GW (right)",
              data = press_mean_cr,
            theme = 2,
            bar.f.o = .5,
@@ -560,7 +560,7 @@ pirateplot(formula = n ~ condition  + req_action + OutValence,
                   avg.line.o = 0, # Average line
                   point.pch = 21,
                   point.bg = "black",
-                  point.cex = 1) 
+                  point.cex = 1) #For GW, when AI was stimulated. participants pressed 
   
 
 presses <- subset(tus,   Cue == "GW"& RT>0) ; View(presses)
@@ -582,7 +582,7 @@ pirateplot(formula = n ~ condition  + req_action + OutValence,
                   avg.line.o = 0, # Average line
                   point.pch = 21,
                   point.bg = "black",
-                  point.cex = 1) 
+                  point.cex = 1) #same as right graph above
   
 #means - PRESSES FOR NOGOS - ERRORS
 
