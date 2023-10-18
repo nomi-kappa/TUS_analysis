@@ -99,6 +99,9 @@ b.dacc <- b.dacc %>%
       mutate (condition="b.dacc")
 ```
 
+
+
+
 #### Set variable names
 ```{r}
 a.sham <- a.sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
@@ -114,6 +117,14 @@ c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter
 ```{r}
 tus <-bind_rows(a.sham, c.ai, b.dacc)
 
+```
+
+### add session column
+```{r}
+# Extract numbers at the end of each level and create a new column
+tus<-tus %>%
+  mutate(session = as.factor(str_extract(ID,"(?<=\\D)\\d+(?=_log.txt)")))
+View(tus)
 ```
 
 
@@ -347,6 +358,7 @@ ggplot(MeanGoResp) +
   facet_grid(~block)+
   theme_bw() +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") 
+view(tus)
 ```
 
 
@@ -511,7 +523,34 @@ pirateplot(formula = correct ~ condition  + req_action +OutValence,
           ylim = c(0.1, 1.0))
 
          #breaks = seq(from = 0, to = 1, by = 0.1))
+
+#THE SAME AS ABOVE BUT WITH VARIANCE/ERROR BARS
+pirateplot(formula = correct ~ condition  + req_action +OutValence,
+           data = tus_correct,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .6, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+         # ylim = c(0.1, 1.0))
+
+#with stat_summary
+ggplot(data=tus_correct, aes(x=correct, y=condition, fill=correct))+ stat_summary(fun.y = mean, geom = "bar") + stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.3)
+                  
 ```
+
 
 
 
@@ -818,6 +857,7 @@ salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC 
 model_acc_sal <- glmer(correct ~ req_action  + trial_number + OutValence*condition + req_action*condition +(1|ID) , 
                  data  = salient_df, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
+summary(model_acc_sal)
 #Cue impact
 sal_cue_accu <- glmer(correct ~ Cue*condition +(1|ID) , 
                  data  = salient_df, family="binomial", 
