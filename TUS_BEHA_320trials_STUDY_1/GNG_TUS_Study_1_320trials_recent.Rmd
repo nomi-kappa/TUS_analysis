@@ -686,50 +686,91 @@ How about RTs?
 ```{r}
 
 # Calculate summary statistics (mean and standard deviation)
+#!!!!may be do just the stat_sum with simple staff as above? 
+pirateplot(formula = RT ~ condition  + req_action +OutValence,
+           data = tus,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .2, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+         # ylim = c(0.1, 1.0))
 
- 
-ppts<-tus %>% group_by(ID) %>%
-   distinct(ID) %>% 
-  nrow() # number of participants
 
-MeanGoResppersub_cond_RT <- tus %>% group_by(ID, Cue, req_action, OutValence, block, condition, RT, correct) %>% summarise(Mean_RT = mean(RT, na.rm = TRUE))
-MeanGoResppersub_cond_RT <- na.omit(MeanGoResppersub_cond_RT)
-#MeanGoResppersub_cond <- MeanGoResppersub_cond %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+# compute mean_rt for each participant
+Meanrtpersub_rt <- tus %>% group_by(ID, req_action, OutValence, condition, RT) %>% summarise(mean_rt = mean(RT))
+Meanrtpersub_rt <- na.omit(Meanrtpersub_rt)
+Meanrtpersub_rt <- Meanrtpersub_rt %>% group_by(req_action, OutValence, condition) %>% summarise(mean_rt = mean(mean_rt))
 
-summary_data_RT <- tus %>%
-  group_by(condition, req_action, OutValence, RT, ID) %>%
+pirateplot(formula =  mean_rt ~ condition  + req_action +OutValence,
+           data = Meanrtpersub_rt,
+                           theme = 0,
+           main = "mean_RT per subject",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .2, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+         # ylim = c(0.1, 1.0))
+
+#AND with tus # !!!!DOES NOT CALCULATE SD AND CONSEQUENTLY SE, THING WHY
+Meanrtpersub_rt2 <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount, condition, RT) %>% summarise(mean_rt = mean(RT))
+Meanrtpersub_rt2 <- na.omit(Meanrtpersub_rt2)
+
+
+summary_data_rt <- Meanrtpersub_rt2 %>%
+  group_by(condition, req_action, OutValence) %>%
   summarise(
-    mean_rt = mean(RT) ,
-    sd_rt = sd(RT),
+    mean_rt = mean(RT),
+    sd_rt = sd(RT),  # Calculate the standard deviation of RT
     count = n(),
-    se_rt =sd_rt/sqrt(ppts),
+    se_rt = sd_rt / sqrt(ppts)  # Calculate the standard error
   ) %>%
   na.omit()
 
-
-
-
 # Create a ggplot with error bars, bars, and facets
-ggplot(summary_data_RT, aes(x = condition, y = mean_rt, ymin = mean_rt - se_rt, ymax = mean_rt + se_rt, fill = condition)) +
+ggplot(summary_data_rt, aes(x = condition, y = mean_rt, ymin = mean_rt - se_rt, ymax = mean_rt + se_rt, fill = condition)) +
   geom_errorbar(position = position_dodge(width = 0.75), width = 0.2) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
   geom_text(aes(label = round(mean_rt, 2)), vjust = -0.5, position = position_dodge(width = 0.75)) +
-  facet_grid(req_action ~ OutValence) +
-  theme_APA
+ facet_grid(req_action ~ OutValence) +
+theme_APA
 
-# add points !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NB
-# Merge summary_data and tus data
-merged_data_RT <- merge(tus, summary_data_RT, by = "condition", all.x = TRUE) #merging should be a left join. In a left join, all rows from the left data frame (tus in this case) will be retained, and matching rows from the right data frame (summary_data) will be added. If there are no matches, the columns from the right data frame will contain missing values (NA).
-merged_data <- merged_data %>% na.omit()
+
+# Merge summary_data and tus data to add data points
+merged_data_rt <- merge(tus, summary_data_rt, by = "condition", all.x = TRUE) 
+              #merged_data_rt <- merged_data_rt %>% na.omit()
 
 # Create a ggplot with error bars, bars, data points, and facets
-ggplot(data = summary_data_RT, aes(x = condition, y = mean_rt, fill = condition)) +
+ggplot(data = summary_data_rt, aes(x = condition, y = mean_rt, fill = condition)) +
   geom_errorbar(aes(ymin = mean_rt - se_rt, ymax = mean_rt + se_rt),
                 position = position_dodge(width = 0.75), width = 0.2) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
 
   # Use merged_data for geom_point instead of tus
-  geom_point(data = merged_data_RT, aes(x = condition, y = mean_rt, color = condition),
+  geom_point(data = merged_data_rt, aes(x = condition, y = mean_rt, color = condition),
              position = position_dodge(width = 0.75), size = 1) +
   geom_text(aes(label = round(mean_rt, 3)), vjust = -0.5, position = position_dodge(width = 0.75)) +
   facet_grid(req_action ~ OutValence) +
