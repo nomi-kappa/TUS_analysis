@@ -1,14 +1,14 @@
 
 ---
-title: "GNG_TUS_Study_1"
+  title: "GNG_TUS_Study_1"
 author: "nomi"
 date: "2023-04-05"
 output: html_document
 ---
-
-
-#### LOAD LIBRARIES
-```{r}
+  
+  ############################merge changes with github then delete
+  #### LOAD LIBRARIES
+  ```{r}
 #library(Rccp)
 #library(rlang)
 library(tibbletime)
@@ -39,51 +39,51 @@ library(ggpirate)
 
 ```{r}
 theme_APA <- theme_bw()+
-    theme(panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          axis.line = element_line(size = 1),                                        
-          text = element_text(
-              size = 20,
-              face="bold"), 
-          axis.text = element_text(
-              size = 20,
-              face="plain",
-              colour="black"),
-          legend.title = element_blank(),
-          legend.position = 'top',
-          legend.direction = "horizontal",
-          legend.text = element_text(
-              face="plain",
-              colour="black",
-              size=20),
-          strip.text.x = element_text(
-              size = 20,
-              face = "bold"),
-          panel.background = element_rect(
-              fill='white',
-              colour='white'),
-          strip.background = element_rect(
-              fill='white',
-              colour='white'),
-          axis.title.x = element_text(
-              margin = margin(t = 10)),
-          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
-          plot.caption = element_text(size=15)
-          )
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(size = 1),                                        
+        text = element_text(
+          size = 20,
+          face="bold"), 
+        axis.text = element_text(
+          size = 20,
+          face="plain",
+          colour="black"),
+        legend.title = element_blank(),
+        legend.position = 'top',
+        legend.direction = "horizontal",
+        legend.text = element_text(
+          face="plain",
+          colour="black",
+          size=20),
+        strip.text.x = element_text(
+          size = 20,
+          face = "bold"),
+        panel.background = element_rect(
+          fill='white',
+          colour='white'),
+        strip.background = element_rect(
+          fill='white',
+          colour='white'),
+        axis.title.x = element_text(
+          margin = margin(t = 10)),
+        plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+        plot.caption = element_text(size=15)
+  )
 ```
 
 ####insert .txt files
 ```{r}
 a.sham<- tibble(filename = list.files("1.SHAM", "*.txt", full.names=TRUE)) %>% 
-    group_by(filename) %>% 
-    do(read.table(.$filename))
+  group_by(filename) %>% 
+  do(read.table(.$filename))
 c.ai<- tibble(filename = list.files("3.AI", "*.txt", full.names=TRUE)) %>% 
-    group_by(filename) %>% 
-    do(read.table(.$filename))
+  group_by(filename) %>% 
+  do(read.table(.$filename))
 b.dacc<- tibble(filename = list.files("2.dACC", "*.txt", full.names=TRUE)) %>% 
-    group_by(filename) %>% 
-    do(read.table(.$filename))
+  group_by(filename) %>% 
+  do(read.table(.$filename))
 
 
 ```
@@ -92,11 +92,11 @@ b.dacc<- tibble(filename = list.files("2.dACC", "*.txt", full.names=TRUE)) %>%
 
 ```{r}
 a.sham <- a.sham %>%
-      mutate (condition="a.sham")
+  mutate (condition="a.sham")
 c.ai <- c.ai %>%
-      mutate (condition="c.ai")
+  mutate (condition="c.ai")
 b.dacc <- b.dacc %>%
-      mutate (condition="b.dacc")
+  mutate (condition="b.dacc")
 ```
 
 
@@ -105,11 +105,11 @@ b.dacc <- b.dacc %>%
 #### Set variable names
 ```{r}
 a.sham <- a.sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+                                 "jitter2", "RT", "outcomefeed", "condition"))
 b.dacc <- b.dacc %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+                                 "jitter2", "RT", "outcomefeed", "condition"))
 c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+                             "jitter2", "RT", "outcomefeed", "condition"))
 ```
 
 
@@ -131,42 +131,42 @@ View(tus)
 #### Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
 ```{r}
 tus <- tus %>%
-      mutate_at("ID", str_replace, "1.SHAM/", "")# & "log.txt", "")
+  mutate_at("ID", str_replace, "1.SHAM/", "")# & "log.txt", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "3.AI/", "")
+  mutate_at("ID", str_replace, "3.AI/", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "2.dACC/", "")
+  mutate_at("ID", str_replace, "2.dACC/", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_2", "")
+  mutate_at("ID", str_replace, "_SHAM_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_3", "")
+  mutate_at("ID", str_replace, "_SHAM_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_SHAM_1", "")
+  mutate_at("ID", str_replace, "_SHAM_1", "")
 #tus <- tus %>%
-   #   mutate_at("ID", str_replace, "_SHAM__1", "_sham")
+#   mutate_at("ID", str_replace, "_SHAM__1", "_sham")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_2", "")
+  mutate_at("ID", str_replace, "_dACC_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_3", "")
+  mutate_at("ID", str_replace, "_dACC_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_dACC_1", "")
+  mutate_at("ID", str_replace, "_dACC_1", "")
 #tus <- tus %>%
-    #  mutate_at("ID", str_replace, "_ACC_2", "_dACC")
+#  mutate_at("ID", str_replace, "_ACC_2", "_dACC")
 #tus <- tus %>%
 #      mutate_at("ID", str_replace, "_ACC_1", "_dACC")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_2", "")
+  mutate_at("ID", str_replace, "_AI_2", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_3", "")
+  mutate_at("ID", str_replace, "_AI_3", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_AI_1", "")
+  mutate_at("ID", str_replace, "_AI_1", "")
 tus <- tus %>%
-      mutate_at("ID", str_replace, "_log.txt", "")
+  mutate_at("ID", str_replace, "_log.txt", "")
 #tus <- tus %>%
-  #    mutate_at("ID", str_replace, "SINB_0180", "SINB0180")
+#    mutate_at("ID", str_replace, "SINB_0180", "SINB0180")
 #copied
 #tus <- tus %>%
-   #   mutate_at("ID", str_replace, "_Copy", "")
+#   mutate_at("ID", str_replace, "_Copy", "")
 ```
 
 
@@ -180,32 +180,32 @@ tus$GoResponse <- with(tus, ifelse(RT>0, 1, 0))
 ### Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
 ```{r}
 tus$Cue <- ifelse(tus$stim_ID == tus$NGL, 'NGL',
-                ifelse(tus$stim_ID == tus$NGW, 'NGW', 
-                ifelse(tus$stim_ID == tus$GW, 'GW', 
-              ifelse(tus$stim_ID == tus$GAL, 'GAL', NA))))
-    ```
+                  ifelse(tus$stim_ID == tus$NGW, 'NGW', 
+                         ifelse(tus$stim_ID == tus$GW, 'GW', 
+                                ifelse(tus$stim_ID == tus$GAL, 'GAL', NA))))
+```
 
 #### Add GNG col (Go-noGO)
 ```{r}
 tus$req_action <- ifelse(tus$stim_ID == tus$NGL, 'noGo',
-                ifelse(tus$stim_ID == tus$NGW, 'noGo', 'Go'))   
+                         ifelse(tus$stim_ID == tus$NGW, 'noGo', 'Go'))   
 #NB's way: 
 #pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
-            #       ifelse(pilot$Cue == 'NGW', 'NoGo',
-             #      ifelse(pilot$Cue == 'GW', 'Go',
-              #      felse(pilot$Cue == 'GAL', 'Go', NA))))
+#       ifelse(pilot$Cue == 'NGW', 'NoGo',
+#      ifelse(pilot$Cue == 'GW', 'Go',
+#      felse(pilot$Cue == 'GAL', 'Go', NA))))
 
 ```
- 
+
 #### Add correct column (0-1)  
 ```{r}
 tus <- tus %>%
   mutate(correct = ifelse(req_action == "noGo", ifelse(response == "no_press", 1, 0), 
-         
-                    ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
+                          
+                          ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
 ```
-        
-          ###Trial column 
+
+###Trial column 
 ```{r}
 #1,2,3...100...320
 tus <- tus %>%
@@ -217,9 +217,9 @@ tus <- tus %>%
 #block colums 1, 2, 3, 4   =====sos with the trials that have 400 instead of 320
 ```{r}
 tus$block <- ifelse(tus$trial_number == 1:80, '1',
-                ifelse(tus$trial_number == 81:160, '2', 
-                ifelse(tus$trial_number == 161:240, '3', 
-              ifelse(tus$trial_number == 241:320, '4', NA))))
+                    ifelse(tus$trial_number == 81:160, '2', 
+                           ifelse(tus$trial_number == 161:240, '3', 
+                                  ifelse(tus$trial_number == 241:320, '4', NA))))
 # counts trials of the same condition within each block
 count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a function 
 #into a rolling version of itself for use inside of a call to dplyr::mutate() ,
@@ -239,33 +239,33 @@ tus <- tus %>%
 ### Add win_lose column (win - lose) 
 ```{r}
 tus$feedback <- recode_factor(tus$outcomefeed, "-1" = "lose", 
-                                "1" = "win", "0"= "neutral")
+                              "1" = "win", "0"= "neutral")
 
 ```
-      
+
 ### Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
 ```{r}
 tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
-                   ifelse(tus$Cue == 'NGW', 'Win',
-                   ifelse(tus$Cue == 'GW', 'Win',
-                   ifelse(tus$Cue == 'GAL', 'Avoid', NA))))
+                         ifelse(tus$Cue == 'NGW', 'Win',
+                                ifelse(tus$Cue == 'GW', 'Win',
+                                       ifelse(tus$Cue == 'GAL', 'Avoid', NA))))
 ```
 
 #### Add salient feedback column only
 ```{r}
 tus <- tus %>%
   mutate(salient = ifelse(feedback == "win","win",
-                      ifelse(feedback == "lose", "lose", NA)))
+                          ifelse(feedback == "lose", "lose", NA)))
 ```
-        
-        
+
+
 write.csv
 ```{r}
 write.csv(tus, "GNG_TUS_S1.csv")
 ```
 
 
-            ######Processing
+######Processing
 
 
 #MEAN RT - PRESSES (distribution of RT)
@@ -302,7 +302,7 @@ MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_act
 yarrr::pirateplot(formula = RT ~ req_action + OutValence + condition,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
                   data = MeanRTpersub,           
                   theme = 2,
-                 # main = "Condition",
+                  # main = "Condition",
                   ylab = "Reaction Time (ms)",
                   ylim = c(400, 1000),
                   bean.f.o = .4, # Bean fill
@@ -323,7 +323,7 @@ tus_correct<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summari
 yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,    
                   data = tus_correct,           
                   theme = 2,
-                 #main = "Probability of being correct per condition",
+                  #main = "Probability of being correct per condition",
                   ylab = " (p) of correct",
                   ylim = c(0.1, 1.15),
                   bean.f.o = .4, # Bean fill
@@ -343,7 +343,7 @@ yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,
 # compute proportion of go responses for each participant (first sum per ID, then feed that into general summary)
 MeanGoResppersub <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
 MeanGoResppersub <- na.omit(MeanGoResppersub)
-MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse));View(MeanGoResp)
 
 #plot of p(Go) responses
 ggplot(MeanGoResp) + 
@@ -365,7 +365,7 @@ view(tus)
 #proportion of GO response per type of Stimulation (sham, ai, dACC) - NADEIDE  and ELSA to check
 ```{r}
 
-    #AI - it does not summarize find why --> I excluded the block. Not sure it did not like it
+#AI - it does not summarize find why --> I excluded the block. Not sure it did not like it
 ai <- subset(tus, condition == "c.ai")
 
 # compute proportion of go responses for each participant
@@ -378,11 +378,11 @@ ai_rolavg<- ggplot(MeanGoResp.ai) +
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for AI") +
-   xlim(NA, 20)+
- theme_bw() 
+  xlim(NA, 20)+
+  theme_bw() 
 
 
-    #dACC - 
+#dACC - 
 dacc <- subset(tus, condition == "b.dacc")
 #dacc <- na.omit(dacc)
 
@@ -395,11 +395,11 @@ dacc_rolavg<- ggplot(MeanGoResp.dacc) +
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for dACC")+
-   xlim(NA, 20)+ theme_bw() 
+  xlim(NA, 20)+ theme_bw() 
 
 
 
-    #Sham
+#Sham
 sham <- subset(tus, condition == "a.sham")
 
 # compute proportion of go responses for each participant
@@ -412,19 +412,19 @@ sham_rolavg<- ggplot(MeanGoResp.sham) +
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for sham") +
-   xlim(NA, 20)+
- theme_bw() 
+  xlim(NA, 20)+
+  theme_bw() 
 
 #roll avg per CONDITION
 rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
-                    #labels = c("GW", "GAL", "NGW", "NGL"), 
-                  ncol = 2, nrow = 2);rol_avg
+                     #labels = c("GW", "GAL", "NGW", "NGL"), 
+                     ncol = 2, nrow = 2);rol_avg
 ```
 
-     #rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
+#rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
 
-  ***it looks like stimulation to ACC increases the propensity to press in the go condition. And stim to both areas slows down learning in the nogo condition***
-```{r}
+***it looks like stimulation to ACC increases the propensity to press in the go condition. And stim to both areas slows down learning in the nogo condition***
+  ```{r}
 #Grey area is CI
 
 #GW
@@ -439,8 +439,8 @@ MeanGoResp_gw <- MeanGoResppersub_gw %>% group_by(req_action, OutValence, TrialC
 GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
   geom_smooth(linetype = "longdash") +
   scale_colour_brewer(palette = "Set1") +
-   #facet_grid(~condition)+
-   xlim(NA, 20)+
+  #facet_grid(~condition)+
+  xlim(NA, 20)+
   ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
 
@@ -456,9 +456,9 @@ MeanGoResp_gal <- MeanGoResppersub_gal %>% group_by(TrialCount, condition) %>% s
 GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
   geom_smooth(linetype = "longdash") +
   scale_colour_brewer(palette = "Set1") +
-   #facet_grid(~condition)+
-   xlim(NA, 20)+
-     ylim(0.05, 0.9)+
+  #facet_grid(~condition)+
+  xlim(NA, 20)+
+  ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
 
 #NGW
@@ -474,8 +474,8 @@ NGW<-ggplot(MeanGoResp_NGW) +
   geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
-   xlim(NA, 20)+
-     ylim(0.05, 0.9)+
+  xlim(NA, 20)+
+  ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
 
 
@@ -493,18 +493,18 @@ NGL<-ggplot(MeanGoResp_NGL) +
   geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
-   xlim(NA, 20)+
-      ylim(0.05, 0.9)+
+  xlim(NA, 20)+
+  ylim(0.05, 0.9)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
 
 
 
 #CUES PER CONDITION
 cues <- ggarrange(GW, GAL, NGW, NGL,
-                    #labels = c("GW", "GAL", "NGW", "NGL"), 
+                  #labels = c("GW", "GAL", "NGW", "NGL"), 
                   ncol = 2, nrow = 2);cues
-   #ylim(0.05, 0.9); 
- 
+#ylim(0.05, 0.9); 
+
 
 ```
 
@@ -522,14 +522,14 @@ pirateplot(formula = correct ~ condition  + req_action +OutValence,
            theme = 1,
            bar.f.o = .5, 
            point.o = .5, 
-          ylim = c(0.1, 1.0))
+           ylim = c(0.1, 1.0))
 
-         #breaks = seq(from = 0, to = 1, by = 0.1))
+#breaks = seq(from = 0, to = 1, by = 0.1))
 
 #THE SAME AS ABOVE BUT WITH VARIANCE/ERROR BARS
 pirateplot(formula = correct ~ condition  + req_action +OutValence,
            data = tus_correct,
-                           theme = 0,
+           theme = 0,
            #main = "Fully customized pirateplot",
            #pal = "southpark", # southpark color palette
            bean.f.o = .6, # Bean fill
@@ -546,7 +546,7 @@ pirateplot(formula = correct ~ condition  + req_action +OutValence,
            point.bg = "white",
            point.col = "black",
            point.cex = .7)+theme_APA
-         # ylim = c(0.1, 1.0))
+# ylim = c(0.1, 1.0))
 
 #with stat_summary
 ggplot(data=tus_correct, aes(x=correct, y=condition, fill=correct))+ stat_summary(fun.y = mean, geom = "bar") + stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.3)
@@ -555,14 +555,11 @@ ggplot(data=tus_correct, aes(x=correct, y=condition, fill=correct))+ stat_summar
 
 # Calculate summary statistics (mean and standard deviation)
 
- 
-ppts<-tus %>% group_by(ID) %>%
-   distinct(ID) %>% 
-  nrow() # number of participants
+n_ppt <-tus %>% group_by (ID)%>% count ()
 
 MeanGoResppersub_cond <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount, condition, correct) %>% summarise(GoResponse = mean(GoResponse))
-MeanGoResppersub_cond <- na.omit(MeanGoResppersub_cond)
-#MeanGoResppersub_cond <- MeanGoResppersub_cond %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub <- na.omit(MeanGoResppersub_conf)
+MeanGoResp <- MeanGoResppersub_conf %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
 
 summary_data <- MeanGoResppersub_cond %>%
   group_by(condition, req_action, OutValence) %>%
@@ -570,7 +567,7 @@ summary_data <- MeanGoResppersub_cond %>%
     mean_correct = mean(correct),
     sd_correct = sd(correct),
     count = n(),
-    se_correct =sd_correct/sqrt(ppts),
+    se_correct =sd_correct/sqrt(20),
   ) %>%
   na.omit()
 
@@ -586,82 +583,68 @@ ggplot(summary_data, aes(x = condition, y = mean_correct, ymin = mean_correct - 
   theme_APA
 
 # add points !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NB
-# Merge summary_data and tus data
-merged_data <- merge(tus, summary_data, by = "condition", all.x = TRUE) #merging should be a left join. In a left join, all rows from the left data frame (tus in this case) will be retained, and matching rows from the right data frame (summary_data) will be added. If there are no matches, the columns from the right data frame will contain missing values (NA).
-merged_data <- merged_data %>% na.omit()
 
-# Create a ggplot with error bars, bars, data points, and facets
-ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = condition)) +
-  geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
-                position = position_dodge(width = 0.75), width = 0.2) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
 
-  # Use merged_data for geom_point instead of tus
-  geom_point(data = merged_data, aes(x = condition, y = mean_correct, color = condition),
-             position = position_dodge(width = 0.75), size = 1) +
-  geom_text(aes(label = round(mean_correct, 3)), vjust = -0.5, position = position_dodge(width = 0.75)) +
-  facet_grid(req_action ~ OutValence) +
-  theme_APA
 ```
 
 
 
 
 #presses for correct  and presses for incorrect (nogos) - ***SEE COMMENTS FOR FURTHER EXPLANATION*** ALSO
-         ****IMPORTANT FOR THE GW FOR THE AI****
-```{r}
+****IMPORTANT FOR THE GW FOR THE AI****
+  ```{r}
 #means - PRESSES FOR GOs (that is pressed when they supposed to be pressing or else pressed for the Go conditions)
 
 presses_for_correct <- subset(tus, response != "no_press"& correct == "1") # that is for both Goes (GW and GAL)
-  press_mean_ID<-presses_for_correct %>% group_by(ID, OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
-  press_mean_cr  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
-  
+press_mean_ID<-presses_for_correct %>% group_by(ID, OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
+press_mean_cr  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
+
 pirateplot(formula = n ~ condition  + req_action + OutValence,
            main = "presses for GAL(left) and GW (right)",
-             data = press_mean_cr,
+           data = press_mean_cr,
            theme = 2,
            bar.f.o = .5,
            ylim = c(0, 80),
-                  bean.f.o = .4, # Bean fill
-                  bean.b.o = .2, # Light bean border
-                  point.o = .5, # Points (opacity)
-                  inf.disp = "line",
-                  inf.f.o = 0.5, # Inference fill
-                  inf.b.o = 0.5, # Inference border
-                  avg.line.o = 0, # Average line
-                  point.pch = 21,
-                  point.bg = "black",
-                  point.cex = 1) #For GW, when AI was stimulated. participants pressed 
-  
+           bean.f.o = .4, # Bean fill
+           bean.b.o = .2, # Light bean border
+           point.o = .5, # Points (opacity)
+           inf.disp = "line",
+           inf.f.o = 0.5, # Inference fill
+           inf.b.o = 0.5, # Inference border
+           avg.line.o = 0, # Average line
+           point.pch = 21,
+           point.bg = "black",
+           point.cex = 1) #For GW, when AI was stimulated. participants pressed 
+
 
 #presses for GW (as the one in previous chunk)
 presses <- subset(tus,   Cue == "GW"& RT>0) 
-  press_mean_ID<-presses %>% group_by(ID, OutValence, condition, req_action) %>% count(req_action = "Go",  Cue = "GW" )%>%summarize (n=mean(n))
-  press_mean  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
-  
+press_mean_ID<-presses %>% group_by(ID, OutValence, condition, req_action) %>% count(req_action = "Go",  Cue = "GW" )%>%summarize (n=mean(n))
+press_mean  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
+
 pirateplot(formula = n ~ condition  + req_action + OutValence,
            main = "presses",
-             data = press_mean,
+           data = press_mean,
            theme = 2,
            bar.f.o = .5,
            ylim = c(0, 100),
-                  bean.f.o = .4, # Bean fill
-                  bean.b.o = .2, # Light bean border
-                  point.o = .5, # Points (opacity)
-                  inf.disp = "line",
-                  inf.f.o = 0.5, # Inference fill
-                  inf.b.o = 0.5, # Inference border
-                  avg.line.o = 0, # Average line
-                  point.pch = 21,
-                  point.bg = "black",
-                  point.cex = 1) #same as right graph above
+           bean.f.o = .4, # Bean fill
+           bean.b.o = .2, # Light bean border
+           point.o = .5, # Points (opacity)
+           inf.disp = "line",
+           inf.f.o = 0.5, # Inference fill
+           inf.b.o = 0.5, # Inference border
+           avg.line.o = 0, # Average line
+           point.pch = 21,
+           point.bg = "black",
+           point.cex = 1) #same as right graph above
 
 
 
 #THE SAME AS ABOVE BUT WITH VARIANCE/ERROR BARS
 pirateplot(formula = correct ~ condition  + req_action +OutValence,
            data = tus_correct,
-                           theme = 0,
+           theme = 0,
            #main = "Fully customized pirateplot",
            #pal = "southpark", # southpark color palette
            bean.f.o = .6, # Bean fill
@@ -678,87 +661,33 @@ pirateplot(formula = correct ~ condition  + req_action +OutValence,
            point.bg = "white",
            point.col = "black",
            point.cex = .7)+theme_APA
-         # ylim = c(0.1, 1.0))
+# ylim = c(0.1, 1.0))
 
 ``` 
-
-How about RTs?
-```{r}
-
-# Calculate summary statistics (mean and standard deviation)
-
- 
-ppts<-tus %>% group_by(ID) %>%
-   distinct(ID) %>% 
-  nrow() # number of participants
-
-MeanGoResppersub_cond_RT <- tus %>% group_by(ID, Cue, req_action, OutValence, block, condition, RT, correct) %>% summarise(Mean_RT = mean(RT, na.rm = TRUE))
-MeanGoResppersub_cond_RT <- na.omit(MeanGoResppersub_cond_RT)
-#MeanGoResppersub_cond <- MeanGoResppersub_cond %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
-
-summary_data_RT <- tus %>%
-  group_by(condition, req_action, OutValence, RT, ID) %>%
-  summarise(
-    mean_rt = mean(RT) ,
-    sd_rt = sd(RT),
-    count = n(),
-    se_rt =sd_rt/sqrt(ppts),
-  ) %>%
-  na.omit()
-
-
-
-
-# Create a ggplot with error bars, bars, and facets
-ggplot(summary_data_RT, aes(x = condition, y = mean_rt, ymin = mean_rt - se_rt, ymax = mean_rt + se_rt, fill = condition)) +
-  geom_errorbar(position = position_dodge(width = 0.75), width = 0.2) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
-  geom_text(aes(label = round(mean_rt, 2)), vjust = -0.5, position = position_dodge(width = 0.75)) +
-  facet_grid(req_action ~ OutValence) +
-  theme_APA
-
-# add points !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NB
-# Merge summary_data and tus data
-merged_data_RT <- merge(tus, summary_data_RT, by = "condition", all.x = TRUE) #merging should be a left join. In a left join, all rows from the left data frame (tus in this case) will be retained, and matching rows from the right data frame (summary_data) will be added. If there are no matches, the columns from the right data frame will contain missing values (NA).
-merged_data <- merged_data %>% na.omit()
-
-# Create a ggplot with error bars, bars, data points, and facets
-ggplot(data = summary_data_RT, aes(x = condition, y = mean_rt, fill = condition)) +
-  geom_errorbar(aes(ymin = mean_rt - se_rt, ymax = mean_rt + se_rt),
-                position = position_dodge(width = 0.75), width = 0.2) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
-
-  # Use merged_data for geom_point instead of tus
-  geom_point(data = merged_data_RT, aes(x = condition, y = mean_rt, color = condition),
-             position = position_dodge(width = 0.75), size = 1) +
-  geom_text(aes(label = round(mean_rt, 3)), vjust = -0.5, position = position_dodge(width = 0.75)) +
-  facet_grid(req_action ~ OutValence) +
-  theme_APA
-```
 
 
 #means - PRESSES FOR NOGOS - ERRORS
 ```{r}
 presses_for_error <- subset(tus, response == "press" & correct == "0") 
-  press_mean_ID<-presses_for_error %>% group_by(ID, OutValence, condition, req_action) %>% count(correct )%>%summarize (n=mean(n))
-  press_mean_er  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
-  
- pirateplot(formula = n ~ condition  + req_action +OutValence,
+press_mean_ID<-presses_for_error %>% group_by(ID, OutValence, condition, req_action) %>% count(correct )%>%summarize (n=mean(n))
+press_mean_er  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
+
+pirateplot(formula = n ~ condition  + req_action +OutValence,
            main = "presses for noGos",
-             data = press_mean_er,
+           data = press_mean_er,
            theme = 2,
            bar.f.o = .5,
            ylim = c(0, 80),
-                  bean.f.o = .4, # Bean fill
-                  bean.b.o = .2, # Light bean border
-                  point.o = .5, # Points (opacity)
-                  inf.disp = "line",
-                  inf.f.o = 0.5, # Inference fill
-                  inf.b.o = 0.5, # Inference border
-                  avg.line.o = 0, # Average line
-                  point.pch = 21,
-                  point.bg = "black",
-                  point.cex = 1 ) 
+           bean.f.o = .4, # Bean fill
+           bean.b.o = .2, # Light bean border
+           point.o = .5, # Points (opacity)
+           inf.disp = "line",
+           inf.f.o = 0.5, # Inference fill
+           inf.b.o = 0.5, # Inference border
+           avg.line.o = 0, # Average line
+           point.pch = 21,
+           point.bg = "black",
+           point.cex = 1 ) 
 
 ```
 
@@ -782,9 +711,9 @@ c<-tus %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
 response_per_ppt <-tus %>% group_by (ID)%>% count (response);View (response_per_ppt)
 
 mean(c$n) #avg of 294 correct responses--> 
-          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+#may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
 ```
-   
+
 
 #PROPORTIONs - correct PER PARTCIPANT
 ```{r}
@@ -796,9 +725,9 @@ p <- ggplot(df)
 p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')+
   geom_vline(xintercept = 0.53, col = "red")+ 
   geom_vline(xintercept = 0.50, col = "grey")+
-   geom_vline(xintercept = 0.80, col = "green")+
+  geom_vline(xintercept = 0.80, col = "green")+
   geom_text(aes(x=0.54, label="53%", y=4), colour="black", angle=90) +
-geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
+  geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
   geom_text(aes(x=0.79, label="80%", y=6), colour="black", angle=90) 
 p + ylab('ID')
 
@@ -811,15 +740,15 @@ ggplot(tus) +
 aggregate(data=tus, correct ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
 
 df_c <- aggregate(data=tus, correct ~ ID +condition, FUN="mean")
- 
+
 ggplot(data = df_c) + 
   geom_bar(mapping = aes(fill = condition, x = ID, y = correct), stat = "identity", position = "dodge")
 
 #same but with lines and dots
- df_c %>%ggplot(aes(condition, correct, color=ID)) +
-   #geom_boxplot()+
+df_c %>%ggplot(aes(condition, correct, color=ID)) +
+  #geom_boxplot()+
   geom_point(aes(fill=ID),size=5) +
- # scale_x_log10()+
+  # scale_x_log10()+
   geom_line(aes(group = ID),color="grey")
 #ggsave("#performance per participant and condition.png")
 
@@ -828,51 +757,51 @@ ggplot(data = df_c) +
 aggregate(data=tus, correct ~ condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
 
 df_con <- aggregate(data=tus, correct ~ condition, FUN="mean")
- 
+
 ggplot(data = df_con) + 
   geom_bar(mapping = aes(fill = condition, x = condition, y = correct), stat = "identity", position = "dodge")
 ```
- 
- RTs for participants 
+
+RTs for participants 
 ```{r}
 #rt per participant per condition
 aggregate(data=tus, RT ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
 
 df_rt <- aggregate(data=tus, RT ~ ID +condition, FUN="mean")
- 
+
 ggplot(data = df_rt) + 
   geom_bar(mapping = aes(fill = condition, x = ID, y = RT), stat = "identity", position = "dodge") 
-  
+
 
 #same but with lines and dots
-  df_rt %>%ggplot(aes(condition, RT, color=ID)) +
-   #geom_boxplot()+
+df_rt %>%ggplot(aes(condition, RT, color=ID)) +
+  #geom_boxplot()+
   geom_point(aes(fill=ID),size=5) +
- #scale_x_log10()+
+  #scale_x_log10()+
   geom_line(aes(group = ID),color="grey")
-  
-#-------------------------------
-  
-  #for NGW only (correct) - NO POINT
-  ngwin <- subset(tus, Cue == "NGW")
 
-  ngwin_cr <- aggregate(data=ngwin, correct ~ ID +condition, FUN="mean")
+#-------------------------------
+
+#for NGW only (correct) - NO POINT
+ngwin <- subset(tus, Cue == "NGW")
+
+ngwin_cr <- aggregate(data=ngwin, correct ~ ID +condition, FUN="mean")
 
 ngwin_cr %>%ggplot(aes(condition, correct, color=ID)) +
-   #geom_boxplot()+
+  #geom_boxplot()+
   geom_point(aes(fill=ID),size=5) +
- #scale_x_log10()+
+  #scale_x_log10()+
   geom_line(aes(group = ID),color="grey")
 
 
-  #for NGW only (RT) - NO POINT
+#for NGW only (RT) - NO POINT
 
 ngwin_rt <- aggregate(data=ngwin, RT ~ ID +condition, FUN="mean")
 
 ngwin_rt %>%ggplot(aes(condition, RT, color=ID)) +
-   #geom_boxplot()+
+  #geom_boxplot()+
   geom_point(aes(fill=ID),size=5) +
- #scale_x_log10()+
+  #scale_x_log10()+
   geom_line(aes(group = ID),color="grey")
 ```
 
@@ -886,8 +815,8 @@ Analysis
 #NB RUN A BASIC ANOVA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ```{r}
 model_acc <- glmer(correct ~ req_action  + trial_number +OutValence + req_action*condition +(1|ID) , 
-                 data  = tus, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                   data  = tus, family="binomial", 
+                   glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
 summ(model_acc, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
 summ(model_acc, scale = T)
@@ -903,14 +832,14 @@ lm(correct ~ condition, data=tus)
 
 #Cue impact
 model_acc_cue <- glmer(correct ~ Cue*condition +(1|ID) , 
-                 data  = tus, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                       data  = tus, family="binomial", 
+                       glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc_cue) 
 
 #visualize how spread accuracy is 
 ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
-               geom_jitter(stat = "identity")+
-    facet_grid(~condition)
+  geom_jitter(stat = "identity")+
+  facet_grid(~condition)
 geom_smooth(method= "lm", se = TRUE)
 
 
@@ -930,8 +859,8 @@ df$condition <- as.factor(df$condition)
 df$trial_number <- as.factor(df$trial_number)
 df$OutValence <- as.factor(df$OutValence)
 #run anovaBF (not the correct analysis as the DV is categorical - just trying)
- accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
-   progress=FALSE)
+accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+               progress=FALSE)
 accu[4]/accu[3]
 
 
@@ -952,50 +881,50 @@ tus_acc <-  BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, mo
 model_rt <- lmer(RT ~ req_action  + OutValence + req_action*condition +(1|ID), # + trial_number (excluded cause it gives me the outcome of all trials, it does not group them)
                  data  = tus, REML = FALSE) #REML = FALSE
 summary (model_rt) 
-    #print(model_rt, correlation=FALSE)
+#print(model_rt, correlation=FALSE)
 report_table(model_rt)
 
 
 
 
 #run anovaBF 
- rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
-   progress=FALSE)
+rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+             progress=FALSE)
 accu[4]/accu[3]
 summary(rt)
 
- #Cue impact
+#Cue impact
 model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
-                 data  = tus,REML = FALSE) #REML = FALSE
+                     data  = tus,REML = FALSE) #REML = FALSE
 anova(model_rt)
 summary (model_rt_cue) 
 
 ```
 
 
-          
-          
-          #SALIENT ONLY#
+
+
+#SALIENT ONLY#
 ```{r}
 #select salient only (win, lose) and keep variables ID through block and all columns between them
 tus_salient <- subset(tus, salient=!"neutral",
-select=ID:salient);  
+                      select=ID:salient);  
 
 salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC AS WELL
 
 ```  
 
-        
+
 #Accuracy
 ```{r}
 model_acc_sal <- glmer(correct ~ req_action  + trial_number + OutValence*condition + req_action*condition +(1|ID) , 
-                 data  = salient_df, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
+                       data  = salient_df, family="binomial", 
+                       glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
 summary(model_acc_sal)
 #Cue impact
 sal_cue_accu <- glmer(correct ~ Cue*condition +(1|ID) , 
-                 data  = salient_df, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                      data  = salient_df, family="binomial", 
+                      glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (sal_cue_accu) 
 
 ```
@@ -1004,11 +933,11 @@ summary (sal_cue_accu)
 
 ```{r}
 model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition+(1|ID), 
-                 data  = salient_df, REML = FALSE) #REML = FALSE
+                     data  = salient_df, REML = FALSE) #REML = FALSE
 summary (model_rt_sal) 
 report_table(model_rt_sal)
 #Cue impact
 sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
-                 data  = salient_df, REML = FALSE) #REML = FALSE
+                   data  = salient_df, REML = FALSE) #REML = FALSE
 summary (sal_cue_rt) 
 ```
