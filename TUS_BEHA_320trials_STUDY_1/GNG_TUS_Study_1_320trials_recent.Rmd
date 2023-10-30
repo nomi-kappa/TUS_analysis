@@ -968,7 +968,9 @@ summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus
 
  ##logistic regression
 ```{r}
-model_acc <- glmer(correct ~ req_action  +OutValence +session + req_action*condition*trial_number +(1|ID) , 
+
+   #???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
+model_acc <- glmer(correct ~    + OutValence + req_action + trial_number+ Cue*condition +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
@@ -986,7 +988,7 @@ lm(correct ~ condition, data=tus)
 
 #Cue impact - CUE as IV 
    #!!!!!!! NGL:AI interaction is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
-model_acc_cue <- glmer(correct ~ Cue*condition*trial_number +(1|ID) , 
+model_acc_cue <- glmer(correct ~ Cue * condition +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc_cue) 
@@ -1098,7 +1100,7 @@ salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC 
         
 ## Accuracy
 ```{r}
-model_acc_sal <- glmer(correct ~ req_action  + trial_number + OutValence*condition + req_action*condition +(1|ID) , 
+model_acc_sal <- glmer(correct ~ condition + req_action + trial_number + OutValence*condition + req_action*condition +(1|ID) , 
                  data  = salient_df, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
 summary(model_acc_sal)
