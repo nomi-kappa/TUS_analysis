@@ -326,8 +326,7 @@ ggplot(MeanGoResp) +
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +
-  xlim (0,20)
-+ theme_bw() 
+  xlim (0,20) +theme_bw() 
 #plot of p(Go) responses per block
 ggplot(MeanGoResp) + 
   geom_smooth(aes(TrialCount,GoResponse,colour=OutValence, lty = req_action)) +
@@ -605,7 +604,7 @@ tus_acc_plot <-ggplot(data=tus_correct, aes( x=condition, y=correct, fill=condit
   stat_summary(fun.y = mean, geom = "bar") + 
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.3); tus_acc_plot
 
- tus_acc_plot + facet_grid(req_action ~ OutValence) + theme_APA # ????***not sure why it disregards the error bars***
+ tus_acc_plot + facet_grid(req_action ~ OutValence) + theme_APA 
 
 
  #TRYING ADDING ERROR BARS AS i CANNOT DO IT WITH THE ABOVE CODE
@@ -739,7 +738,7 @@ pirateplot(formula = n ~ condition  + req_action + OutValence,
 # 1. Calculate summary statistics (mean and standard deviation)
 
       #filter data to exclude very high values
- filtered_data_rt <- tus %>%filter(RT >= 0, RT <= 1100)
+ filtered_data_rt <- tus %>%filter(RT >= 100, RT <= 1100)
 
 pirateplot(formula = RT ~ condition  + req_action +OutValence,
            data = filtered_data_rt,
@@ -969,7 +968,7 @@ summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus
 
  ##logistic regression
 ```{r}
-model_acc <- glmer(correct ~ req_action  + trial_number +OutValence +session + req_action*condition +(1|ID) , 
+model_acc <- glmer(correct ~ req_action  +OutValence +session + req_action*condition*trial_number +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
@@ -985,8 +984,9 @@ report_parameters(model_acc)
 lm(correct ~ condition, data=tus)
 
 
-#Cue impact - CUE as IV
-model_acc_cue <- glmer(correct ~ Cue*condition +(1|ID) , 
+#Cue impact - CUE as IV 
+   #!!!!!!! NGL:AI interaction is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
+model_acc_cue <- glmer(correct ~ Cue*condition*trial_number +(1|ID) , 
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc_cue) 
@@ -1031,6 +1031,7 @@ accu[4]/accu[3]
 accu_cue <-anovaBF(correct ~ Cue*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 accu_cue[4]/accu_cue[3]
+lm(RT ~ condition +req_action +OutValence, data=tus)
 
 
 #banova!!!!!!!! - not working atm
@@ -1044,8 +1045,7 @@ BANOVA::BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_
 #RTs
 
 ```{r}
-
-model_rt <- lmer(RT ~ req_action  + OutValence +session+ req_action*condition +(1|ID), # + trial_number (excluded cause it gives me the outcome of all trials, it does not group them)
+model_rt <- lmer(RT ~ req_action  + OutValence +session+ req_action*condition*trial_number +(1|ID), # + trial_number (excluded cause it gives me the outcome of all trials, it does not group them)
                  data  = tus, REML = FALSE) #REML = FALSE
 summary (model_rt) 
     #print(model_rt, correlation=FALSE)
@@ -1104,7 +1104,7 @@ model_acc_sal <- glmer(correct ~ req_action  + trial_number + OutValence*conditi
 summary(model_acc_sal)
 
 #Cue impact
-sal_cue_accu <- glmer(correct ~ Cue*condition +(1|ID) , 
+sal_cue_accu <- glmer(correct ~ Cue*condition*trial_number +(1|ID) , 
                  data  = salient_df, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (sal_cue_accu) 
