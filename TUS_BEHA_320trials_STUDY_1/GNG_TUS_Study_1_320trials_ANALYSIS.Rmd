@@ -1,0 +1,234 @@
+---
+title: "GNG_TUS_Study_1_320trials_ANALYSIS"
+author: "nomi"
+date: "2023-10-31"
+output: html_document
+---
+
+#READ FILE
+```{r setup, include=FALSE}
+library(readr)
+tus <- read_csv("GNG_TUS_S1.csv")
+View(tus)
+```
+
+
+#Analysis
+
+  ##Accuracy
+
+    ##NB RUN A BASIC ANOVA !!!!!!!!!!!
+```{r}
+oneway.test(correct ~ condition,
+  data = tus,
+  var.equal = TRUE) # assuming equal variances
+
+model <- aov(correct ~ condition * req_action * OutValence, data=tus)
+summary(model)
+
+summary(aov(correct ~ condition * req_action * OutValence + Error(ID/(condition * req_action * OutValence)), data=tus))
+summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus)) # separately testing effect of IVs but their interaction too- not sure if correct??????
+```
+
+
+ ##logistic regression
+```{r}
+
+   #???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
+model_acc <- glmer(correct ~    + OutValence + req_action + trial_number+ Cue*condition +(1|ID) , 
+                 data  = tus, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc) 
+summ(model_acc, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
+summ(model_acc, scale = T)
+report(model_acc)
+report(model_acc) %>% summary()
+report_table(model_acc)
+report_performance(model_acc)
+report_parameters(model_acc)
+
+
+lm(correct ~ condition, data=tus)
+
+
+#Cue impact - CUE as IV 
+   #!!!!!!! NGL:AI interaction is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
+model_acc_cue <- glmer(correct ~ Cue * condition +(1|ID) , 
+                 data  = tus, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc_cue) 
+summ(model_acc_cue, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
+summ(model_acc_cue, scale = T)
+
+#visualize how spread accuracy is - higher variability for the STIMs
+tus_correct_sub <- na.omit(tus_correct_sub)#omit NAs
+
+ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
+               geom_jitter(stat = "identity")+
+    facet_grid(~condition)
+geom_smooth(method= "lm", se = TRUE)
+
+
+#run anovaBF (not the correct analysis as the DV is categorical - just trying)
+#BF
+tus$ID <- as.factor(tus$ID)
+tus$req_action <- as.factor(tus$req_action)
+tus$condition <- as.factor(tus$condition)
+tus$trial_number <- as.factor(tus$trial_number)
+tus$OutValence <- as.factor(tus$OutValence)
+tus$Cue <- as.factor(tus$Cue)
+
+
+#drop NAs
+df <- na.omit(tus)
+df$ID <- as.factor(df$ID)
+df$correct <- as.integer(df$correct)
+df$req_action <- as.factor(df$req_action)
+df$condition <- as.factor(df$condition)
+df$trial_number <- as.factor(df$trial_number)
+df$OutValence <- as.factor(df$OutValence)
+df$Cue <- as.factor(df$Cue)
+
+#anovaBF IV = req_action
+ accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+   progress=FALSE)
+accu[4]/accu[3]
+
+#anovaBF IV = Cue - interaction between the Cue and the condition
+accu_cue <-anovaBF(correct ~ Cue*condition  + ID, data = df, whichRandom = "ID",
+   progress=FALSE)
+accu_cue[4]/accu_cue[3]
+lm(RT ~ condition +req_action +OutValence, data=tus)
+
+
+#banova!!!!!!!! - not working atm
+# Making sure JAGS is installed
+# It can be downloaded here http://mcmc-jags.sourceforge.net (the size is only 2.3 MB)
+
+BANOVA::BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_name = 'Binomial', id = 'ID',
+                        as.integer(16), num_trials = as.integer(20), iter = 100, thin = 5, chains = 2)
+```
+
+#RTs
+
+```{r}
+model_rt <- lmer(RT ~ req_action  + OutValence +session+ req_action*condition*trial_number +(1|ID), # + trial_number (excluded cause it gives me the outcome of all trials, it does not group them)
+                 data  = tus, REML = FALSE) #REML = FALSE
+summary (model_rt) 
+    #print(model_rt, correlation=FALSE)
+report_table(model_rt)
+
+
+
+#run anovaBF IV = req_action and condition
+ rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+   progress=FALSE)
+accu[4]/accu[3]
+summary(rt)
+
+ 
+
+
+
+
+
+
+#Cue impact
+model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
+                 data  = tus,REML = FALSE) #REML = FALSE
+summary (model_rt_cue) 
+
+#simple anova
+anova(model_rt)
+
+#anovaBF IV = Cue - interaction between the Cue and the condition
+rt_cue <-anovaBF(RT ~ Cue*condition  + ID, data = df, whichRandom = "ID",
+   progress=FALSE)
+rt_cue[4]/rt_cue[3]
+summary(rt_cue)
+```
+
+
+          
+          
+  # ANALYSIS FOR SALIENT ONLY (EXCLUDE NEUTRAL OUTCOME)
+  
+```{r}
+#select salient only (win, lose) and keep variables ID through block and all columns between them
+tus_salient <- subset(tus, salient=!"neutral",
+select=ID:salient);  
+
+salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC AS WELL
+
+```  
+
+        
+## Accuracy
+```{r}
+model_acc_sal <- glmer(correct ~ condition + req_action + trial_number + OutValence*condition + req_action*condition +(1|ID) , 
+                 data  = salient_df, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
+summary(model_acc_sal)
+
+#Cue impact
+sal_cue_accu <- glmer(correct ~ Cue*condition*trial_number +(1|ID) , 
+                 data  = salient_df, family="binomial", 
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (sal_cue_accu) 
+```
+
+## RTs
+```{r}
+model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition+(1|ID), 
+                 data  = salient_df, REML = FALSE) #REML = FALSE
+summary (model_rt_sal) 
+report_table(model_rt_sal)
+#Cue impact
+sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
+                 data  = salient_df, REML = FALSE) #REML = FALSE
+summary (sal_cue_rt) 
+```
+
+
+ ##Analysis with Bayesian binomial/logistic anova for the categorical DV - "correct"
+      # with rstarm + bridging
+
+```{r}
+
+library(htmltools)
+options(mc.cores = 4)
+
+
+cor.m1.stan <- rstanarm::stan_glmer(correct ~ condition * OutValence * req_action * Cue + (1|ID),  weights=trial_number,
+                 data  = tus, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__df1.csv") #deleted the "weights = ..."
+
+cor.m1.0.stan <- rstanarm::stan_glmer(correct ~ (condition + OutValence + req_action) * Cue + (1|ID), weights=trial_number,
+               data  = tus, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__df0.csv") #notsure if this the base model. #deleted the "weights = ..."
+
+bridge_1 <-bridgesampling::bridge_sampler(cor.m1.stan)
+bridge_0 <- bridgesampling::bridge_sampler(cor.m1.0.stan)
+# BW: this gives evidence (or not) for the interaction
+bayes_factor(bridge_1, bridge_0, log = FALSE)
+
+
+
+##model with no interaction 
+acc.m2.stan <- rstanarm::stan_glmer(is_slip ~ condition * Cue + (1|ID), 
+               data  = elm_test.byblock, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__df2.csv")
+
+acc.m3.0.stan <- rstanarm::stan_glmer(is_slip ~ condition + Cue + (1|ID), 
+                weights=exposure, data  = elm_test.byblock, family="binomial", chains=4, iter=2e4, 
+                diagnostic_file = "__df2.0.csv")
+
+bridge_3 <-bridgesampling::bridge_sampler(acc.m2.stan)
+bridge_3.0 <- bridgesampling::bridge_sampler(acc.m3.0.stan)
+
+
+# evidence
+bayes_factor(bridge_3, bridge_3.0, log = FALSE)
+
+```
+

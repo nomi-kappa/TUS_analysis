@@ -1134,11 +1134,11 @@ library(htmltools)
 options(mc.cores = 4)
 
 
-cor.m1.stan <- rstanarm::stan_glmer(correct ~ condition * OutValence * req_action * Cue + (1|ID), 
+cor.m1.stan <- rstanarm::stan_glmer(correct ~ condition * OutValence * req_action * Cue + (1|ID),  weights=trial_number,
                  data  = tus, family="binomial", chains=4, iter=2e4, 
                 diagnostic_file = "__df1.csv") #deleted the "weights = ..."
 
-cor.m1.0.stan <- rstanarm::stan_glmer(correct ~ (eondition + OutValence + req_action) * Cue + (1|ID), 
+cor.m1.0.stan <- rstanarm::stan_glmer(correct ~ (condition + OutValence + req_action) * Cue + (1|ID), weights=trial_number,
                data  = tus, family="binomial", chains=4, iter=2e4, 
                 diagnostic_file = "__df0.csv") #notsure if this the base model. #deleted the "weights = ..."
 

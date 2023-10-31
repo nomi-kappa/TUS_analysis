@@ -1,0 +1,263 @@
+---
+title: "GNG_TUS_Study_1_320trials_preprocessing"
+author: "nomi"
+date: "2023-10-31"
+output: html_document
+---
+
+
+# LOAD LIBRARIES
+```{r}
+#library(Rccp)
+#library(rlang)
+library(tibbletime)
+library(purrr)
+library(rstanarm)
+library(stringr)
+library(report)
+#library(ggplot)
+library(ggplot2)
+library(dplyr)
+#library(lmer)
+library(lmerTest)
+library(BayesFactor)
+library(tidyverse)
+library(patchwork)
+library(ggpubr)
+library(jtools) #for explanation of lmer
+library(yarr)
+library (yarrr)
+library(BANOVA)
+library (rstan)
+library(afex)
+
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
+library(ggpirate)
+#p_load ( rms, htmltools, bridgesampling, rstanarm, magrittr, scales, RColorBrewer, 
+# parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
+```
+
+#APA theme
+```{r}
+theme_APA <- theme_bw()+
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          axis.line = element_line(size = 1),                                        
+          text = element_text(
+              size = 20,
+              face="bold"), 
+          axis.text = element_text(
+              size = 20,
+              face="plain",
+              colour="black"),
+          legend.title = element_blank(),
+          legend.position = 'top',
+          legend.direction = "horizontal",
+          legend.text = element_text(
+              face="plain",
+              colour="black",
+              size=20),
+          strip.text.x = element_text(
+              size = 20,
+              face = "bold"),
+          panel.background = element_rect(
+              fill='white',
+              colour='white'),
+          strip.background = element_rect(
+              fill='white',
+              colour='white'),
+          axis.title.x = element_text(
+              margin = margin(t = 10)),
+          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+          plot.caption = element_text(size=15)
+          )
+```
+
+
+    #PREPROCESSING
+
+## insert .txt files
+```{r}
+a.sham<- tibble(filename = list.files("1.SHAM", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+c.ai<- tibble(filename = list.files("3.AI", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+b.dacc<- tibble(filename = list.files("2.dACC", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+```
+
+## add condition column
+```{r}
+a.sham <- a.sham %>%
+      mutate (condition="a.sham")
+c.ai <- c.ai %>%
+      mutate (condition="c.ai")
+b.dacc <- b.dacc %>%
+      mutate (condition="b.dacc")
+```
+
+## Set variable names
+```{r}
+a.sham <- a.sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+b.dacc <- b.dacc %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed", "condition"))
+```
+
+
+## combine datasets
+```{r}
+tus <-bind_rows(a.sham, c.ai, b.dacc)
+
+```
+
+## add session column
+```{r}
+# Extract numbers at the end of each level and create a new column
+tus<-tus %>%
+  mutate(session = as.factor(str_extract(ID,"(?<=\\D)\\d+(?=_log.txt)")))
+#View(tus)
+```
+
+
+## Change name of ID rows to match the subj_ID (i.e.  "pilot data/DBGE0324_log.txt" --> "DBGE0324")
+```{r}
+tus <- tus %>%
+      mutate_at("ID", str_replace, "1.SHAM/", "")# & "log.txt", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "3.AI/", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "2.dACC/", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_2", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_3", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_SHAM_1", "")
+#tus <- tus %>%
+   #   mutate_at("ID", str_replace, "_SHAM__1", "_sham")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_2", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_3", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_dACC_1", "")
+#tus <- tus %>%
+    #  mutate_at("ID", str_replace, "_ACC_2", "_dACC")
+#tus <- tus %>%
+#      mutate_at("ID", str_replace, "_ACC_1", "_dACC")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_2", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_3", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_AI_1", "")
+tus <- tus %>%
+      mutate_at("ID", str_replace, "_log.txt", "")
+#tus <- tus %>%
+  #    mutate_at("ID", str_replace, "SINB_0180", "SINB0180")
+#copied
+#tus <- tus %>%
+   #   mutate_at("ID", str_replace, "_Copy", "")
+```
+
+## Add response col (press - no_press)
+```{r}
+tus$response <- with(tus, ifelse(RT>0, "press", "no_press"))
+tus$GoResponse <- with(tus, ifelse(RT>0, 1, 0)) 
+```
+
+## Add Cue column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+tus$Cue <- ifelse(tus$stim_ID == tus$NGL, 'NGL',
+                ifelse(tus$stim_ID == tus$NGW, 'NGW', 
+                ifelse(tus$stim_ID == tus$GW, 'GW', 
+              ifelse(tus$stim_ID == tus$GAL, 'GAL', NA))))
+    ```
+
+## Add GNG col (Go-noGO)
+```{r}
+tus$req_action <- ifelse(tus$stim_ID == tus$NGL, 'noGo',
+                ifelse(tus$stim_ID == tus$NGW, 'noGo', 'Go'))   
+#NB's way: 
+#pilot$ReqAction <- ifelse(pilot$Cue == 'NGL', 'NoGo',
+            #       ifelse(pilot$Cue == 'NGW', 'NoGo',
+             #      ifelse(pilot$Cue == 'GW', 'Go',
+              #      felse(pilot$Cue == 'GAL', 'Go', NA))))
+
+```
+ 
+## Add correct column (0-1)  
+```{r}
+tus <- tus %>%
+  mutate(correct = ifelse(req_action == "noGo", ifelse(response == "no_press", 1, 0), 
+         
+                    ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
+```
+        
+## Trial column 
+```{r}
+#1,2,3...100...320
+tus <- tus %>%
+  group_by(ID, condition) %>%
+  mutate(trial_number = row_number())
+```
+
+
+## block colums 1, 2, 3, 4   =====sos with the trials that have 400 instead of 320
+```{r}
+tus$block <- ifelse(tus$trial_number == 1:80, '1',
+                ifelse(tus$trial_number == 81:160, '2', 
+                ifelse(tus$trial_number == 161:240, '3', 
+              ifelse(tus$trial_number == 241:320, '4', NA))))
+# counts trials of the same condition within each block
+count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a function 
+#into a rolling version of itself for use inside of a call to dplyr::mutate() ,
+# however it works equally as well when called from purrr::map()
+```
+
+## trial_count column
+```{r}
+tus <- tus %>%
+  group_by(ID, block, condition) %>%
+  mutate(TrialCount = count_trials(Cue)) %>%
+  group_by(ID, block,condition, Cue) %>%
+  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
+```
+
+
+## Add win_lose column (win - lose) 
+```{r}
+tus$feedback <- recode_factor(tus$outcomefeed, "-1" = "lose", 
+                                "1" = "win", "0"= "neutral")
+
+```
+      
+## Add Win/Avoid condition column (if stim_ID=NGW then NGW, etc. for  NGL, GW, GAL)
+```{r}
+tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
+                   ifelse(tus$Cue == 'NGW', 'Win',
+                   ifelse(tus$Cue == 'GW', 'Win',
+                   ifelse(tus$Cue == 'GAL', 'Avoid', NA))))
+```
+
+## Add salient feedback column only
+```{r}
+tus <- tus %>%
+  mutate(salient = ifelse(feedback == "win","win",
+                      ifelse(feedback == "lose", "lose", NA)))
+```
+        
+        
+ ##write.csv
+```{r}
+write.csv(tus, "GNG_TUS_S1.csv")
+```
+

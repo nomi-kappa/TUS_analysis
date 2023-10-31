@@ -1,0 +1,697 @@
+---
+title: "GNG_TUS_Study_1_320trials_PROCESSING"
+author: "nomi"
+date: "2023-10-31"
+output: html_document
+---
+
+#READ FILE
+```{r setup, include=FALSE}
+library(readr)
+tus <- read_csv("GNG_TUS_S1.csv")
+View(tus)
+```
+
+ #PROCESSING
+
+
+## MEAN RT - PRESSES 
+```{r}
+tus_presses <- subset(tus, RT != "0") # exlude 0s (no presses)
+RT_presses <-tus_presses%>%  group_by(condition) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+```
+
+## MEAN CORRECT
+```{r}
+correct_res <-tus%>%  group_by(condition, ID) %>% 
+  summarise(correct = mean(correct))
+RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+```
+
+## Distribution of RT
+```{r}
+tus_presses <- subset(tus, RT != "0") # exlude 0s (no presses)
+RT_presses <-tus_presses%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE));RT_presses #%>%
+ggplot(data = RT_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()+ ggtitle ("Distribution of RT for presses") +theme_APA
+
+#mean RT per participant
+MeanRTpersub <- tus %>% filter(response == "press")%>% group_by(Cue, ID, req_action, OutValence,condition) %>% summarise(RT = mean(RT))
+
+yarrr::pirateplot(formula = RT ~ req_action + OutValence + condition,    # DV = reaction time, IV1 = required action, IV2 = outcome valence
+                  data = MeanRTpersub,           
+                  theme = 2,
+                 # main = "Condition",
+                  ylab = "Reaction Time (ms)",
+                  ylim = c(400, 1000),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7) + theme_APA
+```
+
+## Proportion of GO response per condition 
+**two participants have 21-22 or 23 trials of a Cue- NOT SURE why?.Also NAs count as over 20 trial, but omitted here.**
+```{r}
+# compute proportion of go responses for each participant (first sum per ID, then feed that into general summary)
+MeanGoResppersub <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub <- na.omit(MeanGoResppersub)
+MeanGoResp <- MeanGoResppersub %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot of p(Go) responses 
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +
+  xlim (0,20) +theme_bw() 
+#plot of p(Go) responses per block
+ggplot(MeanGoResp) + 
+  geom_smooth(aes(TrialCount,GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +
+  xlim(0, 20)
+```
+
+
+## Session 
+### It seems to be significant. In the first session they do worse.
+```{r}
+# compute proportion of correct responses for each participant
+tus_correct_sub <- tus %>% group_by(ID, OutValence,session,  condition, req_action) %>% summarise(correct = mean(correct))
+# compute mean proportion of go responses 
+tus_correct <- tus_correct_sub %>% group_by(OutValence, session, req_action, condition) %>% summarise(correct = mean(correct))
+
+
+#plot session
+
+  #re-ordering levels to show as 1,2,3 in the x-axis
+tus_correct$session <- factor(tus_correct$session, levels = c("1", "2", "3"))
+
+pirateplot(formula = correct ~ session +condition,
+           data = tus_correct,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .7, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .3, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+         # ylim = c(0.1, 1.0))
+
+#without "condition"
+pirateplot(formula = correct ~ session,
+           data = tus_correct,
+           theme = 0,
+           bean.f.o = .7,
+           point.o = .3,
+           inf.f.o = .3,
+           inf.b.o = .8,
+           avg.line.o = 1,
+           bar.f.o = .5,
+           inf.f.col = "white",
+           inf.b.col = "black",
+           avg.line.col = "black",
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7) + theme_APA
+```
+
+
+#proportion of GO response per type of Stimulation (sham, ai, dACC) - NADEIDE  and ELSA to check
+```{r}
+    #AI - 
+ai <- subset(tus, condition == "c.ai")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_ai <- ai %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+MeanGoResp.ai <- MeanGoResppersub_ai %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+ai_rolavg<- ggplot(MeanGoResp.ai) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for AI") +
+   xlim(NA, 20)+
+ theme_bw() 
+
+
+    #dACC - 
+dacc <- subset(tus, condition == "b.dacc")
+#dacc <- na.omit(dacc)
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_dacc <- dacc %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResp.dacc <- MeanGoResppersub_dacc %>% group_by(Cue, req_action, OutValence, TrialCount ) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+dacc_rolavg<- ggplot(MeanGoResp.dacc) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for dACC")+
+   xlim(NA, 20)+ theme_bw() 
+
+
+
+    #Sham
+sham <- subset(tus, condition == "a.sham")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_sham <- sham %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+MeanGoResp.sham <- MeanGoResppersub_sham %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+sham_rolavg<- ggplot(MeanGoResp.sham) + 
+  geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for sham") +
+   xlim(NA, 20)+
+ theme_bw() 
+
+#roll avg per CONDITION
+rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
+                    #labels = c("GW", "GAL", "NGW", "NGL"), 
+                  ncol = 2, nrow = 2);rol_avg
+```
+
+##rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
+
+  ***it looks like stimulation to ACC increases the propensity to press in the Go condition. And STIM to both areas slows down learning in the noGO condition***
+```{r}
+#Grey area is CI
+
+#GW
+GW <- subset(tus, Cue == "GW")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_gw <- GW %>% group_by(ID, req_action, OutValence, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_gw <- na.omit(MeanGoResppersub_gw)
+MeanGoResp_gw <- MeanGoResppersub_gw %>% group_by(req_action, OutValence, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot######################play with lines
+GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
+  geom_smooth(linetype = "longdash") +
+  scale_colour_brewer(palette = "Set1") +
+   #facet_grid(~condition)+
+   xlim(NA, 20)+
+  ylim(0.05, 0.9)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
+
+#GAL
+GAL <- subset(tus, Cue == "GAL")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_gal <- GAL %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_gal <- na.omit(MeanGoResppersub_gal)
+MeanGoResp_gal <- MeanGoResppersub_gal %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=condition)) + 
+  geom_smooth(linetype = "longdash") +
+  scale_colour_brewer(palette = "Set1") +
+   #facet_grid(~condition)+
+   xlim(NA, 20)+
+     ylim(0.05, 0.9)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
+
+#NGW
+NGW <- subset(tus, Cue == "NGW")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_NGW <- NGW %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_NGW <- na.omit(MeanGoResppersub_NGW)
+MeanGoResp_NGW <- MeanGoResppersub_NGW %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot - need to work on linetype
+NGW<-ggplot(MeanGoResp_NGW) + 
+  geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
+  scale_colour_brewer(palette = "Set1") +
+  # facet_grid(~condition)+
+   xlim(NA, 20)+
+     ylim(0.05, 0.9)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
+
+
+
+#NGW
+NGL <- subset(tus, Cue == "NGL")
+
+# compute proportion of go responses for each participant
+MeanGoResppersub_NGL <- NGL %>% group_by(ID, TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_NGL <- na.omit(MeanGoResppersub_NGL)
+MeanGoResp_NGL <- MeanGoResppersub_NGL %>% group_by(TrialCount, condition) %>% summarise(GoResponse = mean(GoResponse))
+
+#plot
+NGL<-ggplot(MeanGoResp_NGL) + 
+  geom_smooth(aes(TrialCount, GoResponse, colour=condition )) +
+  scale_colour_brewer(palette = "Set1") +
+  # facet_grid(~condition)+
+   xlim(NA, 20)+
+      ylim(0.05, 0.9)+
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
+
+
+
+#CUES PER CONDITION
+cues <- ggarrange(GW, GAL, NGW, NGL,
+                    #labels = c("GW", "GAL", "NGW", "NGL"), 
+                  ncol = 2, nrow = 2);cues
+   #ylim(0.05, 0.9); 
+```
+
+
+## Probability of correct per participant ***IS THAT CORRECT?***
+```{r}
+tus_correct<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
+yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,    
+                  data = tus_correct,           
+                  theme = 2,
+                 #main = "Proba_correct/condition",
+                  ylab = " (p) of correct",
+                  ylim = c(0.1, 1.15),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)
+```
+
+# ACCURACY PLOTS (x6)
+### proportion of correct per participant per condition ***IMPORTANT FOR THE GW FOR THE AI***
+
+```{r}
+# 1. compute proportion of go responses for each participant <- same as aboe I think
+tus_correct_sub <- tus %>% group_by(ID, OutValence, condition, req_action) %>% summarise(correct = mean(correct))
+# compute mean proportion of go responses 
+tus_correct_meaned <- tus_correct_sub %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
+
+
+pirateplot(formula = correct ~ condition  + req_action +OutValence,
+           data = tus_correct_meaned,
+           theme = 1,
+           main = "Accuracy",
+           bar.f.o = .5, 
+           point.o = .5, 
+          ylim = c(0.5, 1.0))+theme_APA
+
+# 2.THE SAME AS ABOVE 
+pirateplot(formula = correct ~ condition  + OutValence +req_action,
+           data = tus_correct_meaned,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .6, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+ theme_APA
+
+# 3. same with stat_summary
+tus_correct <- na.omit(tus_correct)
+
+tus_acc_plot <-ggplot(data=tus_correct, aes( x=condition, y=correct, fill=condition))+  
+  stat_summary(fun.y = mean, geom = "bar") + 
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.3); tus_acc_plot
+
+ tus_acc_plot + facet_grid(req_action ~ OutValence) + theme_APA 
+
+
+ #TRYING ADDING ERROR BARS AS i CANNOT DO IT WITH THE ABOVE CODE
+
+# 4. Calculate summary statistics (mean and standard deviation)
+
+ppts<-tus %>% group_by(ID) %>%
+   distinct(ID) %>% 
+  nrow() # number of participants
+
+MeanGoResppersub_cond <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount, condition, correct) %>% summarise(GoResponse = mean(GoResponse))
+MeanGoResppersub_cond <- na.omit(MeanGoResppersub_cond)
+#MeanGoResppersub_cond <- MeanGoResppersub_cond %>% group_by(Cue, req_action, block, OutValence, TrialCount) %>% summarise(GoResponse = mean(GoResponse))
+
+summary_data <- MeanGoResppersub_cond %>%
+  group_by(condition, req_action, OutValence) %>%
+  summarise(
+    mean_correct = mean(correct),
+    sd_correct = sd(correct),
+    count = n(),
+    se_correct =sd_correct/sqrt(ppts),
+  ) %>%
+  na.omit()
+
+
+# Create a ggplot with error bars, bars, and facets <- i think pirate plot in line 541 better!!!!!
+ggplot(summary_data, aes(x = condition, y = mean_correct, ymin = mean_correct - se_correct, ymax = mean_correct + se_correct, fill = condition)) +
+  geom_errorbar(position = position_dodge(width = 0.75), width = 0.2) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
+  geom_text(aes(label = round(mean_correct, 2)), vjust = -0.5, position = position_dodge(width = 0.75)) +
+  facet_grid(req_action ~ OutValence) +
+  theme_APA
+
+
+
+
+# 5. add points to the above 
+
+# Merge summary_data and tus data
+merged_data <- merge(tus, summary_data, by = "condition", all.x = TRUE) #merging should be a left join. In a left join, all rows from the left data frame (tus in this case) will be retained, and matching rows from the right data frame (summary_data) will be added. If there are no matches, the columns from the right data frame will contain missing values (NA).
+merged_data <- merged_data %>% na.omit()
+
+
+# Calculate the minimum and maximum y-values in your data
+            #y_min <- min(summary_data$mean_correct - summary_data$se_correct)
+            #y_max <- max(summary_data$mean_correct + summary_data$se_correct)
+
+# Create a ggplot with error bars, bars, data points, and facets
+ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = condition)) +
+  geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
+                position = position_dodge(width = 0.75), width = 0.2) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
+
+  # Use merged_data for geom_point instead of tus
+  geom_point(data = merged_data, aes(x = condition, y = mean_correct, color = condition),
+             position = position_dodge(width = 0.75), size = 1)+
+  geom_text(aes(label = round(mean_correct, 3)), vjust = -0.5, position = position_dodge(width = 0.75)) +
+  facet_grid(req_action ~ OutValence) +  
+  theme_APA +
+  # Set y-axis limits dynamically based on data
+                #ylim(y_min, y_max)
+  coord_cartesian(ylim=c(0.30,1))
+
+
+
+
+# 6. YET ANOTHET PIRATE PLOT
+# Filter the data to exclude values outside the desired y-axis range
+tus_filtered <- tus_correct %>% filter(correct >= 0.40 & correct <= 1)
+
+#pirate plot
+pirateplot(formula = correct ~ condition  + req_action +OutValence,
+           data = tus_filtered,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .6, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+           #coord_cartesian(ylim=c(0.30,0.9))
+
+
+```
+
+
+              ## I THINK I DO NOT NEED THIS CHUNK
+
+#presses for correct  and presses for incorrect (nogos) - ***SEE COMMENTS FOR FURTHER EXPLANATION*** ALSO
+         ****IMPORTANT FOR THE GW FOR THE AI****
+```{r}
+#means - PRESSES FOR GOs (that is pressed when they supposed to be pressing or else pressed for the Go conditions)
+
+presses_for_correct <- subset(tus, response != "no_press"& correct == "1") # that is for both Goes (GW and GAL)
+  press_mean_ID<-presses_for_correct %>% group_by(ID, OutValence, condition, req_action) %>% count(correct = "1")%>%summarize (n=mean(n))
+  press_mean_cr  <- press_mean_ID %>% group_by(OutValence, condition, req_action)%>%summarize (n=mean(n))
+  
+pirateplot(formula = n ~ condition  + req_action + OutValence,
+           main = "presses for GAL(left) and GW (right)",
+             data = press_mean_cr,
+           theme = 2,
+           bar.f.o = .5,
+           ylim = c(0, 80),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.5, # Inference fill
+                  inf.b.o = 0.5, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "black",
+                  point.cex = 1) #For GW, when AI was stimulated. participants pressed 
+``` 
+
+
+## How about RTs? ***NB COULD YOU CHECK PLEASE????***
+
+```{r}
+
+# 1. Calculate summary statistics (mean and standard deviation)
+
+      #filter data to exclude very high values
+ filtered_data_rt <- tus %>%filter(RT >= 100, RT <= 1100)
+
+pirateplot(formula = RT ~ condition  + req_action +OutValence,
+           data = filtered_data_rt,
+                           theme = 0,
+           #main = "Fully customized pirateplot",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .2, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+
+
+# 2. compute mean_rt for each participant - ?????????not sure if this is OK - i might ignore it
+Meanrtpersub_rt <- tus %>% group_by(ID, req_action, OutValence, condition, RT) %>% summarise(mean_rt = mean(RT))
+Meanrtpersub_rt <- na.omit(Meanrtpersub_rt)
+Meanrtpersub_rt <- Meanrtpersub_rt %>% group_by(req_action, OutValence, condition) %>% summarise(mean_rt = mean(mean_rt))
+
+pirateplot(formula =  mean_rt ~ condition  + req_action +OutValence,
+           data = Meanrtpersub_rt,
+                           theme = 0,
+           main = "mean_RT per subject",
+           #pal = "southpark", # southpark color palette
+           bean.f.o = .2, # Bean fill
+           point.o = .3, # Points
+           inf.f.o = .7, # Inference fill
+           inf.b.o = .8, # Inference border
+           avg.line.o = 1, # Average line
+           bar.f.o = .5, # Bar
+           inf.f.col = "white", # Inf fill col
+           inf.b.col = "black", # Inf border col
+           avg.line.col = "black", # avg line col
+           #bar.f.col = gray(.8), # bar filling color
+           point.pch = 21,
+           point.bg = "white",
+           point.col = "black",
+           point.cex = .7)+theme_APA
+
+
+
+#  3. AND with full tus 
+Meanrtpersub_rt2 <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount, condition, RT) %>% summarise(mean_rt = mean(RT))
+Meanrtpersub_rt2 <- na.omit(Meanrtpersub_rt2)
+
+
+summary_data_rt <- Meanrtpersub_rt2 %>%
+  group_by(condition, req_action, OutValence) %>%
+  summarise(
+    mean_rt = mean(RT),
+    sd_rt = sd(RT),  # Calculate the standard deviation of RT
+    count = n(),
+    se_rt = sd_rt / sqrt(ppts)  # Calculate the standard error
+  ) %>%
+  na.omit()
+
+# Create a ggplot with error bars, bars, and facets - pirate plot in the beginning is better (for RTs) - line 286 
+ggplot(summary_data_rt, aes(x = condition, y = mean_rt, ymin = mean_rt - se_rt, ymax = mean_rt + se_rt, fill = condition)) +
+  geom_errorbar(position = position_dodge(width = 0.75), width = 0.2) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
+  geom_text(aes(label = round(mean_rt, 2)), vjust = -0.5, position = position_dodge(width = 0.75)) +
+ facet_grid(req_action ~ OutValence) +
+theme_APA
+
+ # 4. as above - adding data points
+        #Merge summary_data and tus data 
+merged_data_rt <- merge(tus, summary_data_rt, by = "condition", all.x = TRUE) 
+              #merged_data_rt <- merged_data_rt %>% na.omit()
+
+# Create a ggplot with error bars, bars, data points, and facets
+ggplot(data = summary_data_rt, aes(x = condition, y = mean_rt, fill = condition)) +
+  geom_errorbar(aes(ymin = mean_rt - se_rt, ymax = mean_rt + se_rt),
+                position = position_dodge(width = 0.75), width = 0.2) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
+
+  # Use merged_data for geom_point instead of tus
+  geom_point(data = merged_data_rt, aes(x = condition, y = mean_rt, color = condition),
+             position = position_dodge(width = 0.75), size = 2, alpha = 0.5) +
+  geom_text(aes(label = round(mean_rt, 3)), vjust = -0.5, position = position_dodge(width = 0.75)) +
+  facet_grid(req_action ~ OutValence) +
+  theme_APA
+```
+
+
+## performance per participant
+```{r}
+#summary - correct Cues
+ggplot(tus,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#correct counts per Cue
+ccc<-tus %>% group_by (Cue)%>% count (correct);View (ccc)
+
+#correct counts per Cue per ID
+ccc_id<-tus %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
+
+#correct per ID
+c<-tus %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
+
+#response per ID
+response_per_ppt <-tus %>% group_by (ID)%>% count (response);View (response_per_ppt)
+
+mean(c$n) #avg of 294 correct responses--> 
+          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+```
+   
+
+## PROPORTIONs - correct PER PARTCIPANT
+```{r}
+#the proportion of 1s by participant, + more i.e. sound, and language.
+#Because the proportion of 1s in a vector with only 0s and 1s is just the mean, this should work:
+
+df <- aggregate(data=tus, correct ~ ID, FUN="mean")#fun = mean #https://r-coder.com/aggregate-r/
+p <- ggplot(df)
+p <- p + geom_bar(mapping=aes(x=correct, y=ID), stat='identity')+
+  geom_vline(xintercept = 0.53, col = "red")+ 
+  geom_vline(xintercept = 0.50, col = "grey")+
+   geom_vline(xintercept = 0.80, col = "green")+
+  geom_text(aes(x=0.54, label="53%", y=4), colour="black", angle=90) +
+geom_text(aes(x=0.49, label="50%", y=9), colour="black", angle=90)+
+  geom_text(aes(x=0.79, label="80%", y=6), colour="black", angle=90) 
+p + ylab('ID')
+
+#same as above but with stat_summary
+ggplot(tus) + 
+  stat_summary(aes(x = ID, y = correct), 
+               geom = "bar")
+
+#performance per participant and condition
+aggregate(data=tus, correct ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_c <- aggregate(data=tus, correct ~ ID +condition, FUN="mean")
+ 
+ggplot(data = df_c) + 
+  geom_bar(mapping = aes(fill = condition, x = ID, y = correct), stat = "identity", position = "dodge")
+
+#same but with lines and dots
+ df_c %>%ggplot(aes(condition, correct, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ # scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+#ggsave("#performance per participant and condition.png")
+
+
+#performance per  condition - awful
+aggregate(data=tus, correct ~ condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_con <- aggregate(data=tus, correct ~ condition, FUN="mean")
+ 
+ggplot(data = df_con) + 
+  geom_bar(mapping = aes(fill = condition, x = condition, y = correct), stat = "identity", position = "dodge")
+```
+ 
+ ## RTs for participants 
+```{r}
+#rt per participant per condition
+aggregate(data=tus, RT ~ ID+condition, FUN="mean") #fun = mean #https://r-coder.com/aggregate-r/
+
+df_rt <- aggregate(data=tus, RT ~ ID +condition, FUN="mean")
+ 
+ggplot(data = df_rt) + 
+  geom_bar(mapping = aes(fill = condition, x = ID, y = RT), stat = "identity", position = "dodge") 
+  
+
+#same but with lines and dots
+  df_rt %>%ggplot(aes(condition, RT, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+  
+#-------------------------------
+  
+  #for GW only (correct) - NO POINT
+  gwin <- subset(tus, Cue == "GW")
+
+  gwin_cr <- aggregate(data=gwin, correct ~ ID +condition, FUN="mean")
+
+gwin_cr %>%ggplot(aes(condition, correct, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+
+
+  #for NGW only (RT) - NO POINT
+
+gwin_rt <- aggregate(data=gwin, RT ~ ID +condition, FUN="mean")
+
+gwin_rt %>%ggplot(aes(condition, RT, color=ID)) +
+   #geom_boxplot()+
+  geom_point(aes(fill=ID),size=5) +
+ #scale_x_log10()+
+  geom_line(aes(group = ID),color="grey")
+```
+
+
