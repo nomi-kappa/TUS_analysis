@@ -1,5 +1,22 @@
 # TUS_analysis
 
+
+YOU WILL NEED: 
+
+- EITHER 
+the three files for this study 
+1. GNG_TUS_Study_1_320trials_PREPROCESSING- where "GNG_TUS_S1.csv file" is generated, 
+2. GNG_TUS_Study_1_320trials_PROCESSING and 
+3. GNG_TUS_Study_1_320trials_ANALYSIS 
+
+
+- OR
+1. THE GNG_TUS_S1.csv file and 
+2. GNG_TUS_Study_1_320trials_PROCESSING and 
+3. GNG_TUS_Study_1_320trials_ANALYSIS 
+
+
+
 ## Go-noGo task
      
 Equiprobable Go/NoGo learning task (i.e. the ratio Go cues: NoGo cues is 50:50) featuring Win cues (chance for winning points/ money vs. neutral outcome) and Avoid cues (chance for neutral outcome vs. losing points/money).
@@ -64,7 +81,6 @@ otherwise to invalid feedback; reversed probabilities for incorrect responses.*
 
 
 
-NOTE:
-These are the three files for this study (Preprocessing - where "GNG_TUS_S1.csv file" is generated, Processing and Analysis respectively)
+
 
 
