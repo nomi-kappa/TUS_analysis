@@ -109,9 +109,18 @@ models_data$AIC <- as.numeric(models_data$AIC)
 models_data <- models_data[order(models_data$AIC), ]
 
 
-# Output the ordered models and AIC values
+# Step 4:Output the ordered models and AIC values
 cat("Ordered AIC values:\n")
 print(models_data)
+
+
+#OR
+# Step 4: Compare models using aictab
+# Create the AIC table
+aictab_result <- aictab(cand.set = list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13),
+            modnames = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12", "model13"))
+# Print the AIC table
+print(aictab_result)
 ```
 
 #Summary models above
