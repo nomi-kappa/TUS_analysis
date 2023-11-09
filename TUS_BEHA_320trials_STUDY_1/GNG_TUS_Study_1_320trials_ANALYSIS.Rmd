@@ -12,6 +12,25 @@ tus <- read_csv("GNG_TUS_S1.csv")
 View(tus)
 ```
 
+#Load libraries
+```{r}
+library(lmerTest)
+library(lMest)
+library(dplyr)
+library(BayesFactor)
+library(tidyverse)
+library(BANOVA)
+library (rstan)
+library(afex)
+library(rstanarm)
+library(stringr)
+library(report)
+library(jtools) #for explanation of lmer
+library(emmeans)#2 prefictor, one should be continuous (the "var")
+library(effects)
+library(lme4)
+library(bbmle)
+```
 
 #Analysis
 
@@ -32,13 +51,131 @@ summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus
 
 
  ##logistic regression
+      ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
 ```{r}
 
-   #???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
-model_acc <- glmer(correct ~    + OutValence + req_action + trial_number+ Cue*condition +(1|ID) , 
-                 data  = tus, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+#1. all main effects are significant 
+model_acc <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc) 
+
+#2. all main effects are significant
+model_acc <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc) 
+
+#3. all main effects and interaction is significant. val*req_action = Cue
+model_acc <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc) 
+
+#4 val*req_action = Cue
+model_acc <- glmer(correct ~ OutValence * req_action * condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary (model_acc) 
+
+#what elsa also proposed, but I do not think it counts for the main effects, changes the B level.
+       #model_acc <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID) ,        #data  = tus, family="binomial", 
+       #glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+      #summary (model_acc) 
+
+
+#Not sure how to interpret this or how to plot:
+acc <- allEffects(model_acc, xlevels=list(req_action=seq(0, 24, 6)),
+                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));eff.cowles
+
+as.data.frame(acc[[2]])
+
+# the following are equivalent:
+eff.ne <- effect("OutValence*req_action", model_acc)
+Eff.ne <- Effect(c("OutValence", "req_action"), model_acc)
+all.equal(eff.ne$fit, Eff.ne$fit)
+
+# Assuming you have extracted the estimated effects into a data frame
+# For example, using as.data.frame(eff.cowles[[2]])-->
+# Create a ggplot object - not working yet
+acc<-as.data.frame(acc)
+ggplot(data =acc, aes(x = req_action, y = fit)) +
+  geom_point() +  # Add points to the plot
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +  # Add error bars
+  labs(x = "req_action", y = "Effect") +  # Label the axes
+  ggtitle("Estimated Effects of req_action")  # Add a title
+
+#or  #not working either - i do not know
+plot(acc, 'OutValence', axes=list(grid=TRUE,
+y=list(lab="condition"),
+x=list(rotate=90)),
+lines=list(lty=0))
+```
+
+#testing models with and with no effects or interactions
+```{r}
+# Full model with the interaction term
+full_model <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+# Reduced model without the interaction term
+reduced_model <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+# Perform likelihood ratio test
+lr_test <- anova(full_model, reduced_model)
+
+# Access the p-value for the interaction term
+p_value_interaction <- lr_test$`Pr(>Chisq)`["full_model: correct ~ OutValence * req_action * condition + (1 | ID)"]
+
+# Display the p-value
+p_value_interaction
+```
+
+#comparing more models
+```{r}
+# Step 1: Fit a series of GLM models
+model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+
+# Step 2: Calculate model fit statistics
+model1_aic <- AIC(model1)
+model2_aic <- AIC(model2)
+model3_aic <- AIC(model3)
+model4_aic <- AIC(model4)
+model5_aic <- AIC(model5)
+model6_aic <- AIC(model6)
+model7_aic <- AIC(model7)
+model8_aic <- AIC(model8)
+model9_aic <- AIC(model9)
+model10_aic <- AIC(model10)
+
+
+# Step 3: Compare models using AIC
+aic_values <- c(model1_aic, model2_aic, model3_aic,model4_aic, model5_aic, model6_aic, model7_aic, model8_aic, model9_aic, model10_aic)
+cat("BIC comparison:\n")
+cat("Model", best_model_bic$model, "has the lowest BIC:", best_model_bic$BIC, "\n")
+
+```
+
+
+#Reporting
+
+```{r}
 summ(model_acc, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
 summ(model_acc, scale = T)
 report(model_acc)
@@ -46,14 +183,13 @@ report(model_acc) %>% summary()
 report_table(model_acc)
 report_performance(model_acc)
 report_parameters(model_acc)
+```
 
 
-lm(correct ~ condition, data=tus)
-
-
-#Cue impact - CUE as IV 
-   #!!!!!!! NGL:AI interaction is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
-model_acc_cue <- glmer(correct ~ Cue * condition +(1|ID) , 
+```{r}
+ #5 Cue impact - CUE as IV 
+   # is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
+model_acc_cue <- glmer(correct ~ Cue * condition*trial_number + (1 +Cue + condition +trial_number|ID) ,
                  data  = tus, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 summary (model_acc_cue) 
@@ -127,10 +263,6 @@ accu[4]/accu[3]
 summary(rt)
 
  
-
-
-
-
 
 
 #Cue impact

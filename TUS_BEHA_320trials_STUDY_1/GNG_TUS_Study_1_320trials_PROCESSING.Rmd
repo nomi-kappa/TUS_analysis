@@ -12,6 +12,25 @@ tus <- read_csv("GNG_TUS_S1.csv")
 View(tus)
 ```
 
+#Load libraries
+```{r}
+library(tibbletime)
+library(purrr)
+library(stringr)
+library(report)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(ggpubr)
+library(yarr)
+library (yarrr)
+library(afex)
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
+library(ggpirate)
+```
+
  #PROCESSING
 
 

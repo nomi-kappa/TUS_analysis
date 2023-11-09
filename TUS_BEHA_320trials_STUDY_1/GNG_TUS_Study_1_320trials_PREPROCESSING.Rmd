@@ -12,25 +12,19 @@ output: html_document
 #library(rlang)
 library(tibbletime)
 library(purrr)
-library(rstanarm)
 library(stringr)
 library(report)
 #library(ggplot)
 library(ggplot2)
 library(dplyr)
 #library(lmer)
-library(lmerTest)
-library(BayesFactor)
 library(tidyverse)
 library(patchwork)
 library(ggpubr)
 library(jtools) #for explanation of lmer
 library(yarr)
 library (yarrr)
-library(BANOVA)
-library (rstan)
 library(afex)
-
 #install.packages("devtools")
 #devtools::install_github("mikabr/ggpirate")
 library(ggpirate)
@@ -73,6 +67,8 @@ theme_APA <- theme_bw()+
           plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
           plot.caption = element_text(size=15)
           )
+
+View(tus)
 ```
 
 
