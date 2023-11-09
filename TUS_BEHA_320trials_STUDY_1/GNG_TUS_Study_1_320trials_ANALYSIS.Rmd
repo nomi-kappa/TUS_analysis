@@ -30,6 +30,8 @@ library(emmeans)#2 prefictor, one should be continuous (the "var")
 library(effects)
 library(lme4)
 library(bbmle)
+library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criterion/#:~:text=Once%20you've%20created%20several,be%20the%20better%2Dfit%20model.
+#help to interpret results from AICmodavg
 ```
 
 #Analysis
@@ -49,15 +51,86 @@ summary(aov(correct ~ condition * req_action * OutValence + Error(ID/(condition 
 summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus)) # separately testing effect of IVs but their interaction too- not sure if correct??????
 ```
 
+#comparing glmer models - Logistic regression
+     ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
 
- ##logistic regression
-      ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
+```{r}
+# Step 1: Fit a series of GLM models
+
+        #all main effects are significant 
+model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+        #all main effects are significant
+model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+       #all main effects and interaction is significant. val*req_action = Cue
+model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model11 <- glmer(correct ~  OutValence * req_action *condition * trial_number + RT + (1|ID) ,
+                   data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model12 <-glmer(correct ~ OutValence + req_action + condition + RT +trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model13 <-glmer(correct ~ OutValence + req_action + condition + RT +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+
+# Step 2: Create a data frame with model names and AIC values
+models_data <- data.frame(
+  Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13"),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5), AIC(model6), AIC(model7), AIC(model8), AIC(model9), AIC(model10), AIC(model11), AIC(model12), AIC(model13))
+                          )
+
+models_data$AIC <- as.numeric(models_data$AIC)
+# Step 3: Order the data frame based on AIC values
+models_data <- models_data[order(models_data$AIC), ]
+
+
+# Output the ordered models and AIC values
+cat("Ordered AIC values:\n")
+print(models_data)
+```
+
+#Summary models above
+```{r}
+# Assuming you have a list of 10 models named model1, model2, ..., model10
+model_list <- list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13)
+
+# Use lapply to get summaries for all models
+model_summaries <- lapply(model_list, summary)
+
+# Now you can access each summary using model_summaries[[1]], model_summaries[[2]], and so on
+model_summaries[[11]]
+```
+
+
+ 
 ```{r}
 
-#1. all main effects are significant 
-model_acc <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc) 
+
 
 #2. all main effects are significant
 model_acc <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
@@ -106,70 +179,6 @@ plot(acc, 'OutValence', axes=list(grid=TRUE,
 y=list(lab="condition"),
 x=list(rotate=90)),
 lines=list(lty=0))
-```
-
-#testing models with and with no effects or interactions
-```{r}
-# Full model with the interaction term
-full_model <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-# Reduced model without the interaction term
-reduced_model <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-
-# Perform likelihood ratio test
-lr_test <- anova(full_model, reduced_model)
-
-# Access the p-value for the interaction term
-p_value_interaction <- lr_test$`Pr(>Chisq)`["full_model: correct ~ OutValence * req_action * condition + (1 | ID)"]
-
-# Display the p-value
-p_value_interaction
-```
-
-#comparing more models
-```{r}
-# Step 1: Fit a series of GLM models
-model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-
-
-# Step 2: Calculate model fit statistics
-model1_aic <- AIC(model1)
-model2_aic <- AIC(model2)
-model3_aic <- AIC(model3)
-model4_aic <- AIC(model4)
-model5_aic <- AIC(model5)
-model6_aic <- AIC(model6)
-model7_aic <- AIC(model7)
-model8_aic <- AIC(model8)
-model9_aic <- AIC(model9)
-model10_aic <- AIC(model10)
-
-
-# Step 3: Compare models using AIC
-aic_values <- c(model1_aic, model2_aic, model3_aic,model4_aic, model5_aic, model6_aic, model7_aic, model8_aic, model9_aic, model10_aic)
-cat("BIC comparison:\n")
-cat("Model", best_model_bic$model, "has the lowest BIC:", best_model_bic$BIC, "\n")
-
 ```
 
 
