@@ -67,8 +67,6 @@ theme_APA <- theme_bw()+
           plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
           plot.caption = element_text(size=15)
           )
-
-View(tus)
 ```
 
 

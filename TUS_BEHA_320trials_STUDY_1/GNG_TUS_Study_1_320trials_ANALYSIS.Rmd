@@ -15,7 +15,7 @@ View(tus)
 #Load libraries
 ```{r}
 library(lmerTest)
-library(lMest)
+#library(lMest)
 library(dplyr)
 library(BayesFactor)
 library(tidyverse)
@@ -30,6 +30,8 @@ library(emmeans)#2 prefictor, one should be continuous (the "var")
 library(effects)
 library(lme4)
 library(bbmle)
+library(MASS)
+library(MuMIn)
 library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criterion/#:~:text=Once%20you've%20created%20several,be%20the%20better%2Dfit%20model.
 #help to interpret results from AICmodavg
 ```
@@ -55,6 +57,64 @@ summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus
      ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
 
 ```{r}
+### Elsa Test on stepAIC
+modelTEST <- glm(correct ~ OutValence + req_action + condition, data  = tus) 
+summary(modelTEST)
+newmodel <- stepAIC(modelTEST, scope=list(upper= ~OutValence * req_action * condition, lower= ~1))
+
+#Equivalent of stepAIC
+
+      #WAY_1
+# List of fixed effects
+fixed_effects <- c("OutValence", "req_action", "condition", "trial_number")
+
+# Generate all possible combinations of two-way interactions
+interaction_terms_2way <- combn(fixed_effects, 2, simplify = FALSE) %>%
+  lapply(function(x) paste(x, collapse = "*"))
+
+# Generate all possible combinations of three-way interactions
+interaction_terms_3way <- combn(fixed_effects, 3, simplify = FALSE) %>%
+  lapply(function(x) paste(x, collapse = "*"))
+
+# Combine two-way and three-way interaction terms
+interaction_terms <- c(interaction_terms_2way, interaction_terms_3way)
+
+# Check if there are valid combinations
+if (length(interaction_terms) == 0) {
+  cat("No valid combinations of interactions found.")
+} else {
+  # List to store models and AIC values
+  model_list <- list()
+  
+  # Loop through each combination of interactions and fit models
+  for (i in seq_along(interaction_terms)) {
+    # Create formula string with interactions and random intercept
+    formula_str <- as.formula(paste("correct ~", interaction_terms[[i]], "+ (1|ID)"))
+    
+    # Fit the model
+    tryCatch({
+      temp_model <- glmer(formula_str, data = tus, family = "binomial",
+                          glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+      
+      # Calculate AIC and store the model
+      temp_AIC <- AIC(temp_model)
+      model_list[[interaction_terms[[i]]]] <- list(model = temp_model, AIC = temp_AIC)
+    }, error = function(e) {
+      cat("Error occurred with this formula:", deparse(formula_str), "\n")
+    })
+  }
+  
+  # Order models by AIC value
+  ordered_models <- model_list[order(sapply(model_list, function(x) x$AIC))]
+  
+  # Print the ordered models
+  print(ordered_models)
+}
+
+
+        #WAY_2
+
+
 # Step 1: Fit a series of GLM models
 
         #all main effects are significant 
@@ -69,6 +129,7 @@ model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1
 
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+summary(model4)#this is probably the one!
 
 model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
@@ -84,25 +145,79 @@ model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) ,
 
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-
+#not 9
 model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 
 model11 <- glmer(correct ~  OutValence * req_action *condition * trial_number + RT + (1|ID) ,
                    data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-
+#not11
 model12 <-glmer(correct ~ OutValence + req_action + condition + RT +trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 
 model13 <-glmer(correct ~ OutValence + req_action + condition + RT +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
 
+model14 <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID) ,        
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+#overfit i think 14, but also OutValenceWin:conditionc.ai:trial_number                  -0.0050235  0.0013815  -3.636 0.000277 ***
+model15 <- glmer(correct ~ req_action + OutValence + trial_number + condition +(1|ID) + ( req_action + OutValence + trial_number + condition|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+#no 15
+model16 <- glmer(correct ~ req_action * OutValence + trial_number + condition +(1|ID) + ( req_action * OutValence + trial_number + condition|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+ #takes ages and crashes
+model17 <- glmer(correct ~ req_action * OutValence * trial_number * condition +(1|ID) + ( req_action * OutValence * trial_number * condition|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +RT +(1|ID) + ( req_action * OutValence * trial_number * condition +RT|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+model19 <- glmer(correct ~ req_action * OutValence * trial_number * condition *RT +(1|ID) + ( req_action * OutValence * trial_number * condition *RT|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+
+
+#model 20 not working atm
+
+
+# Identify non-numeric columns
+non_numeric_cols <- c("req_action", "OutValence", "trial_number", "condition", "RT")
+
+# Convert non-numeric values to NA
+tus[, non_numeric_cols] <- lapply(tus[, non_numeric_cols], function(x) {
+  as.numeric(as.character(x))
+})
+
+# Replace missing values with column means
+tus[, non_numeric_cols] <- lapply(tus[, non_numeric_cols], function(x) {
+  ifelse(is.na(x), mean(x, na.rm = TRUE), x)
+})
+
+# Scale numeric columns
+scaled_tus <- tus
+scaled_tus[, non_numeric_cols] <- scale(tus[, non_numeric_cols])
+
+# Check the class of ID column
+class(scaled_tus$ID)
+
+# Convert ID to factor if it's not already a factor
+if (!is.factor(scaled_tus$ID)) {
+  scaled_tus$ID <- as.factor(scaled_tus$ID)
+}
+
+# Fit the model again
+model20 <- glmer(correct ~ req_action * OutValence * trial_number * condition * RT + (1|ID),
+                 data = scaled_tus, family = "binomial",
+                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
 
 # Step 2: Create a data frame with model names and AIC values
 models_data <- data.frame(
-  Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13"),
-  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5), AIC(model6), AIC(model7), AIC(model8), AIC(model9), AIC(model10), AIC(model11), AIC(model12), AIC(model13))
-                          )
+  Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13"))#, "model14")), "model15", "model16", "model17", "model18", "model19"),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5), AIC(model6), AIC(model7), AIC(model8), AIC(model9), AIC(model10), AIC(model11), AIC(model12), AIC(model13))#, AIC(model14), AIC(model15), AIC(model16), AIC(model17), AIC(model18), AIC(model19)))
+                          
 
 models_data$AIC <- as.numeric(models_data$AIC)
 # Step 3: Order the data frame based on AIC values
@@ -114,11 +229,11 @@ cat("Ordered AIC values:\n")
 print(models_data)
 
 
-#OR
+      #OR
 # Step 4: Compare models using aictab
 # Create the AIC table
-aictab_result <- aictab(cand.set = list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13),
-            modnames = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12", "model13"))
+aictab_result <- aictab(cand.set = list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13))#, model14, model15, model16, model17, model18, model19),
+  modnames = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12", "model13")#, "model14", "model15", "model16", "model17", "model18", "model19"))
 # Print the AIC table
 print(aictab_result)
 ```
@@ -126,47 +241,29 @@ print(aictab_result)
 #Summary models above
 ```{r}
 # Assuming you have a list of 10 models named model1, model2, ..., model10
-model_list <- list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13)
+model_list <- list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13, model14)
 
 # Use lapply to get summaries for all models
 model_summaries <- lapply(model_list, summary)
 
 # Now you can access each summary using model_summaries[[1]], model_summaries[[2]], and so on
-model_summaries[[11]]
+model_summaries[[4]]
 ```
 
 
  
 ```{r}
 
+# do not hot to combine the allmeans or alleffects to check the beta basic level main effects.
+```
 
-
-#2. all main effects are significant
-model_acc <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc) 
-
-#3. all main effects and interaction is significant. val*req_action = Cue
-model_acc <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc) 
-
-#4 val*req_action = Cue
-model_acc <- glmer(correct ~ OutValence * req_action * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc) 
-
-#what elsa also proposed, but I do not think it counts for the main effects, changes the B level.
-       #model_acc <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID) ,        #data  = tus, family="binomial", 
-       #glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-      #summary (model_acc) 
-
-
-#Not sure how to interpret this or how to plot:
+#Plotting the effects? Help - not working OK
+```{r}
+#Not sure how to interpret the model (whichever I pick) or how to plot:
 acc <- allEffects(model_acc, xlevels=list(req_action=seq(0, 24, 6)),
                    fixed.predictors=list(given.values=c(OutValenceWin =0.5)));eff.cowles
 
-as.data.frame(acc[[2]])
+as.data.frame(acc[[]])
 
 # the following are equivalent:
 eff.ne <- effect("OutValence*req_action", model_acc)
@@ -202,36 +299,28 @@ report_table(model_acc)
 report_performance(model_acc)
 report_parameters(model_acc)
 ```
-
-
-```{r}
- #5 Cue impact - CUE as IV 
-   # is significant, but not the dACC:NGL. I am not sure why, because in the plot the AI is closer to Sham than the dACC!!!!!!!!!!!!!!!!!!
-model_acc_cue <- glmer(correct ~ Cue * condition*trial_number + (1 +Cue + condition +trial_number|ID) ,
-                 data  = tus, family="binomial", 
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-summary (model_acc_cue) 
-summ(model_acc_cue, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
-summ(model_acc_cue, scale = T)
-
+ 
+ 
 #visualize how spread accuracy is - higher variability for the STIMs
+```{r}
 tus_correct_sub <- na.omit(tus_correct_sub)#omit NAs
 
 ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
                geom_jitter(stat = "identity")+
     facet_grid(~condition)
 geom_smooth(method= "lm", se = TRUE)
+```
 
 
 #run anovaBF (not the correct analysis as the DV is categorical - just trying)
-#BF
+```{r}
+#as.factor
 tus$ID <- as.factor(tus$ID)
 tus$req_action <- as.factor(tus$req_action)
 tus$condition <- as.factor(tus$condition)
 tus$trial_number <- as.factor(tus$trial_number)
 tus$OutValence <- as.factor(tus$OutValence)
 tus$Cue <- as.factor(tus$Cue)
-
 
 #drop NAs
 df <- na.omit(tus)
@@ -243,6 +332,7 @@ df$trial_number <- as.factor(df$trial_number)
 df$OutValence <- as.factor(df$OutValence)
 df$Cue <- as.factor(df$Cue)
 
+
 #anovaBF IV = req_action
  accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
@@ -253,6 +343,7 @@ accu_cue <-anovaBF(correct ~ Cue*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 accu_cue[4]/accu_cue[3]
 lm(RT ~ condition +req_action +OutValence, data=tus)
+
 
 
 #banova!!!!!!!! - not working atm

@@ -506,7 +506,7 @@ pirateplot(formula = n ~ condition  + req_action + OutValence,
 # 1. Calculate summary statistics (mean and standard deviation)
 
       #filter data to exclude very high values
- filtered_data_rt <- tus %>%filter(RT >= 100, RT <= 1100)
+ filtered_data_rt <- tus %>%filter(RT >= 300, RT <= 800)
 
 pirateplot(formula = RT ~ condition  + req_action +OutValence,
            data = filtered_data_rt,
@@ -691,26 +691,26 @@ ggplot(data = df_rt) +
 #-------------------------------
   
   #for GW only (correct) - NO POINT
-  gwin <- subset(tus, Cue == "GW")
+ # gwin <- subset(tus, Cue == "GW")
 
-  gwin_cr <- aggregate(data=gwin, correct ~ ID +condition, FUN="mean")
+#  gwin_cr <- aggregate(data=gwin, correct ~ ID +condition, FUN="mean")
 
-gwin_cr %>%ggplot(aes(condition, correct, color=ID)) +
-   #geom_boxplot()+
-  geom_point(aes(fill=ID),size=5) +
- #scale_x_log10()+
-  geom_line(aes(group = ID),color="grey")
+#gwin_cr %>%ggplot(aes(condition, correct, color=ID)) +
+                            #geom_boxplot()+
+ # geom_point(aes(fill=ID),size=5) +
+                        #scale_x_log10()+
+  #geom_line(aes(group = ID),color="grey")
 
 
   #for NGW only (RT) - NO POINT
 
-gwin_rt <- aggregate(data=gwin, RT ~ ID +condition, FUN="mean")
+#gwin_rt <- aggregate(data=gwin, RT ~ ID +condition, FUN="mean")
 
-gwin_rt %>%ggplot(aes(condition, RT, color=ID)) +
-   #geom_boxplot()+
-  geom_point(aes(fill=ID),size=5) +
- #scale_x_log10()+
-  geom_line(aes(group = ID),color="grey")
+#gwin_rt %>%ggplot(aes(condition, RT, color=ID)) +
+             #geom_boxplot()+
+  #geom_point(aes(fill=ID),size=5) +
+                #scale_x_log10()+
+  #geom_line(aes(group = ID),color="grey")
 ```
 
 
