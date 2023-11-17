@@ -18,6 +18,7 @@ library(lmerTest)
 #library(lMest)
 library(dplyr)
 library(BayesFactor)
+library(leaps)
 library(tidyverse)
 library(BANOVA)
 library (rstan)
@@ -40,29 +41,13 @@ library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criter
 
   ##Accuracy
 
-    ##NB RUN A BASIC ANOVA !!!!!!!!!!!
-```{r}
-oneway.test(correct ~ condition,
-  data = tus,
-  var.equal = TRUE) # assuming equal variances
-
-model <- aov(correct ~ condition * req_action * OutValence, data=tus)
-summary(model)
-
-summary(aov(correct ~ condition * req_action * OutValence + Error(ID/(condition * req_action * OutValence)), data=tus))
-summary(aov(correct ~ condition * req_action *  OutValence + Error(ID), data=tus)) # separately testing effect of IVs but their interaction too- not sure if correct??????
-```
-
-#comparing glmer models - Logistic regression
-     ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
+   
+      #comparing glmer models - Logistic regression
+             ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
 
 ```{r}
-### Elsa Test on stepAIC
-modelTEST <- glm(correct ~ OutValence + req_action + condition, data  = tus) 
-summary(modelTEST)
-newmodel <- stepAIC(modelTEST, scope=list(upper= ~OutValence * req_action * condition, lower= ~1))
 
-#Equivalent of stepAIC
+#Equivalent of stepAIC for glmer - comparing models - do not like it
 
       #WAY_1
 # List of fixed effects
@@ -94,7 +79,7 @@ if (length(interaction_terms) == 0) {
     # Fit the model
     tryCatch({
       temp_model <- glmer(formula_str, data = tus, family = "binomial",
-                          glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+                          glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=100000)))
       
       # Calculate AIC and store the model
       temp_AIC <- AIC(temp_model)
@@ -119,67 +104,71 @@ if (length(interaction_terms) == 0) {
 
         #all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
         #all main effects are significant
+summary(model1)
 model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-       #all main effects and interaction is significant. val*req_action = Cue
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model2)#all main effects and interaction is significant. val*req_action = Cue
 model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model3)
 
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 summary(model4)#this is probably the one!
 
+model0 <- glmer(correct ~condition + req_action + condition*req_action + OutValence + condition*OutValence + req_action*OutValence +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model0)#ignore most probably
 model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
-
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model5)
 model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model6)
 
 model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 #not 9
 model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model11 <- glmer(correct ~  OutValence * req_action *condition * trial_number + RT + (1|ID) ,
-                   data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                   data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 #not11
 model12 <-glmer(correct ~ OutValence + req_action + condition + RT +trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model13 <-glmer(correct ~ OutValence + req_action + condition + RT +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model14 <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID) ,        
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 #overfit i think 14, but also OutValenceWin:conditionc.ai:trial_number                  -0.0050235  0.0013815  -3.636 0.000277 ***
 model15 <- glmer(correct ~ req_action + OutValence + trial_number + condition +(1|ID) + ( req_action + OutValence + trial_number + condition|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 #no 15
 model16 <- glmer(correct ~ req_action * OutValence + trial_number + condition +(1|ID) + ( req_action * OutValence + trial_number + condition|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
  #takes ages and crashes
 model17 <- glmer(correct ~ req_action * OutValence * trial_number * condition +(1|ID) + ( req_action * OutValence * trial_number * condition|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +RT +(1|ID) + ( req_action * OutValence * trial_number * condition +RT|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 model19 <- glmer(correct ~ req_action * OutValence * trial_number * condition *RT +(1|ID) + ( req_action * OutValence * trial_number * condition *RT|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
 
 #model 20 not working atm
-
-
 # Identify non-numeric columns
 non_numeric_cols <- c("req_action", "OutValence", "trial_number", "condition", "RT")
 
@@ -205,9 +194,8 @@ if (!is.factor(scaled_tus$ID)) {
   scaled_tus$ID <- as.factor(scaled_tus$ID)
 }
 
-# Fit the model again
 model20 <- glmer(correct ~ req_action * OutValence * trial_number * condition * RT + (1|ID),
-                 data = scaled_tus, family = "binomial",
+                 data = scaled_tus, family = binomial,
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
@@ -215,8 +203,8 @@ model20 <- glmer(correct ~ req_action * OutValence * trial_number * condition * 
 
 # Step 2: Create a data frame with model names and AIC values
 models_data <- data.frame(
-  Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13"))#, "model14")), "model15", "model16", "model17", "model18", "model19"),
-  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5), AIC(model6), AIC(model7), AIC(model8), AIC(model9), AIC(model10), AIC(model11), AIC(model12), AIC(model13))#, AIC(model14), AIC(model15), AIC(model16), AIC(model17), AIC(model18), AIC(model19)))
+  Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13", "model14")#, "model15", "model16", "model17", "model18", "model19"),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4), AIC(model5), AIC(model6), AIC(model7), AIC(model8), AIC(model9), AIC(model10), AIC(model11), AIC(model12), AIC(model13), AIC(model14))#, #AIC(model15), AIC(model16), AIC(model17), AIC(model18), AIC(model19)))
                           
 
 models_data$AIC <- as.numeric(models_data$AIC)
@@ -229,19 +217,24 @@ cat("Ordered AIC values:\n")
 print(models_data)
 
 
-      #OR
-# Step 4: Compare models using aictab
+      #OR preferable
+# Step 2: Compare models using aictab
 # Create the AIC table
-aictab_result <- aictab(cand.set = list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13))#, model14, model15, model16, model17, model18, model19),
-  modnames = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12", "model13")#, "model14", "model15", "model16", "model17", "model18", "model19"))
-# Print the AIC table
+aictab_result <- aictab(cand.set = list(model1, model2, model3, model4, model5, model11, model12, model13))#, model14, model15, model16, model17, model18, model19),
+  modnames = c("model1", "model2", "model3", "model4", "model5",  "model11", "model12", "model13")#, "model14", "model15", "model16", "model17", "model18", "model19"))
+
+# Step 3: Reorder the AIC table by AICc values
+aictab_result <- aictab_result[order(aictab_result$AICc), ]
+
+# Step: 4Print the reordered AIC table
 print(aictab_result)
+
 ```
 
 #Summary models above
 ```{r}
 # Assuming you have a list of 10 models named model1, model2, ..., model10
-model_list <- list(model1, model2, model3, model4, model5, model6, model7, model8, model9, model10, model11, model12, model13, model14)
+model_list <- list(model1, model2, model3, model4, model5, model11, model12, model13)
 
 # Use lapply to get summaries for all models
 model_summaries <- lapply(model_list, summary)
@@ -250,18 +243,15 @@ model_summaries <- lapply(model_list, summary)
 model_summaries[[4]]
 ```
 
-
- 
 ```{r}
-
 # do not hot to combine the allmeans or alleffects to check the beta basic level main effects.
 ```
 
-#Plotting the effects? Help - not working OK
+#Plotting the effects? Help - NOT WORKING
 ```{r}
 #Not sure how to interpret the model (whichever I pick) or how to plot:
 acc <- allEffects(model_acc, xlevels=list(req_action=seq(0, 24, 6)),
-                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));eff.cowles
+                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));cc
 
 as.data.frame(acc[[]])
 
@@ -288,40 +278,8 @@ lines=list(lty=0))
 ```
 
 
-#Reporting
-
-```{r}
-summ(model_acc, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
-summ(model_acc, scale = T)
-report(model_acc)
-report(model_acc) %>% summary()
-report_table(model_acc)
-report_performance(model_acc)
-report_parameters(model_acc)
-```
- 
- 
-#visualize how spread accuracy is - higher variability for the STIMs
-```{r}
-tus_correct_sub <- na.omit(tus_correct_sub)#omit NAs
-
-ggplot(tus_correct_sub, aes(x = correct , y = req_action, color=req_action))+
-               geom_jitter(stat = "identity")+
-    facet_grid(~condition)
-geom_smooth(method= "lm", se = TRUE)
-```
-
-
 #run anovaBF (not the correct analysis as the DV is categorical - just trying)
 ```{r}
-#as.factor
-tus$ID <- as.factor(tus$ID)
-tus$req_action <- as.factor(tus$req_action)
-tus$condition <- as.factor(tus$condition)
-tus$trial_number <- as.factor(tus$trial_number)
-tus$OutValence <- as.factor(tus$OutValence)
-tus$Cue <- as.factor(tus$Cue)
-
 #drop NAs
 df <- na.omit(tus)
 df$ID <- as.factor(df$ID)
@@ -334,9 +292,10 @@ df$Cue <- as.factor(df$Cue)
 
 
 #anovaBF IV = req_action
- accu <-anovaBF(correct ~ req_action*condition  + ID, data = df, whichRandom = "ID",
-   progress=FALSE)
-accu[4]/accu[3]
+ accu <-anovaBF(correct ~ OutValence*req_action*condition*trial_number  + ID, data = df, whichRandom = "ID",
+   progress=FALSE); accu
+accu[17]/accu[12]
+accu/max(accu)#best models as denominator to so the closest ones
 
 #anovaBF IV = Cue - interaction between the Cue and the condition
 accu_cue <-anovaBF(correct ~ Cue*condition  + ID, data = df, whichRandom = "ID",
@@ -356,31 +315,141 @@ BANOVA::BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_
 
 #RTs
 
+#fit-and-bic equivalent of stepAIC for lmer
 ```{r}
-model_rt <- lmer(RT ~ req_action  + OutValence +session+ req_action*condition*trial_number +(1|ID), # + trial_number (excluded cause it gives me the outcome of all trials, it does not group them)
-                 data  = tus, REML = FALSE) #REML = FALSE
-summary (model_rt) 
-    #print(model_rt, correlation=FALSE)
-report_table(model_rt)
+# Function to create all combinations of predictors including interactions up to four variables
+get_combinations <- function(predictors) {
+  n <- length(predictors)
+  combs <- unlist(lapply(1:n, function(i) combn(predictors, i, simplify = FALSE)), recursive = FALSE)
+  
+  # Generate combinations with interactions up to four variables
+  interactions_4way <- lapply(1:(n-3), function(i) {
+    combn(predictors, i, FUN = function(x) {
+      remaining <- setdiff(predictors, x)
+      combs <- combn(remaining, 3, paste, collapse = "*")
+      paste(x, combs, sep = "*")
+    })
+  })
+  
+  interactions_4way <- unlist(interactions_4way, recursive = FALSE)
+  
+  c(combs, interactions_4way)
+}
+
+# Function to fit models and compute BIC, excluding redundant models
+fit_and_bic <- function(data, response, predictors) {
+  combinations <- get_combinations(predictors)
+  bics <- numeric(length(combinations))
+  
+  for (i in seq_along(combinations)) {
+    formula <- as.formula(paste(response, "~", paste(combinations[[i]], collapse = " + "), "+ (1|ID)"))
+    model <- lmer(formula, data = data, REML = FALSE)
+    bics[i] <- BIC(model)
+  }
+  
+  result <- data.frame(Model = sapply(combinations, paste, collapse = " + "), BIC = bics)
+  result <- result[order(result$BIC), ]
+  
+  # Remove redundant models
+  result <- result[!duplicated(lapply(strsplit(result$Model, "\\+"), function(x) sort(trimws(x)))), ]
+  
+  result
+}
+
+# Define your response variable and predictor variables
+response_var <- "RT"
+predictor_vars <- c("OutValence", "req_action", "condition", "trial_number")
+
+# Example usage
+result <- fit_and_bic(data = tus, response = response_var, predictors = predictor_vars)
+print(result)
+```
 
 
+#comparing between three model. This looks to be the best "model_rt_tn"
+```{r}
+model_rt1 <- lmer(RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt1) 
 
+model_rt2 <- lmer(RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt2)#THIS MODEL seems to be the best
+
+#model_rt_tnsn<- lmer(RT ~ req_action*OutValence*condition*trial_number*session +(1|ID), data  = tus, REML = FALSE) 
+#summary (model_rt_tnsn) # NO
+
+model_rt3 <- lmer(RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt3)
+
+model_rt4 <- lmer(RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt4)
+
+model_rt5 <- lmer(RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt5)#no
+   
+# Perform Likelihood Ratio Test
+lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5)
+print(lr_test) 
+p_value <- lr_test$Pr[2];p_value
+```
+
+#anovaBF for RTs
+```{r}
 #run anovaBF IV = req_action and condition
- rt <-anovaBF(RT ~ req_action*condition  + ID, data = df, whichRandom = "ID",
+ rt <-anovaBF(RT ~ req_action*OutValence*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
-accu[4]/accu[3]
+rt[17]/rt[13] 
+ rt[18]/rt[13] 
+ rt[18/rt[17] 
 summary(rt)
+ratios<-rt/max(rt);ratios#best models as denominator to so the closest ones 13, 14, 15, 17, 18, 16, 12, 11
 
+
+
+#or
+# Remove rows with missing values in 'RT'
+tus <- na.omit(tus)
+# Convert 'ID' to factor if it's not already a factor
+if (!is.factor(tus$ID)) {
+  tus$ID <- as.factor(tus$ID)
+}
+
+# Calculate Bayes factors for each model using the 'tus' dataset
+bf_13 <- lmBF(RT ~ req_action + OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_15 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_17 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_18 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
+
+# Extract Bayes factors
+bf_values <- c(bf_13, bf_15, bf_17, bf_18)
+
+# Compare Bayes factors
+bf_values / max(bf_values)
+
+```
+
+
+
+#Reporting -  examples
+```{r}
+summ(model_acc, exp = T)# set "exp = T" to show esponentiated estimates; if you need standardised estimaets, set "scale = T"
+summ(model_acc, scale = T)
+report(model_acc)
+report(model_acc) %>% summary()
+report_table(model_acc)
+report_performance(model_acc)
+report_parameters(model_acc)
+```
  
+#########################################################################################################################################################################################
 
 
-#Cue impact
+          #from here ONWARDS, IT CAN BE IGNORED AT THE MOMENT - DECIDE IF NEEDED
+          
+          #Cue  - not needed
+```{r}
 model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
                  data  = tus,REML = FALSE) #REML = FALSE
-summary (model_rt_cue) 
-
-#simple anova
-anova(model_rt)
+summary (model_rt_cue)
 
 #anovaBF IV = Cue - interaction between the Cue and the condition
 rt_cue <-anovaBF(RT ~ Cue*condition  + ID, data = df, whichRandom = "ID",
@@ -389,9 +458,6 @@ rt_cue[4]/rt_cue[3]
 summary(rt_cue)
 ```
 
-
-          
-          
   # ANALYSIS FOR SALIENT ONLY (EXCLUDE NEUTRAL OUTCOME)
   
 ```{r}
@@ -400,7 +466,6 @@ tus_salient <- subset(tus, salient=!"neutral",
 select=ID:salient);  
 
 salient_df <-tus_salient %>% drop_na();  View(salient_df) # WRONG IT DRPOPS ACC AS WELL
-
 ```  
 
         
@@ -411,7 +476,7 @@ model_acc_sal <- glmer(correct ~ condition + req_action + trial_number + OutVale
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALS
 summary(model_acc_sal)
 
-#Cue impact
+#Cue impact - not good
 sal_cue_accu <- glmer(correct ~ Cue*condition*trial_number +(1|ID) , 
                  data  = salient_df, family="binomial", 
                  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000))) #REML = FALSE
@@ -424,7 +489,7 @@ model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + re
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (model_rt_sal) 
 report_table(model_rt_sal)
-#Cue impact
+#Cue impact -that is good
 sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (sal_cue_rt) 
