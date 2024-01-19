@@ -100,7 +100,7 @@ if (length(interaction_terms) == 0) {
         #WAY_2
 
 
-# Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 is decent 8, 7, 6, 3, 1)
+# Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
 
         #all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
@@ -249,7 +249,7 @@ model_summaries[[0]]
 ```{r}
 #Not sure how to interpret the model (whichever I pick) or how to plot:
 acc <- allEffects(model_acc, xlevels=list(req_action=seq(0, 24, 6)),
-                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));cc
+                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));acc
 
 as.data.frame(acc[[]])
 
@@ -379,7 +379,7 @@ model_rt3 <- lmer(RT ~ OutValence*req_action*condition +trial_number +(1|ID), da
 summary (model_rt3) # good
 
 model_rt4 <- lmer(RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt4)
+summary (model_rt4) #good too
 
 model_rt5 <- lmer(RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt5)#
@@ -397,7 +397,7 @@ p_value <- lr_test$Pr[2];p_value
    progress=FALSE)
 rt[17]/rt[13] 
  rt[18]/rt[13] 
- rt[18/rt[17] 
+ rt[18]/rt[17] 
 summary(rt)
 ratios<-rt/max(rt);ratios#best models as denominator to so the closest ones 13, 14, 15, 17, 18, 16, 12, 11
 
