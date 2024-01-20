@@ -46,6 +46,13 @@ library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criter
              ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
 
 ```{r}
+#as.factor
+tus$req_action<-as.factor(tus$req_action); class (tus$req_action)
+
+# refactor reference level
+tus <- within(tus, req_action <- relevel(req_action, ref = "noGo"))
+
+
 
 #Equivalent of stepAIC for glmer - comparing models - do not like it
 
@@ -100,7 +107,7 @@ if (length(interaction_terms) == 0) {
         #WAY_2
 
 
-# Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
+# Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 and 9.b is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
 
         #all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
@@ -133,6 +140,12 @@ model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) ,
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 summary(model9)#not 9
+
+
+model9.b <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+summary(model9.b)
+
 model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 summary(model10)
@@ -162,6 +175,8 @@ model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +R
 
 model19 <- glmer(correct ~ req_action * OutValence * trial_number * condition *RT +(1|ID) + ( req_action * OutValence * trial_number * condition *RT|ID), 
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+
+
 
 
 #model 20 not working atm
@@ -238,7 +253,10 @@ model_list <- list(model1, model2, model3, model4, model5, model11, model12, mod
 model_summaries <- lapply(model_list, summary)
 
 # Now you can access each summary using model_summaries[[1]], model_summaries[[2]], and so on
-model_summaries[[0]]
+model_summaries[[1]]
+
+#
+summ(model1)
 ```
 
 ```{r}
@@ -366,26 +384,34 @@ print(result)
 
 #comparing between three model. This looks to be the best "model_rt_tn" (model 2 and 3)
 ```{r}
+tus$req_action <- relevel(tus$req_action, ref = "noGo")
+
 model_rt1 <- lmer(RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt1) 
 
 model_rt2 <- lmer(RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt2)#THIS MODEL seems to be the best
+summary (model_rt2)#T
 
 #model_rt_tnsn<- lmer(RT ~ req_action*OutValence*condition*trial_number*session +(1|ID), data  = tus, REML = FALSE) 
 #summary (model_rt_tnsn) # NO
 
 model_rt3 <- lmer(RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt3) # good
+summary (model_rt3) # good - this one probably
 
 model_rt4 <- lmer(RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt4) #good too
 
 model_rt5 <- lmer(RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt5)#
+
+model_rt6 <- lmer(RT ~ Cue*condition + trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt6)#
+
+model_rt7 <- lmer(RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
+summary (model_rt7)# main effects
    
 # Perform Likelihood Ratio Test
-lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5)
+lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5, model_rt6, model_rt7)
 print(lr_test) 
 p_value <- lr_test$Pr[2];p_value
 ```

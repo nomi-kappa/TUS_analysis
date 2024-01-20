@@ -308,6 +308,8 @@ cues <- ggarrange(GW, GAL, NGW, NGL,
 ## Probability of correct per participant ***IS THAT CORRECT?***
 ```{r}
 tus_correct<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
+tus_correct_sub_gen <- tus_correct %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
+na.omit(tus_correct_sub_gen)
 yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,    
                   data = tus_correct,           
                   theme = 2,
@@ -324,6 +326,45 @@ yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,
                   point.pch = 21,
                   point.bg = "white",
                   point.cex = .7)
+
+##maybe this to be the same as the RTs
+yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,    
+                  data = tus_correct,           
+                  theme = 2,
+                 # main = "Condition",
+                  ylab = "(p) of correct",
+                  ylim = c(0,1),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)  + facet_grid(~condition) + theme_APA 
+
+
+#or per all, per ID (mean of means) --> NULL = probably not correct thing for pirate plot
+yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,    
+                  data = tus_correct_sub_gen,           
+                  theme = 2,
+                 # main = "Condition",
+                  ylab = "(p) of correct per Sub",
+                  ylim = c(0,1),
+                  bean.f.o = .4, # Bean fill
+                  bean.b.o = .2, # Light bean border
+                  point.o = .5, # Points (opacity)
+                  inf.disp = "line",
+                  inf.f.o = 0.8, # Inference fill
+                  inf.b.o = 0.8, # Inference border
+                  avg.line.o = 0, # Average line
+                  point.pch = 21,
+                  point.bg = "white",
+                  point.cex = .7)  + 
+                  facet_grid(~condition) + 
+                  theme_APA 
 ```
 
 # ACCURACY PLOTS (x6)
@@ -339,7 +380,8 @@ tus_correct_meaned <- tus_correct_sub %>% group_by(OutValence, req_action, condi
 pirateplot(formula = correct ~ condition  + req_action +OutValence,
            data = tus_correct_meaned,
            theme = 1,
-           main = "Accuracy",
+           #main = "Accuracy",
+           #labs(y = "correct (accuracy)") ,
            bar.f.o = .5, 
            point.o = .5, 
           ylim = c(0.5, 1.0))+theme_APA
@@ -439,7 +481,7 @@ ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = conditio
 
 
 
-# 6. YET ANOTHET PIRATE PLOT
+# 6. YET ANOTHET PIRATE PLOT,                            -->i think that is the best for accuracy per all (named: Acc_perall5)
 # Filter the data to exclude values outside the desired y-axis range
 tus_filtered <- tus_correct %>% filter(correct >= 0.40 & correct <= 1)
 
@@ -503,7 +545,7 @@ pirateplot(formula = n ~ condition  + req_action + OutValence,
 
 ```{r}
 
-# 1. Calculate summary statistics (mean and standard deviation)
+# 1. Calculate summary statistics (mean and standard deviation)     --> not so good
 ######NB do it per participant - the dots not all RTs in the plot)
       #filter data to exclude very high values
  filtered_data_rt <- tus %>%filter(RT >= 300, RT <= 1500)
@@ -530,14 +572,14 @@ pirateplot(formula = RT ~ condition  + req_action +OutValence,
 
 
 # 2. compute mean_rt for each participant - ?????????not sure if this is OK - i might ignore it
-Meanrtpersub_rt <- tus %>% group_by(ID, req_action, OutValence, condition, RT) %>% summarise(mean_rt = mean(RT))
+Meanrtpersub_rt <- tus %>% group_by(ID, req_action, OutValence, condition, RT) %>% summarise(mean_rt_per_Subject = mean(RT))
 Meanrtpersub_rt <- na.omit(Meanrtpersub_rt)
-Meanrtpersub_rt <- Meanrtpersub_rt %>% group_by(req_action, OutValence, condition) %>% summarise(mean_rt = mean(mean_rt))
+Meanrtpersub_rt <- Meanrtpersub_rt %>% group_by(req_action, OutValence, condition) %>% summarise(mean_rt_per_Subject = mean(mean_rt_per_Subject))
 
-pirateplot(formula =  mean_rt ~ condition  + req_action +OutValence,
+pirateplot(formula =  mean_rt_per_Subject ~ condition  + req_action +OutValence,
            data = Meanrtpersub_rt,
                            theme = 0,
-           main = "mean_RT per subject",
+           #main = "mean_RT_per_SUB",
            #pal = "southpark", # southpark color palette
            bean.f.o = .2, # Bean fill
            point.o = .3, # Points
@@ -625,10 +667,38 @@ mean(c$n) #avg of 294 correct responses-->
    
 #proportion of RT response per type of Stimulation (sham, ai, dACC) 
 ```{r}
-    #AI - 
+#trial_by_trial behaviour RT 
+
+
+#for all
+
+# compute proportion of go responses for each participant (first sum per ID, then feed that into general summary)
+MeanRTpersub <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(meanRT = mean(RT))
+
+MeanRT <- MeanRTpersub %>% group_by(Cue, req_action, OutValence, block,  TrialCount) %>% summarise(meanRT = mean(meanRT))
+
+#plot of p(Go) responses 
+ggplot(MeanRT) + 
+  geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_RT") +
+  xlim (0,20) +theme_bw() 
+#plot of RT per block
+ggplot(MeanRT) + 
+  geom_smooth(aes(TrialCount,meanRT,colour=OutValence, lty = req_action)) +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(~block)+
+  theme_bw() +
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_RT_perBlock") +
+  xlim(0, 20)
+
+
+
+
+
+#AI - 
 ai <- subset(tus, condition == "c.ai")
 
-# compute proportion of go responses for each participant
 MeanRTpesppersub_ai <- ai %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(RT))
 
 MeanRTResp.ai <- MeanRTpesppersub_ai %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(meanRT))
