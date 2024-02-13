@@ -27,7 +27,7 @@ library (yarrr)
 library(afex)
 #install.packages("devtools")
 #devtools::install_github("mikabr/ggpirate")
-library(ggpirate)
+#library(ggpirate)
 #p_load ( rms, htmltools, bridgesampling, rstanarm, magrittr, scales, RColorBrewer, 
 # parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
 ```

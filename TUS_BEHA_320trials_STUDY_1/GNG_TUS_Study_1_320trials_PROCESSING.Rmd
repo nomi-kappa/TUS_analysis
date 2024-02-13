@@ -309,7 +309,7 @@ cues <- ggarrange(GW, GAL, NGW, NGL,
 ```{r}
 tus_correct<-tus %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
 tus_correct_sub_gen <- tus_correct %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
-na.omit(tus_correct_sub_gen)
+tus_correct_sub_gen<-na.omit(tus_correct_sub_gen)
 yarrr::pirateplot(formula = correct ~ condition  +req_action +OutValence,    
                   data = tus_correct,           
                   theme = 2,
@@ -346,13 +346,14 @@ yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,
                   point.cex = .7)  + facet_grid(~condition) + theme_APA 
 
 
+#not workinh --> empty
 #or per all, per ID (mean of means) --> NULL = probably not correct thing for pirate plot
 yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,    
                   data = tus_correct_sub_gen,           
                   theme = 2,
                  # main = "Condition",
                   ylab = "(p) of correct per Sub",
-                  ylim = c(0,1),
+                  ylim = c(0.4,1.15),
                   bean.f.o = .4, # Bean fill
                   bean.b.o = .2, # Light bean border
                   point.o = .5, # Points (opacity)
@@ -363,8 +364,31 @@ yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,
                   point.pch = 21,
                   point.bg = "white",
                   point.cex = .7)  + 
-                  facet_grid(~condition) + 
-                  theme_APA 
+                  facet_grid(~condition) + theme_APA 
+
+
+
+#or --> no error bars
+# Calculate mean and standard error per condition
+# Calculate mean and standard error per condition and req_action
+summary_data <- tus_correct_sub_gen_filtered %>%
+  group_by(condition, req_action, OutValence) %>%
+  summarise(mean_correct = mean(correct),
+            se_correct = sd(correct, na.rm = TRUE) / sqrt(n()))
+
+# Plot with error bars
+ggplot(summary_data, aes(x = req_action, y = mean_correct, fill = OutValence)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  facet_wrap(~ condition) +
+  labs(title = "Mean Correct with Standard Error bars_noGo") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+
+
+
 ```
 
 # ACCURACY PLOTS (x6)

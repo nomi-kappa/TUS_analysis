@@ -123,11 +123,15 @@ model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) ,
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 #this is probably the one!
 
+model4.b <- glmer(correct ~ OutValence * req_action * condition + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+
 model0 <- glmer(correct ~condition + req_action + condition*req_action + OutValence + condition*OutValence + req_action*OutValence +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 summary(model0)#ignore most probably
 model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+
 model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
@@ -297,7 +301,10 @@ lines=list(lty=0))
 #run anovaBF (not the correct analysis as the DV is categorical - just trying)
 ```{r}
 #drop NAs
-df <- na.omit(tus)
+# Assuming 'df' is your data frame and 'column_name' is the name of the column you want to delete
+df <- subset(tus, select = -log_rt)
+
+df <- na.omit(df); View(df)
 df$ID <- as.factor(df$ID)
 df$correct <- as.integer(df$correct)
 df$req_action <- as.factor(df$req_action)
@@ -305,6 +312,7 @@ df$condition <- as.factor(df$condition)
 df$trial_number <- as.factor(df$trial_number)
 df$OutValence <- as.factor(df$OutValence)
 df$Cue <- as.factor(df$Cue)
+df$block <- as.factor(df$block)
 
 
 #anovaBF IV = req_action
@@ -330,6 +338,30 @@ BANOVA::BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_
 ```
 
 #RTs
+
+ #Log
+```{r}
+library(moments)
+skewness(tus$RT, na.rm = TRUE)
+# Add a small constant to the data
+small_constant <- 0.0001  # Adjust as needed
+# Add a small constant to the RT column
+tus$RT <- tus$RT + small_constant
+
+
+
+
+    #log10(max(x+1) - x) #for negatively skewed data --> lm_test_nogo %>% mutate(log_rt = log10(max(rt + 1) - rt))
+    #log10(x) for positively skewed data,
+tus <- tus %>%
+  mutate(log_RT = log10(RT));view(tus)
+
+
+```
+       
+       
+       
+
 
 #fit-and-bic equivalent of stepAIC for lmer
 ```{r}
@@ -386,28 +418,28 @@ print(result)
 ```{r}
 tus$req_action <- relevel(tus$req_action, ref = "noGo")
 
-model_rt1 <- lmer(RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) 
+model_rt1 <- lmer(log_RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt1) 
 
-model_rt2 <- lmer(RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt2 <- lmer(log_RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt2)#T
 
 #model_rt_tnsn<- lmer(RT ~ req_action*OutValence*condition*trial_number*session +(1|ID), data  = tus, REML = FALSE) 
 #summary (model_rt_tnsn) # NO
 
-model_rt3 <- lmer(RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt3 <- lmer(log_RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt3) # good - this one probably
 
-model_rt4 <- lmer(RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt4 <- lmer(log_RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt4) #good too
 
-model_rt5 <- lmer(RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt5 <- lmer(log_RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt5)#
 
-model_rt6 <- lmer(RT ~ Cue*condition + trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt6 <- lmer(log_RT ~ Cue*condition + trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt6)#
 
-model_rt7 <- lmer(RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
+model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt7)# main effects
    
 # Perform Likelihood Ratio Test
@@ -417,9 +449,23 @@ p_value <- lr_test$Pr[2];p_value
 ```
 
 #anovaBF for RTs
+predictors with + :  effects are assumed to be additive and independent of each other.
+predictors with * :  possibility the effect of one predictor on the outcome variable may vary depending on the level of another predictor -aptures the synergistic or conditional effects of predictors 
 ```{r}
 #run anovaBF IV = req_action and condition
- rt <-anovaBF(RT ~ req_action*OutValence*condition  + ID, data = df, whichRandom = "ID",
+# Calculate Bayes factors with specified number of iterations
+rt_1 <- anovaBF( formula = log_RT ~ condition*Cue + ID, data = df,  whichRandom = "ID", progress = FALSE, iterations = 3000); summary (rt_1) # refers to the number of Monte Carlo samples used for approximation when computing Bayes factors. It specifies the number of samples used to estimate the marginal likelihoods of the models being compared.each iteration corresponds to one random sample drawn from the posterior distribution. By increasing the number of iterations, you obtain a more accurate approximation of the integral, leading to more precise estimates of the marginal likelihoods and, consequently, more reliable Bayes factors for model comparison. "Iterations" refers to the number of times the computer repeats a specific calculation to make sure it's accurate.unning a simulation or experiment. By doing it multiple times (more iterations), we can get a more reliable answer.
+rt_1_inter<-rt_1[4]/rt_1[3]; summary(rt_1_inter) #2.299506 ±2.95% #large variation that's why I used iterations above
+
+
+
+
+rt_2<-anovaBF(log_RT ~ condition*Cue*block  + ID, data = df, whichRandom = "ID",
+   progress=FALSE, iterations = 3000); summary (rt_2)
+rt_2[10]/rt_2[4] 
+
+
+ rt <-anovaBF(log_RT ~ req_action*OutValence*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 rt[17]/rt[13] 
  rt[18]/rt[13] 
@@ -438,10 +484,10 @@ if (!is.factor(tus$ID)) {
 }
 
 # Calculate Bayes factors for each model using the 'tus' dataset
-bf_13 <- lmBF(RT ~ req_action + OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_15 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_17 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_18 <- lmBF(RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_13 <- lmBF(log_RT ~ req_action + OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_15 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_17 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
+bf_18 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
 
 # Extract Bayes factors
 bf_values <- c(bf_13, bf_15, bf_17, bf_18)
@@ -471,12 +517,12 @@ report_parameters(model_acc)
           
           #Cue  - not needed
 ```{r}
-model_rt_cue <- lmer(RT ~ Cue*condition +(1|ID) , 
+model_rt_cue <- lmer(log_RT ~ Cue*condition +(1|ID) , 
                  data  = tus,REML = FALSE) #REML = FALSE
 summary (model_rt_cue)
 
 #anovaBF IV = Cue - interaction between the Cue and the condition
-rt_cue <-anovaBF(RT ~ Cue*condition  + ID, data = df, whichRandom = "ID",
+rt_cue <-anovaBF(log_RT ~ Cue*condition  + ID, data = df, whichRandom = "ID",
    progress=FALSE)
 rt_cue[4]/rt_cue[3]
 summary(rt_cue)
@@ -509,12 +555,12 @@ summary (sal_cue_accu)
 
 ## RTs
 ```{r}
-model_rt_sal <- lmer(RT ~ req_action  + trial_number + OutValence*condition + req_action*condition+(1|ID), 
+model_rt_sal <- lmer(log_RT ~ req_action  + trial_number + OutValence*condition + req_action*condition+(1|ID), 
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (model_rt_sal) 
 report_table(model_rt_sal)
 #Cue impact -that is good
-sal_cue_rt <- lmer(RT ~ Cue*condition +(1|ID), 
+sal_cue_rt <- lmer(log_RT ~ Cue*condition +(1|ID), 
                  data  = salient_df, REML = FALSE) #REML = FALSE
 summary (sal_cue_rt) 
 ```
