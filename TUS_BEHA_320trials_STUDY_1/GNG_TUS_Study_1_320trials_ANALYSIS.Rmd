@@ -35,6 +35,7 @@ library(MASS)
 library(MuMIn)
 library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criterion/#:~:text=Once%20you've%20created%20several,be%20the%20better%2Dfit%20model.
 #help to interpret results from AICmodavg
+library(lspline)
 ```
 
 #Analysis
@@ -510,7 +511,314 @@ report_performance(model_acc)
 report_parameters(model_acc)
 ```
  
-#########################################################################################################################################################################################
+###########################################################################################################################################################################
+
+
+
+
+#lspline #knots #learning curve
+Piecewise Linear Regression (Learning and Exploitation Phases)
+
+
+outcome:
+1. A linear component captures linear trends or patterns in the data. For example, if there is a constant increase or decrease in RT as trial_number increases, the linear component would capture this trend.
+2. A quadratic component captures nonlinear trends or patterns in the data. For example, if RT initially decreases and then increases (or vice versa) as trial_number increases, the quadratic component would capture this curvature.
+
+```{r}
+# Identify the trial number where the learning curve starts to plateau
+plateau_trial <- 22
+
+# Subset data for before and after the plateau
+before_plateau <- tus[tus$trial_number <= plateau_trial, ]
+after_plateau <- tus[tus$trial_number > plateau_trial, ]
+```
+
+
+
+It seems that condition plays an important role especially after the learning curve starts to plateau, mainly for the Accuracy. (when interaction with trial_number)
+```{r}
+
+
+# Create an interaction term between trial_number, condition, and block for before_plateau
+before_plateau$interaction_term <- interaction(before_plateau$trial_number, before_plateau$condition, drop = TRUE)
+ 
+#Create an interaction term between trial_number, condition, and block for after_plateau
+after_plateau$interaction_term <- interaction(after_plateau$trial_number, after_plateau$condition, drop = TRUE)
+#######################      Accuracy - correct     ###########################
+
+
+
+# Fit GLMM for correct before plateau
+glmer_before <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = before_plateau, family = binomial)
+
+
+# Fit GLMM for correct after plateau
+glmer_after <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = after_plateau, family = binomial)
+
+# Print summaries of the models
+summary(glmer_before)
+summary(glmer_after)
+
+######################        RTs                   ##########################
+
+
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before <- lmer(RT ~ poly(interaction_term, degree = 2) + (1 | ID), data = before_plateau)
+
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after <- lmer(RT ~ poly(interaction_term, degree = 2)  + (1 | ID), data = after_plateau)
+
+# Print summaries of the models
+summary(lmer_before)
+summary(lmer_after)
+
+```
+
+#interaction RT*condition & correct*condition
+
+
+correct*condition = significant even in exploitation phase
+
+```{r}
+#RT
+
+# Create interaction terms between RT and condition for before_plateau
+before_plateau$RT_condition <- interaction(before_plateau$RT, before_plateau$condition, drop = TRUE)
+
+# Create interaction terms between RT and condition for after_plateau
+after_plateau$RT_condition <- interaction(after_plateau$RT, after_plateau$condition, drop = TRUE)
+
+#Fit GLMM for RT before plateau
+glmer_before_RT <- glmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = before_plateau, family = gaussian)
+
+# Fit GLMM for RT after plateau
+glmer_after_RT <- glmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = after_plateau, family = gaussian)
+
+
+# Print summaries of the models for RT
+summary(glmer_before_RT)
+summary(glmer_after_RT)
+
+
+#Accuracy
+# Create interaction terms between correct and condition for before_plateau
+before_plateau$correct_condition <- interaction(before_plateau$correct, before_plateau$condition, drop = TRUE)
+
+# Create interaction terms between correct and condition for after_plateau
+after_plateau$correct_condition <- interaction(after_plateau$correct, after_plateau$condition, drop = TRUE)
+
+# Fit GLMM for correct before plateau
+glmer_before_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = before_plateau, family = binomial) #SIGNIFICANT
+
+# Fit GLMM for correct after plateau
+glmer_after_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = after_plateau, family = binomial) #SIGNIFICANT!!!!
+
+#
+# Print summaries of the models for correct
+summary(glmer_before_correct)
+summary(glmer_after_correct)
+
+
+
+```
+
+for accuracy*condition above which is significant, I am specifying the levels - Icannot
+```{r}
+
+
+
+```
+
+
+subsetting before and after, when plateau
+
+```{r}
+# Identify the trial number where the learning curve starts to plateau
+plateau_trial <- 20
+
+
+# Subset data for before and after the plateau
+before_plateau <- tus[tus$trial_number <= plateau_trial, ]
+after_plateau <- tus[tus$trial_number > plateau_trial, ]
+```
+
+
+CONDITION
+```{r}
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before_RT <- lmer(RT ~  condition + (1 | ID), data = before_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct before plateau
+glmer_before_correct <- glmer(correct ~  condition + (1 | ID), family = binomial, data = before_plateau)
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after_RT <- lmer(RT ~  condition + (1 | ID), data = after_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct after plateau
+glmer_after_correct <- glmer(correct ~  condition + (1 | ID), family = binomial, data = after_plateau) # dacc *** ai *
+
+# Print summaries of the models
+summary(lmer_before_RT)
+summary(glmer_before_correct)
+summary(lmer_after_RT)
+summary(glmer_after_correct)
+
+
+```
+
+
+CONDITION*CUE
+
+
+```{r}
+
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before_RT_cond*Cue <- lmer(RT ~  condition*Cue + (1 | ID), data = before_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct before plateau
+glmer_before_correct_cond*Cue <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = before_plateau)
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after_RT_cond*Cue <- lmer(RT ~   condition*Cue  + (1 | ID), data = after_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct after plateau
+glmer_after_correct_cond*Cue  <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = after_plateau) # dacc *** ai *
+
+# Print summaries of the models
+summary(lmer_before_RT_cond*Cue)
+summary(glmer_before_correct_cond*Cue)
+summary(lmer_after_RT_cond*Cue)
+summary(glmer_after_correct_cond*Cue)
+
+```
+
+
+
+CONDITION*VALENCE
+```{r}
+
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before_RT_con_val <- lmer(RT ~  condition*OutValence + (1 | ID), data = before_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct before plateau
+glmer_before_correct_con_val <- glmer(correct ~  condition*OutValence  + (1 | ID), family = binomial, data = before_plateau)
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after_RT_con_val <- lmer(RT ~  condition*OutValence  + (1 | ID), data = after_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct after plateau
+glmer_after_correct_con_val  <- glmer(correct ~   condition*OutValence + (1 | ID), family = binomial, data = after_plateau) 
+
+# Print summaries of the models
+summary(lmer_before_RT_con_val)
+summary(glmer_before_correct_con_val)
+summary(lmer_after_RT_con_val)
+summary(glmer_after_correct_con_val)
+```
+
+
+
+CONDITION*BLOCK (it only makes sense if we set the knot on 80 (first block or play around it))
+```{r}
+
+# Identify the trial number where the learning curve starts to plateau
+plateau_trial <- 80
+
+
+# Subset data for before and after the plateau
+before_plateau <- tus[tus$trial_number <= plateau_trial, ]
+after_plateau <- tus[tus$trial_number > plateau_trial, ]
+
+
+
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before_RT_con_block <- lmer(RT ~  condition*block + (1 | ID), data = before_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct before plateau
+glmer_before_correct_con_block <- glmer(correct ~  condition*block  + (1 | ID), family = binomial, data = before_plateau)
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after_RT_con_block <- lmer(RT ~  condition*block  + (1 | ID), data = after_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct after plateau
+glmer_after_correct_con_block <- glmer(correct ~ condition*block + (1 | ID), family = binomial, data = after_plateau) 
+
+# Print summaries of the models
+summary(lmer_before_RT_con_block)
+summary(glmer_before_correct_con_block)
+summary(lmer_after_RT_con_block)
+summary(glmer_after_correct_con_block)
+```
+
+
+OutValence * req_action * condition (not much sense but significant results if you change know according to diagram)
+-when Go as reference more significant results
+```{r}
+
+# Identify the trial number where the learning curve starts to plateau
+plateau_trial <- 23
+
+
+# Subset data for before and after the plateau
+before_plateau <- tus[tus$trial_number <= plateau_trial, ]
+after_plateau <- tus[tus$trial_number > plateau_trial, ]
+
+# If it's not a factor, convert it to a factor
+if (!is.factor(before_plateau$req_action)) {
+  before_plateau$req_action <- as.factor(before_plateau$req_action)
+}
+
+if (!is.factor(after_plateau$req_action)) {
+  after_plateau$req_action <- as.factor(after_plateau$req_action)
+}
+# Now, relevel req_action with "noGo" as the reference level
+before_plateau$req_action <- relevel(before_plateau$req_action, ref = "noGo")
+after_plateau$req_action <- relevel(after_plateau$req_action, ref = "noGo")
+
+
+# Fit linear mixed-effects regression model for RT before plateau
+lmer_before_RT_vrc <- lmer(RT ~  OutValence * req_action * condition + (1 | ID), data = before_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct before plateau
+glmer_before_correct_vrc <- glmer(correct ~  OutValence * req_action * condition  + (1 | ID), family = binomial, data = before_plateau)
+
+# Fit linear mixed-effects regression model for RT after plateau
+lmer_after_RT_vrc <- lmer(RT ~  OutValence * req_action * condition  + (1 | ID), data = after_plateau)
+
+# Fit generalized linear mixed-effects regression model for correct after plateau
+glmer_after_correct_vrc <- glmer(correct ~ OutValence * req_action * condition + (1 | ID), family = binomial, data = after_plateau) 
+
+# Print summaries of the models
+summary(lmer_before_RT_vrc)
+summary(glmer_before_correct_vrc)
+summary(lmer_after_RT_vrc)
+summary(glmer_after_correct_vrc)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
           #from here ONWARDS, IT CAN BE IGNORED AT THE MOMENT - DECIDE IF NEEDED

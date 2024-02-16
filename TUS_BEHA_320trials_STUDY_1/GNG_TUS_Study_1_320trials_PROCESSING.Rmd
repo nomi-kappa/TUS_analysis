@@ -31,6 +31,44 @@ library(afex)
 library(ggpirate)
 ```
 
+ #APA theme
+```{r}
+theme_APA <- theme_bw()+
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank(),
+          axis.line = element_line(linewidth = 1),                                        
+          text = element_text(
+              size = 20,
+              face="bold"), 
+          axis.text = element_text(
+              size = 20,
+              face="plain",
+              colour="black"),
+          legend.title = element_blank(),
+          legend.position = 'top',
+          legend.direction = "horizontal",
+          legend.text = element_text(
+              face="plain",
+              colour="black",
+              size=20),
+          strip.text.x = element_text(
+              size = 20,
+              face = "bold"),
+          panel.background = element_rect(
+              fill='white',
+              colour='white'),
+          strip.background = element_rect(
+              fill='white',
+              colour='white'),
+          axis.title.x = element_text(
+              margin = margin(t = 10)),
+          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
+          plot.caption = element_text(size=15)
+          )
+```
+
+ 
  #PROCESSING
 
 
@@ -217,6 +255,9 @@ sham_rolavg<- ggplot(MeanGoResp.sham) +
 rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
                     #labels = c("GW", "GAL", "NGW", "NGL"), 
                   ncol = 2, nrow = 2);rol_avg
+
+
+
 ```
 
 ##rolling average per CUE for all three conditions (plot with NGW for three conditions (sham, ai, dACC), plot GW..etc.)
@@ -239,7 +280,7 @@ GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condi
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-  ylim(0.05, 0.9)+
+  ylim(0.05, 1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
 
 #GAL
@@ -256,7 +297,7 @@ GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=con
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(0.05, 0.9)+
+     ylim(0.05, 1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
 
 #NGW
@@ -273,7 +314,7 @@ NGW<-ggplot(MeanGoResp_NGW) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(0.05, 0.9)+
+     ylim(0.05, 1)+
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
 
 
