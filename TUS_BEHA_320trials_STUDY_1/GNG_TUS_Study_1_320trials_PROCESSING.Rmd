@@ -337,12 +337,24 @@ NGL<-ggplot(MeanGoResp_NGL) +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
 
 
+# Determine the maximum and minimum values of GoResponse, cause NGL depricated
+max_response <- max(c(MeanGoResp_gw$GoResponse, MeanGoResp_gal$GoResponse, MeanGoResp_NGW$GoResponse, MeanGoResp_NGL$GoResponse))
+min_response <- min(c(MeanGoResp_gw$GoResponse, MeanGoResp_gal$GoResponse, MeanGoResp_NGW$GoResponse, MeanGoResp_NGL$GoResponse))
 
-#CUES PER CONDITION
-cues <- ggarrange(GW, GAL, NGW, NGL,
-                    #labels = c("GW", "GAL", "NGW", "NGL"), 
-                  ncol = 2, nrow = 2);cues
-   #ylim(0.05, 0.9); 
+# Set the y-axis limits with a buffer for error bars
+y_min <- min_response - 0.1  # Adjust the buffer as needed
+y_max <- max_response + 0.0  # Adjust the buffer as needed
+
+# Update the y-axis limits for all plots
+GW <- GW + ylim(y_min, y_max)
+GAL <- GAL + ylim(y_min, y_max)
+NGW <- NGW + ylim(y_min, y_max)
+NGL <- NGL + ylim(y_min, y_max)
+
+# Combine the plots
+cues <- ggarrange(GW, GAL, NGW, NGL, ncol = 2, nrow = 2)
+cues
+
 ```
 
 

@@ -181,8 +181,18 @@ model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +R
 model19 <- glmer(correct ~ req_action * OutValence * trial_number * condition *RT +(1|ID) + ( req_action * OutValence * trial_number * condition *RT|ID), 
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
+#followup_beha
+model20<-glmer(correct ~ feedback * followup_beha * condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model20)
 
+model21<-glmer(correct ~ followup_beha + condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model21)
 
+model22<-glmer(correct ~ followup_beha * condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22)
+
+model23<-glmer(correct ~ feedback * condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23)
 
 #model 20 not working atm
 # Identify non-numeric columns
@@ -442,6 +452,21 @@ summary (model_rt6)#
 
 model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt7)# main effects
+
+
+#followup_beha
+model_rt8<-lmer(log_RT ~ feedback * followup_beha * condition  +(1|ID) ,
+                 data  = tus, REML = FALSE ); summary(model_rt8)
+
+model_rt9<-lmer(log_RT ~ followup_beha + condition  +(1|ID) ,
+                 data  = tus,  REML = FALSE); summary(model_rt9)
+
+model_rt10<-lmer(log_RT ~ followup_beha * condition  +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt10)
+
+model_rt11<-lmer(log_RT ~ feedback * condition  +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt11)
+
    
 # Perform Likelihood Ratio Test
 lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5, model_rt6, model_rt7)
@@ -521,16 +546,16 @@ Piecewise Linear Regression (Learning and Exploitation Phases)
 
 
 outcome:
-1. A linear component captures linear trends or patterns in the data. For example, if there is a constant increase or decrease in RT as trial_number increases, the linear component would capture this trend.
-2. A quadratic component captures nonlinear trends or patterns in the data. For example, if RT initially decreases and then increases (or vice versa) as trial_number increases, the quadratic component would capture this curvature.
+1. poly1 A linear component captures linear trends or patterns in the data. For example, if there is a constant increase or decrease in RT as trial_number increases, the linear component would capture this trend.
+2. poly2 A quadratic component captures nonlinear trends or patterns in the data. For example, if RT initially decreases and then increases (or vice versa) as trial_number increases, the quadratic component would capture this curvature.
 
 ```{r}
 # Identify the trial number where the learning curve starts to plateau
-plateau_trial <- 22
+knot <- 22
 
 # Subset data for before and after the plateau
-before_plateau <- tus[tus$trial_number <= plateau_trial, ]
-after_plateau <- tus[tus$trial_number > plateau_trial, ]
+learning_phase <- tus[tus$trial_number <= knot, ]
+exploitation_phase <- tus[tus$trial_number > knot, ]
 ```
 
 
@@ -538,40 +563,39 @@ after_plateau <- tus[tus$trial_number > plateau_trial, ]
 It seems that condition plays an important role especially after the learning curve starts to plateau, mainly for the Accuracy. (when interaction with trial_number)
 ```{r}
 
-
 # Create an interaction term between trial_number, condition, and block for before_plateau
-before_plateau$interaction_term <- interaction(before_plateau$trial_number, before_plateau$condition, drop = TRUE)
+learning_phase$interaction_term <- interaction(learning_phase$trial_number, learning_phase$condition, drop = TRUE)
  
 #Create an interaction term between trial_number, condition, and block for after_plateau
-after_plateau$interaction_term <- interaction(after_plateau$trial_number, after_plateau$condition, drop = TRUE)
+exploitation_phase$interaction_term <- interaction(exploitation_phase$trial_number, exploitation_phase$condition, drop = TRUE)
+
+
 #######################      Accuracy - correct     ###########################
 
-
-
 # Fit GLMM for correct before plateau
-glmer_before <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = before_plateau, family = binomial)
+glmer_learning <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = learning_phase, family = binomial)
 
 
 # Fit GLMM for correct after plateau
-glmer_after <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = after_plateau, family = binomial)
+glmer_exploitation <- glmer(correct ~ poly(interaction_term, degree = 2) + (1 | ID), data = exploitation_phase, family = binomial)
 
 # Print summaries of the models
-summary(glmer_before)
-summary(glmer_after)
+summary(glmer_learning)
+summary(glmer_exploitation)
 
 ######################        RTs                   ##########################
 
 
 # Fit linear mixed-effects regression model for RT before plateau
-lmer_before <- lmer(RT ~ poly(interaction_term, degree = 2) + (1 | ID), data = before_plateau)
+lmer_learning <- lmer(RT ~ poly(interaction_term, degree = 2) + (1 | ID), data = learning_phase)
 
 
 # Fit linear mixed-effects regression model for RT after plateau
-lmer_after <- lmer(RT ~ poly(interaction_term, degree = 2)  + (1 | ID), data = after_plateau)
+lmer_exploitation <- lmer(RT ~ poly(interaction_term, degree = 2)  + (1 | ID), data = exploitation_phase)
 
 # Print summaries of the models
-summary(lmer_before)
-summary(lmer_after)
+summary(lmer_learning)
+summary(lmer_exploitation)
 
 ```
 
