@@ -540,7 +540,11 @@ ggplot(accuracy_data, aes(x = feedback, y = correct, fill = followup_beha)) +
   theme_minimal() +
   coord_cartesian(ylim = c(0.3, 1)) # Set the y-axis limits
 
-#B# fill it up - NOOOOO it seems almost the same, look #A#
+
+
+
+
+#B# fill it up - NOOOOO it seems almost the same, look #A#****************
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "correct"))
 
@@ -595,14 +599,14 @@ ggplot(rt_data, aes(x = feedback, y = RT, fill = followup_beha)) +
   facet_wrap(~ condition, scales = "free") +  # Facet by condition
   labs(title = "Mean Reaction Time after Different Types of Feedback by Condition",
        x = "Feedback", y = "Mean Reaction Time") +
-  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
   theme_minimal() +
   coord_cartesian(ylim = c(100, max(rt_data$RT, na.rm = TRUE) * 1.1)) # Set the y-axis limits
 
 
 
 
-#B# fill it up - not good, lose does not show ******************
+#B# fill it up -*********check it is correct
 
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "RT"))
@@ -610,31 +614,29 @@ feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select =
 # Exclude NA values
 feedback_data <- na.omit(feedback_data)
 
-# Calculate the mean accuracy of 'correct' per condition
-rt_data <- aggregate(RT ~ feedback + followup_beha + condition, data = feedback_data, FUN = mean)
+# Ensure all combinations of feedback and condition are present
+library(tidyr)
+feedback_data <- complete(feedback_data, feedback, condition, fill = list(RT = 0))
 
-# Calculate the mean accuracy of "press" and "no_press" per condition
-mean_rt <- rt_data %>%
-  group_by(feedback, condition) %>%
-  summarise(mean_press = mean(RT[followup_beha == "press"]),
-            mean_no_press = mean(RT[followup_beha == "no_press"]))
+# Calculate the mean RT for each combination of feedback, followup_beha, and condition
+mean_rt <- feedback_data %>%
+  group_by(feedback, followup_beha, condition) %>%
+  summarise(mean_RT = mean(RT))
 
 # Define custom colors
-custom_colors <- c("Press" = "#66c2a5", "No Press" = "#fc8d62")
+custom_colors <- c("press" = "#66c2a5", "no_press" = "#fc8d62")
 
-# Plot the mean accuracy of "press" and "no_press" per condition
-ggplot(mean_rt, aes(x = feedback)) +
-  geom_bar(aes(y = mean_press, fill = "Press"), stat = "identity", position = "dodge", color = "black") +
-  geom_bar(aes(y = mean_no_press, fill = "No Press"), stat = "identity", position = "dodge", color = "black") +
+# Plot the stacked bar plot
+ggplot(mean_rt, aes(x = feedback, y = mean_RT, fill = followup_beha)) +
+  geom_bar(stat = "identity", position = "stack") +
   facet_wrap(~ condition, scales = "free") +
-  labs(title = "Mean Accuracy of 'press' and 'no_press' of follow-up behavior per Condition",
+  labs(title = "Mean RT of 'press' and 'no_press' per Condition",
        x = "Feedback", y = "Mean RT") +
   scale_fill_manual(values = custom_colors,
-                     guide = guide_legend(title = "Follow-Up Behavior", 
-                                          override.aes = list(fill = custom_colors))) +
-  theme_minimal() +
-  coord_cartesian(ylim = c(200,400)) +
-  theme(legend.position = "right")
+                     guide = guide_legend(title = "Follow-Up Behavior")) +
+    coord_cartesian(ylim = c(100,750)) +
+  theme_minimal()
+
 
 ```
         

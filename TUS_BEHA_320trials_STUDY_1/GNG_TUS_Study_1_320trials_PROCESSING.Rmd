@@ -847,11 +847,11 @@ MeanRTResp_gw <- MeanRTpersub_gw %>% group_by(req_action, OutValence, TrialCount
 
 #plot######################play with lines
 GW_rt<-ggplot(data=MeanRTResp_gw, mapping =aes(TrialCount, meanRT, colour=condition)) + 
-  geom_smooth(linetype = "longdash") +
+  geom_smooth(linetype = "longdash", alpha = 0.3) +
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-  ylim(100, 750)+
+  ylim(0, 650)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GW_RT") +theme_bw() 
 
 #GAL
@@ -864,11 +864,11 @@ MeanRTResp_gal <- MeanRTpersub_gal %>% group_by(TrialCount, condition) %>% summa
 
 #plot
 GAL_rt<-ggplot(data=MeanRTResp_gal, mapping =aes(TrialCount, meanRT, colour=condition)) + 
-  geom_smooth(linetype = "longdash") +
+  geom_smooth(linetype = "longdash", alpha = 0.3) +
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(100, 750)+
+     ylim(0, 650)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GAL_RT") +theme_bw() 
 
 #NGW
@@ -881,11 +881,11 @@ MeanRTResp_NGW <- MeanRTpersub_NGW %>% group_by(TrialCount, condition) %>% summa
 
 #plot - need to work on linetype
 NGW_rt<-ggplot(MeanRTResp_NGW) + 
-  geom_smooth(aes(TrialCount, meanRT, colour=condition )) +
+  geom_smooth(aes(TrialCount, meanRT, colour=condition), size = 1)  +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(100, 750)+
+     ylim(0,650)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGW_RT") +theme_bw() 
 
 
@@ -900,11 +900,11 @@ MeanRTResp_NGL <- MeanRTpersub_NGL %>% group_by(TrialCount, condition) %>% summa
 
 #plot
 NGL_rt<-ggplot(MeanRTResp_NGL) + 
-  geom_smooth(aes(TrialCount, meanRT, colour=condition )) +
+  geom_smooth(aes(TrialCount, meanRT, colour=condition ), size = 1)  +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-      ylim(100, 750)+
+      coord_cartesian(ylim = c(0, 650))+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGL_RT") + theme_bw() 
 
 
