@@ -472,7 +472,7 @@ mean_press <- press_counts %>%
   summarise(mean_press = mean(press),
             mean_no_press = mean(no_press))
 
-# Plotting
+# Plotting (after win and neutral AI and DACC were pressing more)!!!!!!!!!!
 # Define custom colors
 custom_colors <- c("Press" = "#66c2a5", "No Press" = "#fc8d62")
 
@@ -490,7 +490,49 @@ ggplot(press_counts, aes(x = feedback)) +
   theme(legend.position = "right")
 
 
-#mean per condition for the followup_beha
+
+#mean per condition for the followup_beha - not stacked [KEEP]
+
+# Calculate counts of 'press' and 'no_press' for each combination of feedback, followup_beha, and condition
+count_data <- feedback_data %>%
+  group_by(feedback, followup_beha, condition) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Calculate the total counts (sum of 'press' and 'no_press') for each combination of feedback and condition
+total_counts <- count_data %>%
+  group_by(feedback, condition) %>%
+  summarise(total_count = sum(count))
+
+# Merge total counts with count data
+count_data <- count_data %>%
+  left_join(total_counts, by = c("feedback", "condition"))
+
+# Calculate the mean proportion of 'press' and 'no_press' for each combination of feedback and condition
+mean_proportion <- count_data %>%
+  mutate(mean_proportion = count / total_count)
+
+# Separate mean proportions for 'press' and 'no_press'
+mean_press <- mean_proportion %>% filter(followup_beha == "press")
+mean_no_press <- mean_proportion %>% filter(followup_beha == "no_press")
+
+# Create the grouped bar plot showing the mean proportion of 'press' and 'no_press' per feedback and condition
+ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_beha)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap(~ condition, scales = "free") +  # Facet by condition
+  labs(title = "Mean Proportion of 'press' and 'no_press' per Feedback by Condition",
+       x = "Feedback", y = "Mean Proportion") +
+  scale_fill_manual(values = c("#66c2a5", "#fc8d62"), name = "Follow-Up Behavior",
+                     labels = c("Press", "No Press")) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.6), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+
+
+
+
+
+
+#mean per condition for the followup_beha - stacked [KEEP]
 
 # Calculate the mean of "press" and "no_press" per condition
 mean_press <- feedback_data %>%
@@ -516,7 +558,7 @@ ggplot(mean_press, aes(x = feedback)) +
   theme(legend.position = "right")
 
 
-
+ 
 
                   
 
@@ -583,7 +625,7 @@ ggplot(mean_accuracy, aes(x = feedback)) +
 
 
 
-        #mean condition rt
+        #mean condition rt [KEEP]
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "RT"))
 
@@ -606,7 +648,9 @@ ggplot(rt_data, aes(x = feedback, y = RT, fill = followup_beha)) +
 
 
 
-#B# fill it up -*********check it is correct
+#B# fill it up -*********check it is correct [KEEP]
+
+library(tidyr)
 
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "RT"))
@@ -614,9 +658,19 @@ feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select =
 # Exclude NA values
 feedback_data <- na.omit(feedback_data)
 
-# Ensure all combinations of feedback and condition are present
-library(tidyr)
-feedback_data <- complete(feedback_data, feedback, condition, fill = list(RT = 0))
+# Create a data frame with all combinations of feedback, followup_beha, and condition
+all_combinations <- expand.grid(feedback = levels(feedback_data$feedback),
+                                followup_beha = unique(feedback_data$followup_beha),
+                                condition = unique(feedback_data$condition))
+
+# Left join the all_combinations data frame with the existing data
+feedback_data <- left_join(all_combinations, feedback_data, by = c("feedback", "followup_beha", "condition"))
+
+# Replace NA values in the RT column with 0
+feedback_data$RT[is.na(feedback_data$RT)] <- 0
+
+# Check the first few rows of the completed dataset
+head(feedback_data)
 
 # Calculate the mean RT for each combination of feedback, followup_beha, and condition
 mean_rt <- feedback_data %>%
