@@ -144,7 +144,7 @@ model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) ,
 
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model9)#not 9
+summary(model9)
 
 
 model9.b <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
