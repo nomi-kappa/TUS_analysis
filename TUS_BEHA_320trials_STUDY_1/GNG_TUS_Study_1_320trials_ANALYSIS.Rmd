@@ -196,6 +196,30 @@ model22<-glmer(correct ~ followup_beha * condition  +(1|ID) ,
 model23<-glmer(correct ~ feedback * condition  +(1|ID) ,
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23)
 
+#convert to a factor
+tus$followup_beha <- factor(tus$followup_beha, levels = c("no_press", "press"))
+
+model23b<-glmer(followup_beha ~ feedback * condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23b)
+
+#followup_response
+
+# Convert followup_response to factor
+tus$followup_response <- factor(tus$followup_response, levels = c("no_press", "press"))
+
+
+model24 <- glmer(followup_response ~ correct_feedback   +(1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model24)
+
+model25 <- glmer(followup_response ~ condition  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model25)
+
+model26 <- glmer(correct ~ correct_feedback * condition  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model26)
+
+
+
+
 #model 20 not working atm
 # Identify non-numeric columns
 non_numeric_cols <- c("req_action", "OutValence", "trial_number", "condition", "RT")
@@ -455,7 +479,7 @@ summary (model_rt6)#
 model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
 summary (model_rt7)# main effects
 
-
+                                            #  !!!AI affectd by general feedback, not correct.
 #followup_beha
 model_rt8<-lmer(log_RT ~ feedback * followup_beha * condition  +(1|ID) ,
                  data  = tus, REML = FALSE ); summary(model_rt8)
@@ -469,7 +493,26 @@ model_rt10<-lmer(log_RT ~ followup_beha * condition  +(1|ID) ,
 model_rt11<-lmer(log_RT ~ feedback * condition  +(1|ID) ,
                  data  = tus, REML = FALSE); summary(model_rt11)
 
+#followup_response
+model_rt12<-lmer(log_RT ~ followup_response * condition  +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt12)
    
+
+model_rt13<-lmer(log_RT ~ followup_response * condition * correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt13)
+
+model_rt14<-lmer(log_RT ~  condition * correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt14)
+
+model_rt15<-lmer(log_RT ~  condition + correct_feedback + followup_response +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt15)
+
+model_rt16<-lmer(log_RT ~  condition * followup_response +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt16)
+   
+model_rt17<-lmer(log_RT ~  correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt17)
+
 # Perform Likelihood Ratio Test
 lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5, model_rt6, model_rt7)
 print(lr_test) 

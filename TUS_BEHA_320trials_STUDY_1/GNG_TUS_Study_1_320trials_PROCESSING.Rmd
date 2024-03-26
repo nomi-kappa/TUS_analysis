@@ -587,6 +587,35 @@ pirateplot(formula = correct ~ condition  + req_action +OutValence,
 
 ```
 
+#presses and no_presses means - needs work to be facet by response
+```{r}
+# Convert "response" to binary numeric variable
+tus_numeric <- tus %>%
+  mutate(response_numeric = as.numeric(response == "press"))  # Convert "press" to 1, "no_press" to 0
+
+
+# Calculate mean number of presses and standard error per condition, cue, and response
+summary_data <- tus_numeric %>%
+  group_by(condition, Cue, response) %>%
+  summarise(mean_response = mean(response_numeric, na.rm = TRUE),
+            se_response = sqrt(mean_response * (1 - mean_response) / n()), na.rm = TRUE)
+
+# Print summary data
+summary_data
+# Plot
+ggplot(summary_data, aes(x = Cue, y = mean_response, fill = condition)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = mean_response - se_response, ymax = mean_response + se_response),
+                position = position_dodge(width = 0.9), width = 0.25) +
+  labs(x = "Cue", y = "Mean Presses", title = "Mean Number of Presses per Condition and Cue") +
+  facet_wrap(~ response, scales = "free_y") +  # Facet by response
+  theme_minimal()
+
+
+
+```
+
+
 
               ## I THINK I DO NOT NEED THIS CHUNK
 
@@ -1032,3 +1061,337 @@ ggplot(data = df_rt) +
 ```
 
 
+
+##FOLLOW UP BEHAVIOUR GENERAL FEEDBACK
+```{r}
+
+                         #general followup beha - LOOKS CORRECT
+
+   #Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha"))
+
+# Exclude NA values
+feedback_data <- na.omit(feedback_data)
+
+# Create a grouped bar plot showing the distribution of follow-up behaviors after each type of feedback
+ggplot(feedback_data, aes(x = feedback, fill = followup_beha)) +
+  geom_bar(position = "dodge", color = "black", stat = "count") +
+  labs(title = "Response Distribution after Different Types of Feedback",
+       x = "Feedback", y = "Count") +
+  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  theme_minimal()
+
+
+
+
+
+
+                                  #accuracy
+
+# A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+accuracy_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "correct", "condition"))
+
+# Exclude NA values
+accuracy_data <- na.omit(accuracy_data)
+
+# Create a grouped bar plot showing the mean of correct responses after each type of feedback for accuracy
+# Check the range of the 'correct' variable
+summary(accuracy_data$correct)
+
+# Assuming the minimum value is 0.25 or greater, set the y-axis limits using coord_cartesian
+ggplot(accuracy_data, aes(x = feedback, fill = followup_beha, y = correct)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Correct Responses after Different Types of Feedback (Accuracy)",
+       x = "Feedback", y = "Mean Correct Response") +
+  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  theme_minimal() +
+  #facet_grid(~condition)+
+  coord_cartesian(ylim = c(0.2, 1))
+
+
+
+
+       #mean condition accuracy
+# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "correct"))
+
+# Exclude NA values
+feedback_data <- na.omit(feedback_data)
+
+# Calculate the mean of 'correct' per condition
+accuracy_data <- aggregate(correct ~ feedback + followup_beha + condition, data = feedback_data, FUN = mean)
+
+# Create a grouped bar plot showing the mean of correct responses after each type of feedback, separated by condition
+ggplot(accuracy_data, aes(x = feedback, y = correct, fill = followup_beha)) +
+  geom_bar(position = "dodge", color = "black", stat = "identity") +
+  facet_wrap(~ condition, scales = "free") +  # Facet by condition
+  labs(title = "Mean Correct Responses after Different Types of Feedback by Condition",
+       x = "Feedback", y = "Mean Correct Response") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0.3, 1)) # Set the y-axis limits
+
+
+  
+                                  #mean RT
+
+#A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+rt_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "RT"))
+
+# Exclude NA values
+rt_data <- na.omit(rt_data)
+
+# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT
+ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
+       x = "Feedback", y = "Mean Reaction Time") +
+  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  theme_minimal()+
+  coord_cartesian(ylim = c(0, 600))
+
+
+
+
+                          #mean per condition for the followup_beha - not stacked [KEEP]
+
+# Calculate counts of 'press' and 'no_press' for each combination of feedback, followup_beha, and condition
+count_data <- feedback_data %>%
+  group_by(feedback, followup_beha, condition) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Calculate the total counts (sum of 'press' and 'no_press') for each combination of feedback and condition
+total_counts <- count_data %>%
+  group_by(feedback, condition) %>%
+  summarise(total_count = sum(count))
+
+# Merge total counts with count data
+count_data <- count_data %>%
+  left_join(total_counts, by = c("feedback", "condition"))
+
+# Calculate the proportion of 'press' and 'no_press' for each combination of feedback and condition
+mean_proportion <- count_data %>%
+  mutate(mean_proportion = count / total_count)
+
+# Create a grouped bar plot showing the mean proportion of responses after each type of feedback, separated by condition
+ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_beha)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap(~ condition, scales = "free") +  # Facet by condition
+  labs(title = "Mean Proportion of Response after Different Types of Feedback by Condition",
+       x = "Feedback", y = "Mean Proportion") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.7), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+
+
+  
+ #countS per condition - stacked [KEEP]
+
+# Count occurrences of press and no_press per condition
+press_counts <- feedback_data %>%
+  group_by(feedback, condition, followup_beha) %>%
+  summarise(count = n()) %>%
+  pivot_wider(names_from = followup_beha, values_from = count, values_fill = 0)
+
+# Calculate the mean of press and no_press responses per condition
+mean_press <- press_counts %>%
+  group_by(condition) %>%
+  summarise(mean_press = mean(press),
+            mean_no_press = mean(no_press))
+
+# Plot counts of "press" and "no_press" per condition
+ggplot(press_counts, aes(x = feedback)) +
+  geom_bar(aes(y = press, fill = "Press"), stat = "identity", position = "dodge", color = "black", show.legend = TRUE) +
+  geom_bar(aes(y = no_press, fill = "No Press"), stat = "identity", position = "dodge", color = "black", show.legend = TRUE) +
+  facet_wrap(~ condition, scales = "free") +
+  labs(title = "Counts of 'press' and 'no_press' per Condition",
+       x = "Feedback", y = "Count") +
+  scale_fill_manual(values = custom_colors,
+                    guide = guide_legend(title = "Follow-Up Behavior", 
+                                         labels = c("Press", "No Press"))) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+
+
+
+#same as above but just counts
+
+  #count second one is better for count
+# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "Cue"))
+
+# Exclude NA values
+feedback_data <- na.omit(feedback_data)
+
+# Create a grouped bar plot showing the distribution of responses after each type of feedback, separated by condition
+ggplot(feedback_data, aes(x = feedback, fill = followup_beha)) +
+  geom_bar(position = "dodge", color = "black", stat = "count") +
+  facet_wrap(~ condition, scales = "free") +  # Facet by condition
+  labs(title = "Response Distribution after Different Types of Feedback by Condition",
+       x = "Feedback", y = "Count") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal()+
+  coord_cartesian(ylim = c(0, 2500))
+```
+
+   # foolow_up beha per cue interesting
+```{r}
+# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), 
+                        select = c("feedback", "followup_beha", "condition", "Cue"))
+
+# Exclude NA values
+feedback_data <- na.omit(feedback_data)
+
+# Filter data for "GW" and "GAL" cues
+feedback_data <- feedback_data %>%
+  filter(Cue %in% c("GW", "GAL"))
+
+# Calculate counts of 'press' and 'no_press' for each combination of feedback, followup_beha, condition, and Cue
+count_data <- feedback_data %>%
+  group_by(feedback, followup_beha, condition, Cue) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Calculate the total counts (sum of 'press' and 'no_press') for each combination of feedback, condition, and Cue
+total_counts <- count_data %>%
+  group_by(feedback, condition, Cue) %>%
+  summarise(total_count = sum(count))
+
+# Merge total counts with count data
+count_data <- count_data %>%
+  left_join(total_counts, by = c("feedback", "condition", "Cue"))
+
+# Calculate the proportion of 'press' and 'no_press' for each combination of feedback, condition, and Cue
+mean_proportion <- count_data %>%
+  mutate(mean_proportion = count / total_count)
+
+# Create a grouped bar plot showing the mean proportion of responses after each type of feedback, separated by condition and Cue
+ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_beha)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_grid(Cue ~ condition) +  # Facet by condition and Cue
+  labs(title = "Mean Proportion of Response after Different Types of Feedback by Condition and Cue",
+       x = "Feedback", y = "Mean Proportion") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.7), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+
+
+
+```
+
+
+
+
+
+
+
+
+##FOLLOW UP BEHAVIOUR CORRECT FEEDBACK
+
+```{r}
+
+   #Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data_r <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_response", "condition"))
+
+# Exclude NA values
+feedback_data_r <- na.omit(feedback_data_r)
+
+              #mean per condition for the followup_beha - not stacked [KEEP]
+
+# Calculate counts of 'press' and 'no_press' for each combination of feedback, followup_beha, and condition
+count_data_r <- feedback_data_r %>%
+  group_by(feedback, followup_response, condition) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Calculate the total counts (sum of 'press' and 'no_press') for each combination of feedback and condition
+total_counts_r <- count_data_r %>%
+  group_by(feedback, condition) %>%
+  summarise(total_count = sum(count))
+
+# Merge total counts with count data
+count_data_r <- count_data_r %>%
+  left_join(total_counts_r, by = c("feedback", "condition"))
+
+# Calculate the proportion of 'press' and 'no_press' for each combination of feedback and condition
+mean_proportion_r <- count_data_r %>%
+  mutate(mean_proportion_r = count / total_count)
+
+# Create a grouped bar plot showing the mean proportion of responses after each type of feedback, separated by condition
+ggplot(mean_proportion_r, aes(x = feedback, y = mean_proportion_r, fill = followup_response)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap(~ condition, scales = "free") +  # Facet by condition
+  labs(title = "Mean Proportion of Response after Different Types of Feedback by Condition",
+       x = "Feedback", y = "Mean Proportion") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.65), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+
+
+
+
+
+             #[per cue]
+
+# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+feedback_data_rcue <- subset(tus, feedback %in% c("win", "lose", "neutral"), 
+                        select = c("feedback", "followup_response", "condition", "Cue"))
+
+# Exclude NA values
+feedback_data_rcue <- na.omit(feedback_data_rcue)
+
+# Filter data for "GW" and "GAL" cues
+feedback_data_rcue <- feedback_data_rcue %>%
+  filter(Cue %in% c("GW"))
+
+# Calculate counts of 'press' and 'no_press' for each combination of feedback, followup_beha, condition, and Cue
+count_data_rcue <- feedback_data_rcue %>%
+  group_by(feedback, followup_response, condition, Cue) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Calculate the total counts (sum of 'press' and 'no_press') for each combination of feedback, condition, and Cue
+total_counts_rcue <- count_data_rcue %>%
+  group_by(feedback, condition, Cue) %>%
+  summarise(total_count = sum(count))
+
+# Merge total counts with count data
+count_data_rcue <- count_data_rcue %>%
+  left_join(total_counts, by = c("feedback", "condition", "Cue"))
+
+# Calculate the proportion of 'press' and 'no_press' for each combination of feedback, condition, and Cue
+mean_proportion_rcue <- count_data_rcue %>%
+  mutate(mean_proportion_rcue = count / total_count)
+
+# Create a grouped bar plot showing the mean proportion of responses after each type of feedback, separated by condition and Cue
+ggplot(mean_proportion_rcue, aes(x = feedback, y = mean_proportion_rcue, fill = followup_response)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_grid(Cue ~ condition) +  # Facet by condition and Cue
+  labs(title = "Mean Proportion of Response after Different Types of correct Feedback by Condition and Cue",
+       x = "Feedback", y = "Mean Proportion") +
+  scale_fill_manual(values = c("press" = "#66c2a5", "no_press" = "#fc8d62")) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.4), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+
+
+
+
+```
+
+
+
+
+ALSO DO
+
+-	a) follow up behaviour after unsuccessfull stop (pressed while a noGo) and 
+-	b) follow up behaviour after positive or after correct feedback (80% of the cases, as the other 20% was a random opposite feedback). !!!--.> 
+
+Cai and colleagues (2014): (1) rAI and salience networks may contribute to inhibitory control by detecting salient stopping events; 
+- c) Go Cues behaviour (there is something going on in my data for sure, and (2) rAI and salience networks may directly recruit inhibition by slowing down responses after salient events 
+- d) RTs followup after positive or negative feedback maybe, found for WIN only? WHAT ARE MY SALIENT QUES? I AM CONFUSED order of saliency? GW, NGW, GAL, NGL (or the very first three more salient than NGL)? As, GW and NGW more salient that is why AI significant and GW more presses for AI? 
+-	E) follow up after positive and negative feedback only	
+-	
