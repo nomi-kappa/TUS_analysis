@@ -740,6 +740,8 @@ response_per_ppt <-tus %>% group_by (ID)%>% count (response);View (response_per_
 mean(c$n) #avg of 294 correct responses--> 
           #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
 ```
+
+
    
    
 #proportion of RT response per type of Stimulation (sham, ai, dACC) 

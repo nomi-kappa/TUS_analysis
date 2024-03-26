@@ -17,6 +17,8 @@ View(tus)
 library(lmerTest)
 #library(lMest)
 library(dplyr)
+library(alleffects)
+
 library(BayesFactor)
 library(leaps)
 library(tidyverse)
