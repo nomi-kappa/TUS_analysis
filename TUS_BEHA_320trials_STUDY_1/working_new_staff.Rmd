@@ -267,4 +267,49 @@ tus_next_action <-read.csv ("tus_next_action.csv")
 
 
 #glm
+```{r}
+View(tus_next_action)
+tus_next_action$next_action_binary <- as.factor(tus_next_action$next_action_binary)
+tus_next_action$response <- as.factor(tus_next_action$response)
+
+model1 <- glmer(next_action_binary ~ condition  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model1)
+                 
+model2 <- glmer(response ~ condition*feedback*next_action_binary  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model2)
+ 
+model3<- glmer(response ~ feedback*next_action_binary  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model3)  
+                 more like folloupbehaviour ~condition*feedback + (1|sub)
+model4<- glmer(next_action_binary ~ condition*feedback  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model4)  #elsa prefers this 
+  
+  #i want to check accuracy too               
+```
+
+
+#elsa's code to translate to R
+
+```{r}
+idxsub = 0;
+for isub=[1:11 13:16 18:23 26:29]
+    idxsub = idxsub + 1;
+    for icond = 1:3
+        tempout = [];
+        tempact = [];
+        for icue = 1:4
+            tempout = [tempout; mat(submat==isub & cuemat==icue & condmat==icond,4)];
+            tempactv = mat(submat==isub & cuemat==icue & condmat==icond,5);
+            tempact = [tempact; tempactv(2:end); NaN];
+            clear tempactv
+        end
+        arraytemp = [tempout tempact];
+        tabletemp = array2table(arraytemp,'VariableNames',{'out','act'});
+        lme = fitlm(tabletemp,'act~out');
+        %brob = robustfit(arraytemp(:,1),arraytemp(:,2));
+        betacoef(idxsub,icond) = lme.Coefficients.tStat(2);
+        clear tempout tempact arraytemp tabletemp lme
+    end
+end
+```
 
