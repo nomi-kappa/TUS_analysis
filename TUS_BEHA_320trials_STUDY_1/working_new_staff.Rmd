@@ -1,0 +1,270 @@
+---
+title: "working_new_staff"
+author: "nomi"
+date: "2024-03-27"
+output: html_document
+---
+
+```{r}
+
+library(readr)
+tus <- read_csv("GNG_TUS_S1.csv")
+View(tus)
+```
+
+#Load libraries
+```{r}
+library(tibbletime)
+library(purrr)
+library(stringr)
+library(report)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(ggpubr)
+library(yarr)
+library (yarrr)
+library(afex)
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
+library(ggpirate)
+```
+
+#create subsets for GW, GAL, NGW, NGL
+
+  #GW
+```{r}
+# Create subsets for each cue
+subset_GW <- tus %>%
+  filter(Cue == "GW")
+
+
+subset_GW <- subset_GW %>%
+mutate(next_action = case_when(
+     !is.na(lead(response, order_by = trial_number)) ~ lead(response),
+    TRUE ~ NA_character_
+  )); View(subset_GW)
+
+# Insert NA in the first row of the next_action column
+subset_GW <- subset_GW %>%
+  mutate(next_action = ifelse(row_number() == 1, NA_character_, next_action))
+
+# Insert NA values at the end of each block of 20 rows starting from 1
+subset_GW <- subset_GW %>%
+  mutate(next_action = ifelse((row_number() %% 20 == 0 & row_number() != 0), NA_character_, next_action))
+
+# Translate next_action column to 0s and 1s
+subset_GW <- subset_GW %>%
+  mutate(next_action_binary = ifelse(next_action == "press", 1, 0))
+
+
+View(subset_GW)
+write.csv(subset_GW, "GW_next_action.csv")
+GW_next_action<-read.csv("GW_next_action.csv")
+
+```
+
+#NGW
+```{r}
+subset_NGW <- tus %>%
+  filter(Cue == "NGW")
+
+
+
+subset_NGW <- subset_NGW %>%
+mutate(next_action = case_when(
+     !is.na(lead(response, order_by = trial_number)) ~ lead(response),TRUE ~ NA_character_)); View(subset_NGW)
+
+# Insert NA in the first row of the next_action column
+subset_NGW <- subset_NGW %>%
+  mutate(next_action = ifelse(row_number() == 1, NA_character_, next_action))
+
+# Insert NA values at the end of each block of 20 rows starting from 1
+subset_NGW <- subset_NGW %>%
+  mutate(next_action = ifelse((row_number() %% 20 == 0 & row_number() != 0), NA_character_, next_action))
+
+# Translate next_action column to 0s and 1s
+subset_NGW <- subset_NGW %>%
+  mutate(next_action_binary = ifelse(next_action == "press", 1, 0))
+
+
+View(subset_NGW)
+write.csv(subset_NGW, "NGW_next_action.csv")
+NGW_next_action<-read.csv("NGW_next_action.csv")
+```
+
+
+
+
+subset_NGL
+```{r}
+subset_NGL <- tus %>%
+  filter(Cue == "NGL")
+
+
+
+subset_NGL <- subset_NGL %>%
+mutate(next_action = case_when(
+     !is.na(lead(response, order_by = trial_number)) ~ lead(response), TRUE ~ NA_character_))
+
+# Insert NA in the first row of the next_action column
+subset_NGL <- subset_NGL %>%
+  mutate(next_action = ifelse(row_number() == 1, NA_character_, next_action))
+
+# Insert NA values at the end of each block of 20 rows starting from 1
+subset_NGL <- subset_NGL %>%
+  mutate(next_action = ifelse((row_number() %% 20 == 0 & row_number() != 0), NA_character_, next_action)); View(subset_NGL)
+
+# Translate next_action column to 0s and 1s
+subset_NGL <- subset_NGL %>%
+  mutate(next_action_binary = ifelse(next_action == "press", 1, 0))
+
+
+View(subset_NGL)
+write.csv(subset_NGL, "NGL_next_action.csv")
+NGL_next_action<-read.csv("NGL_next_action.csv")
+```
+
+subset_GAL
+```{r}
+subset_GAL <- tus %>%
+  filter(Cue == "GAL")
+View(subset_GAL)
+
+
+
+subset_GAL <- subset_GAL %>%
+mutate(next_action = case_when(
+     !is.na(lead(response, order_by = trial_number)) ~ lead(response), TRUE ~ NA_character_)); View(subset_GAL)
+
+# Insert NA in the first row of the next_action column
+subset_GAL <- subset_GAL %>%
+  mutate(next_action = ifelse(row_number() == 1, NA_character_, next_action))
+
+# Insert NA values at the end of each block of 20 rows starting from 1
+subset_GAL <- subset_GAL %>%
+  mutate(next_action = ifelse((row_number() %% 20 == 0 & row_number() != 0), NA_character_, next_action))
+
+# Translate next_action column to 0s and 1s
+subset_GAL <- subset_GAL %>%
+  mutate(next_action_binary = ifelse(next_action == "press", 1, 0))
+
+
+View(subset_GAL)
+write.csv(subset_GAL, "GAL_next_action.csv")
+GAL_next_action<-read.csv("GAL_next_action.csv")
+```
+
+```
+
+#plotting
+
+  #plot GW_next action
+```{r}
+GW_next_action <- GW_next_action[!is.na(GW_next_action$next_action) & !is.na(GW_next_action$next_action_binary), ]
+ View(GW_next_action)
+                                            
+
+
+
+# Plot the distribution of next_action_binary values
+p1<- ggplot(GW_next_action, aes(x = condition, fill = factor(next_action))) +
+     geom_bar(position = "fill") +
+     labs(title = "Distribution of next_action for GW",
+          x = "Condition",
+          y = "Proportion",
+          fill = "Next Action") +
+   facet_wrap(~  feedback ) +
+     scale_fill_manual(values = c("no_press" = "skyblue", "press" = "orange")) +
+     theme(legend.position = "top")+
+scale_y_continuous(breaks = seq(0, 1, 0.1)); p1
+ 
+
+```
+  
+#plot NGW_next action
+```{r}
+NGW_next_action <- NGW_next_action[!is.na(NGW_next_action$next_action) & !is.na(NGW_next_action$next_action_binary), ]
+ View(NGW_next_action)
+                                            
+
+
+
+# Plot the distribution of next_action_binary values
+p2<- ggplot(NGW_next_action, aes(x = condition, fill = factor(next_action))) +
+     geom_bar(position = "fill") +
+     labs(title = "Distribution of next_action for NGW",
+          x = "Condition",
+          y = "Proportion",
+          fill = "Next Action") +
+   facet_wrap(~  feedback ) +
+     scale_fill_manual(values = c("no_press" = "skyblue", "press" = "orange")) +
+     theme(legend.position = "top")+
+scale_y_continuous(breaks = seq(0, 1, 0.1));p2
+ 
+
+```
+  
+#plot GAL_next action
+```{r}
+GAL_next_action <- GAL_next_action[!is.na(GAL_next_action$next_action) & !is.na(GAL_next_action$next_action_binary), ]
+ View(GAL_next_action)
+                                            
+
+
+
+# Plot the distribution of next_action_binary values
+ p3<-ggplot(GAL_next_action, aes(x = condition, fill = factor(next_action))) +
+     geom_bar(position = "fill") +
+     labs(title = "Distribution of next_action for GAL",
+          x = "Condition",
+          y = "Proportion",
+          fill = "Next Action") +
+   facet_wrap(~  feedback ) +
+     scale_fill_manual(values = c("no_press" = "skyblue", "press" = "orange")) +
+     theme(legend.position = "top")+
+scale_y_continuous(breaks = seq(0, 1, 0.1)); p3
+ 
+
+```
+  #plot NGL_next action
+```{r}
+NGL_next_action <- NGL_next_action[!is.na(NGL_next_action$next_action) & !is.na(NGL_next_action$next_action_binary), ]
+ View(NGL_next_action)
+                                            
+
+
+
+# Plot the distribution of next_action_binary values
+p4<- ggplot(NGL_next_action, aes(x = condition, fill = factor(next_action))) +
+     geom_bar(position = "fill") +
+     labs(title = "Distribution of next_action for NGL",
+          x = "Condition",
+          y = "Proportion",
+          fill = "Next Action") +
+   facet_wrap(~  feedback ) +
+     scale_fill_manual(values = c("no_press" = "skyblue", "press" = "orange")) +
+     theme(legend.position = "top")+
+scale_y_continuous(breaks = seq(0, 1, 0.25));p4
+ 
+
+```
+  
+
+#aggreaate four plots p1 p2 p3 p4
+```{r}
+combined_plot <- p1 + p2 + p3 + p4; combined_plot
+
+```
+
+#combine csv files
+```{r}
+tus_next_action <- bind_rows(GW_next_action, NGW_next_action, NGL_next_action, GAL_next_action); View(tus_next_action)
+write.csv(tus_next_action, "tus_next_action.csv", row.names = FALSE)
+tus_next_action <-read.csv ("tus_next_action.csv")
+```
+
+
+#glm
+
