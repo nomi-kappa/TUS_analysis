@@ -266,25 +266,74 @@ tus_next_action <-read.csv ("tus_next_action.csv")
 ```
 
 
-#glm
+#glm it seems dACC is more affected but the previous Cue, but not AI. AI mainly for the GW
 ```{r}
 View(tus_next_action)
 tus_next_action$next_action_binary <- as.factor(tus_next_action$next_action_binary)
 tus_next_action$response <- as.factor(tus_next_action$response)
+tus_next_action$next_action <- as.factor(tus_next_action$next_action)
+tus_next_action$feedback <- factor(tus_next_action$feedback)
+tus_next_action$feedback <- relevel(tus_next_action$feedback, ref = "neutral")
 
-model1 <- glmer(next_action_binary ~ condition  +(1|ID) , 
-                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model1)
-                 
-model2 <- glmer(response ~ condition*feedback*next_action_binary  +(1|ID) , 
+ 
+
+ #response as DV                
+model2 <- glmer(response ~ condition*feedback*next_action  +(1|ID) , 
                  data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model2)
  
-model3<- glmer(response ~ feedback*next_action_binary  +(1|ID) , 
+model3<- glmer(response ~ feedback*next_action  +(1|ID) , 
                  data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model3)  
+                
                  more like folloupbehaviour ~condition*feedback + (1|sub)
-model4<- glmer(next_action_binary ~ condition*feedback  +(1|ID) , 
+ #next_action as DV
+ 
+model1 <- glmer(next_action ~ condition  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model1)
+                 
+model4<- glmer(next_action ~ condition*feedback*correct_feedback  +(1|ID) , 
                  data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model4)  #elsa prefers this 
+                 
+model4.b<- glmer(next_action ~ Cue*condition*correct_feedback  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model4.b)  #elsa prefers this 
   
-  #i want to check accuracy too               
+  model4.c<- glmer(next_action ~ Cue*condition  +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model4.c)  #elsa prefers this 
+                 
+                   
+
+#correct as DV
+  
+  model5<- glmer(correct ~next_action*condition*feedback +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model5)  
+ 
+  model6 <- glmer(next_Action ~correct_feedback*condition +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model6)  
+                                              
+
+ 
+ #CORRECCT FEEDBACK does not seem to make much difference, not sure if that is the correct model to show that or with the accuracy as DV
+
+  model7 <- glmer(correct ~correct_feedback*feedback*condition +(1|ID) , 
+                 data  = tus_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model7)  
+                                              
+
+                
+                 #subsets CUE
+                 
+  modela<- glmer(next_action ~ feedback*condition  +(1|ID) , 
+                 data  = GW_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modela)  #elsa prefers this 
+                          
+  modelb<- glmer(next_action ~ feedback*condition  +(1|ID) , 
+                 data  = NGW_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modelb)  #elsa prefers this 
+                 
+      modelc<- glmer(next_action ~ feedback*condition  +(1|ID) , 
+      data  = GAL_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modelc)  #elsa prefers this 
+                          
+                          modeld<- glmer(next_action ~ feedback*condition  +(1|ID) , 
+                 data  = NGW_next_action, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modeld)  #elsa prefers this 
+                          
+                          
+  
 ```
 
 
