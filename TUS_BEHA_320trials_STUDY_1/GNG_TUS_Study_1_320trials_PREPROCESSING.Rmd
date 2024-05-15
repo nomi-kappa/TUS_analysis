@@ -33,42 +33,6 @@ library(afex)
 # parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
 ```
 
-#APA theme
-```{r}
-theme_APA <- theme_bw()+
-    theme(panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          axis.line = element_line(size = 1),                                        
-          text = element_text(
-              size = 20,
-              face="bold"), 
-          axis.text = element_text(
-              size = 20,
-              face="plain",
-              colour="black"),
-          legend.title = element_blank(),
-          legend.position = 'top',
-          legend.direction = "horizontal",
-          legend.text = element_text(
-              face="plain",
-              colour="black",
-              size=20),
-          strip.text.x = element_text(
-              size = 20,
-              face = "bold"),
-          panel.background = element_rect(
-              fill='white',
-              colour='white'),
-          strip.background = element_rect(
-              fill='white',
-              colour='white'),
-          axis.title.x = element_text(
-              margin = margin(t = 10)),
-          plot.margin = grid::unit(c(5, 5, 5, 5), "mm"),
-          plot.caption = element_text(size=15)
-          )
-```
 
 
     #PREPROCESSING
@@ -112,6 +76,7 @@ c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter
 tus <-bind_rows(a.sham, c.ai, b.dacc)
 
 ```
+
 
 ## add session column
 ```{r}
@@ -161,6 +126,12 @@ tus <- tus %>%
 #copied
 #tus <- tus %>%
    #   mutate_at("ID", str_replace, "_Copy", "")
+
+
+# Rename ID
+tus <- tus %>%
+  mutate(ID = ifelse(ID == "SSCH0384", "SSCF0384", ID))
+
 ```
 
 ## Add response col (press - no_press)
@@ -251,8 +222,8 @@ tus <- tus %>%
 ```
     
         #'followup_beha' showing response after feedback + 1 in trial_number
-#after loss and after winning feedback behaviour. Add a column based on feedback 
-showing what response/behaviour they have chosen, go or noGo. Maybe something like
+#behaviour after loss and after winning feedback. Adding a column based on feedback 
+showing what response/behaviour they have chosen, go or noGo (press or no_press). Maybe something like
 for feedback [i], mutate column [followup_beha] showing response after feedback +1 in trial_number,
 grouping by ID and condition.
 ```{r}
@@ -267,11 +238,19 @@ tus <- tus %>%
 
 # Count the number of occurrences for each level of the Cue column, to check is balanced
  cue_counts <- table(tus$Cue);print(cue_counts); View(tus)
+ 
+ 
+ 
+ # Recode followup_beha as binary (0 for "no_press" and 1 for "press")
+tus$followup_beha_binary <- as.numeric(tus$followup_beha == "press")
+
+# Check the recoded variable
+table(tus$followup_beha_binary)
 ```
 
 
               # whether they are correct after a correct feedback
-              Find the follow up behaviour after receiving the correct feedback ( or whether they were correct after receiving the correct feedback 80% and not the 20%)
+              Find the follow up behaviour after receiving the correct feedback (or whether they were correct after receiving the correct feedback 80% and not the 20%)
 
 correct feedback
   when NGL and response:no_press and  feedback neutral, then 1 else 0 =>  add to column -> correct_feedback 
@@ -281,16 +260,12 @@ correct feedback
   how to find the follow-up behaviour. Create a column called correct_proba_feed
   
   
-following correctation (whether they were correct after receiving the correct feedback 80% and not the 20%)
-
-previous you have done something similar for general follow up behaviour after feedback like this:
+following correct action (whether they were correct after receiving the correct feedback 80% and not the 20%)
 
 !!!!!!!!!!!!!!!!!! NEUTRAL is ALSO correct when NGL and GAL and they get 0 and feedback was 0
   
   
 ```{r}
-library(dplyr)
-
 # Step 1: Calculate correct_feedback based on specified conditions (check in which instanses feedback was correct 80%) - all good!
 tus <- tus %>%
   mutate(correct_feedback = case_when(
@@ -322,18 +297,192 @@ count_nutral <- 13647
           count_0s <- count_0s / total_count; print(count_0s)
                 count_1s <- count_1s / total_count; print (count_1s)
 
-        # Step 2: Calculate followup_response after correct feedback   -not yet
-      library(dplyr)
+        # Step 2: Calculate followup_response after correct feedback   -called:followup_correctfeed
+      # Add a column indicating follow-up response after correct feedback but also indicate response after wrong_feedback_20%
 
-# Add a column indicating follow-up response after correct feedback
 tus <- tus %>%
-  mutate(followup_response = case_when(
-    correct_feedback == 1 ~ lead(response, order_by = trial_number, default = NA),
-    TRUE ~ NA_character_  # For rows where correct_feedback is not 1, set followup_response as NA
+  mutate(followup_correctfeed = case_when(
+    correct_feedback == 1 ~ lead(response, order_by = trial_number, default = "wrong_feed_20%"),
+    TRUE ~ "wrong_feed_20%"  # For rows where correct_feedback is not 1, set followup_response as "wrong_feed_20%" (20% where wrong feedback is given - opposite than expected)
   ))
 
-# View the updated dataset
+    #Add column to show what behaviour/action they followed after wrong feedback is given
+tus <- tus %>%
+  mutate(followup_wrong_feed = case_when(
+    correct_feedback == 0 ~ lead(response, order_by = trial_number, default = "correct_feedback"),
+    TRUE ~ "correct_feedback"
+  ))
+
+
+# Calculate the percentage of instances of "wrong_feed_20%" in followup_correctfeed column
+wrong_feedback_percentage <- mean(tus$followup_correctfeed == "wrong_feed_20%") * 100
+
+wrong_feedback_percentage # 20.37 ! perfect
+
+
+
+
+# Recode followup_correctfeed as trinary (0 for "no_press", 1 for "press", 2 for "wrong_feed_20%")
+tus$followup_correctfeed_trinary <- ifelse(tus$followup_correctfeed == "press", 1,
+                                           ifelse(tus$followup_correctfeed == "no_press", 0, 2))
+
+# Check the recoded variable
+table(tus$followup_correctfeed_trinary)
+
+
+```
+
+          #Actual reward, excluding wrong feedback (20%) column - called: actual_reward
+          FOR GW & NGW: correctfeedback == 1 & feedback == win & correct ==1 then "reward"
+          FOR GW & NGW: correctfeedback == 1 & feedback == neutral & correct ==0 then "no_reward"
+          FOR NGL & GAL: correctfeedback == 1 & feedback == lose & correct ==0 then "punishment"
+          FOR NGL & GAL: correctfeedback == 1 & feedback == neutral & correct ==1 then "no_punishment"
+          
+          #Reward in general column - called: reward
+          Valence == Win & feedback == win, then "reward"
+          Valence == Win & feedback == neutral, then "no_reward"          
+          Valence == lose & feedback == neutral, then "no_punishment"
+          Valence == lose & feedback == lose, then "punishment"
+
+          
+```{r}
+# actual_reward 
+tus$actual_reward <- NA  # Initialize the column with NA values
+
+# Define conditions for actual_reward column
+tus$actual_reward[tus$Cue %in% c("GW", "NGW") & tus$correct_feedback == 1 & tus$feedback == "win" & tus$correct == 1] <- "reward"
+tus$actual_reward[tus$Cue %in% c("GW", "NGW") & tus$correct_feedback == 1 & tus$feedback == "neutral" & tus$correct == 0] <- "no_reward"
+tus$actual_reward[tus$Cue %in% c("NGL", "GAL") & tus$correct_feedback == 1 & tus$feedback == "lose" & tus$correct == 0] <- "punishment"
+tus$actual_reward[tus$Cue %in% c("NGL", "GAL") & tus$correct_feedback == 1 & tus$feedback == "neutral" & tus$correct == 1] <- "no_punishment"
+
+# reward 
+tus$reward <- NA  # Initialize the column with NA values
+
+# Define conditions for reward column
+tus$reward[tus$OutValence == "Win" & tus$feedback == "win"] <- "reward"
+tus$reward[tus$OutValence == "Win" & tus$feedback == "neutral"] <- "no_reward"
+tus$reward[tus$OutValence == "Avoid" & tus$feedback == "neutral"] <- "no_punishment"
+tus$reward[tus$OutValence == "Avoid" & tus$feedback == "lose"] <- "punishment"
+
+```
+          
+
+#Exlusion 3SDs still 30 participants
+```{r}
+# Calculate mean accuracy per participant
+mean_accuracy_per_participant <- tus %>%
+  group_by(ID) %>%
+  summarise(mean_accuracy = mean(correct, na.rm = TRUE))
+
+# Calculate mean and standard deviation of mean accuracy
+mean_accuracy <- mean(mean_accuracy_per_participant$mean_accuracy)
+sd_accuracy <- sd(mean_accuracy_per_participant$mean_accuracy)
+
+# Define lower and upper bounds
+lower_bound <- mean_accuracy - 3 * sd_accuracy
+upper_bound <- mean_accuracy + 3 * sd_accuracy
+
+# Identify excluded participants
+excluded_participants <- mean_accuracy_per_participant %>%
+  filter(mean_accuracy < lower_bound | mean_accuracy > upper_bound)
+
+# Add a column to indicate exclusion
+mean_accuracy_per_participant <- mean_accuracy_per_participant %>%
+  mutate(excluded = ifelse(ID %in% excluded_participants$ID, "Excluded", "Included"))
+
+# Merge exclusion information back into tus dataset
+tus <- left_join(tus, mean_accuracy_per_participant, by = "ID")
+
+# Print number of participants before and after exclusion
+num_participants_before <- nrow(mean_accuracy_per_participant)
+num_participants_after <- num_participants_before - nrow(excluded_participants)
+
+cat("Number of participants before exclusion:", num_participants_before, "\n")
+cat("Number of participants after exclusion:", num_participants_after, "\n")
+
+# View the updated tus dataset
 View(tus)
+
+
+```
+
+# Exclusion 3sd per condition and ID
+```{r}
+# Define function to filter data within ±3 standard deviations
+filter_within_3sds <- function(x) {
+  mean_x <- mean(x)
+  sd_x <- sd(x)
+  lower_bound <- mean_x - 3 * sd_x
+  upper_bound <- mean_x + 3 * sd_x
+  return(x >= lower_bound & x <= upper_bound)
+}
+
+# Filter data within ±3 standard deviations per ID and per condition
+filtered_tus <- tus %>%
+  group_by(ID, condition) %>%
+  filter(filter_within_3sds(RT))
+
+# Identify excluded participants per condition
+excluded_participants_per_condition <- filtered_tus %>%
+  group_by(ID, condition) %>%
+  summarise(excluded = ifelse(n() == 0, "Excluded", "Included"))
+
+# Merge exclusion information back into the original dataset
+tus <- left_join(tus, excluded_participants_per_condition, by = c("ID", "condition"))
+
+# Print number of participants before and after exclusion per condition
+num_participants_before_per_condition <- tus %>%
+  distinct(ID, condition) %>%
+  summarise(num_participants = n()) %>%
+  nrow()
+
+num_participants_after_per_condition <- excluded_participants_per_condition %>%
+  filter(excluded == "Included") %>%
+  distinct(ID, condition) %>%
+  summarise(num_participants = n()) %>%
+  nrow()
+
+cat("Number of participants before exclusion per condition:", num_participants_before_per_condition, "\n")
+cat("Number of participants after exclusion per condition:", num_participants_after_per_condition, "\n")
+
+#pr
+
+
+# Print conditions per ID before exclusion
+conditions_per_ID_before <- tus %>%
+  filter(!is.na(correct)) %>%
+  distinct(ID, condition) %>%
+  arrange(ID)  # Sort by ID for clarity
+
+print("Conditions per ID before exclusion:")
+print(conditions_per_ID_before)
+
+# Print conditions per ID after exclusion
+conditions_per_ID_after <- filtered_tus %>%
+  distinct(ID, condition) %>%
+  arrange(ID)  # Sort by ID for clarity
+
+print("Conditions per ID after exclusion:")
+print(conditions_per_ID_after)
+
+# Count conditions per ID before exclusion
+conditions_count_before <- tus %>%
+  filter(!is.na(correct)) %>%
+  group_by(ID) %>%
+  summarise(num_conditions = n_distinct(condition)) %>%
+  arrange(ID)  # Sort by ID for clarity
+
+print("Conditions count per ID before exclusion:")
+View(conditions_count_before)
+
+# Count conditions per ID after exclusion
+conditions_count_after <- filtered_tus %>%
+  group_by(ID) %>%
+  summarise(num_conditions = n_distinct(condition)) %>%
+  arrange(ID)  # Sort by ID for clarity
+
+print("Conditions count per ID after exclusion:")
+View(conditions_count_after)
 
 
 ```
@@ -345,4 +494,3 @@ write.csv(tus, "GNG_TUS_S1.csv")
 
 
 
-  

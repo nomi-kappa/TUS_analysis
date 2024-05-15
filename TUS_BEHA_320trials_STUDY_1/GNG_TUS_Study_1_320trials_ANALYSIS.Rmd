@@ -17,8 +17,7 @@ View(tus)
 library(lmerTest)
 #library(lMest)
 library(dplyr)
-library(alleffects)
-
+#library(alleffects)
 library(BayesFactor)
 library(leaps)
 library(tidyverse)
@@ -47,19 +46,23 @@ library(lspline)
    
       #comparing glmer models - Logistic regression
              ####???Should check for multicollinearity by calculating a Variance Inflation Factor (VIF) for each independent variable maybe?
-
+             
 ```{r}
 #as.factor
 tus$req_action<-as.factor(tus$req_action); class (tus$req_action)
+tus$ID<-as.factor(tus$ID); class (tus$ID)
 
 # refactor reference level
 tus <- within(tus, req_action <- relevel(req_action, ref = "noGo"))
 
-
-
+```
+           
+           
+           #WAY_1        
+```{r}
 #Equivalent of stepAIC for glmer - comparing models - do not like it
 
-      #WAY_1
+
 # List of fixed effects
 fixed_effects <- c("OutValence", "req_action", "condition", "trial_number")
 
@@ -105,77 +108,83 @@ if (length(interaction_terms) == 0) {
   # Print the ordered models
   print(ordered_models)
 }
+```
 
 
         #WAY_2
-
+```{r}
 
 # Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 and 9.b is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
-
-        #all main effects are significant 
+           #REML = FALSE
+        
+#all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-        #all main effects are significant
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+        #all main effects are significant - fail to converge
 model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-#all main effects and interaction is significant. val*req_action = Cue
-model3 <- glmer(correct ~ OutValence * req_action + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) 
+#good
+model3 <- glmer(correct ~ OutValence * condition + req_action  + trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3) 
 
+#relatively good
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-#this is probably the one!
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model4) 
 
-model4.b <- glmer(correct ~ OutValence * req_action * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+#relatively good
+model4.b <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model4.b)
 
-model0 <- glmer(correct ~condition + req_action + condition*req_action + OutValence + condition*OutValence + req_action*OutValence +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model0)#ignore most probably
-model5 <- glmer(correct ~ OutValence * req_action * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+#failed to converge and not good
+model4.c <- glmer(correct ~ condition * trial_number * OutValence +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model4.c) 
+#not sure, but not bad
+model5 <- glmer(correct ~condition*trial_number + req_action + condition*req_action + OutValence + condition*OutValence + req_action*OutValence +(1|ID) , data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model5)#ignore most probably
 
-model6 <- glmer(correct ~ Cue + condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+# all significant
+model6 <- glmer(correct ~ Cue + condition +(1|ID) , 
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model6) 
 
+#fail to converge, but all significant
 model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model7) 
 
+#this is good
 model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model8) 
 
+#failed to converge but gives info
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model9)
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model9)
 
-
-model9.b <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model9.b)
-
+##failed to converge but gives info
 model10 <- glmer(correct ~ Cue * condition * OutValence* req_action* trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model10)
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model10)
+
+#not11 overfit maybe? also failed to converge
 model11 <- glmer(correct ~  OutValence * req_action *condition * trial_number + RT + (1|ID) ,
-                   data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
-summary(model11)#not11
+                   data = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model11)
+
+#failed to converge, all significant
 model12 <-glmer(correct ~ OutValence + req_action + condition + RT +trial_number +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model12)
 
+#failed to converge, all significant
 model13 <-glmer(correct ~ OutValence + req_action + condition + RT +(1|ID) , 
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model13)
 
-model14 <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID) ,        
-                 data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary (model14) #REML = FALSE
-#overfit i think 14, but also OutValenceWin:conditionc.ai:trial_number                  -0.0050235  0.0013815  -3.636 0.000277 ***
-model15 <- glmer(correct ~ req_action + OutValence + trial_number + condition +(1|ID) + ( req_action + OutValence + trial_number + condition|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+#overfit i think 14, but also 
+model14 <- glmer(correct ~ OutValence + req_action + condition + trial_number + (OutValence * req_action * condition * trial_number) + (1|ID), data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary (model14) 
+
 #no 15
+model15 <- glmer(correct ~ req_action + OutValence + trial_number + condition +(1|ID) + ( req_action + OutValence + trial_number + condition|ID), 
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model1)
+
 model16 <- glmer(correct ~ req_action * OutValence + trial_number + condition +(1|ID) + ( req_action * OutValence + trial_number + condition|ID), 
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
  #takes ages and crashes
-model17 <- glmer(correct ~ req_action * OutValence * trial_number * condition +(1|ID) + ( req_action * OutValence * trial_number * condition|ID), 
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
+   #model17 <- glmer(correct ~ req_action * OutValence * trial_number * condition +(1|ID) + ( req_action * OutValence * trial_number * condition|ID), 
+               #  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) 
 
 model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +RT +(1|ID) + ( req_action * OutValence * trial_number * condition +RT|ID), 
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
@@ -183,76 +192,11 @@ model18 <- glmer(correct ~ req_action + OutValence + trial_number + condition +R
 model19 <- glmer(correct ~ req_action * OutValence * trial_number * condition *RT +(1|ID) + ( req_action * OutValence * trial_number * condition *RT|ID), 
                  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) #REML = FALSE
 
-#followup_beha
-model20<-glmer(correct ~ feedback * followup_beha * condition  +(1|ID) ,
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model20)
-
-model21<-glmer(correct ~ followup_beha + condition  +(1|ID) ,
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model21)
-
-model22<-glmer(correct ~ followup_beha * condition  +(1|ID) ,
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22)
-
-model23<-glmer(correct ~ feedback * condition  +(1|ID) ,
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23)
-
-#convert to a factor
-tus$followup_beha <- factor(tus$followup_beha, levels = c("no_press", "press"))
-
-model23b<-glmer(followup_beha ~ feedback * condition  +(1|ID) ,
-                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23b)
-
-#followup_response
-
-# Convert followup_response to factor
-tus$followup_response <- factor(tus$followup_response, levels = c("no_press", "press"))
+```
 
 
-model24 <- glmer(followup_response ~ correct_feedback   +(1|ID), 
-                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model24)
-
-model25 <- glmer(followup_response ~ condition  + (1|ID), 
-                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model25)
-
-model26 <- glmer(correct ~ correct_feedback * condition  + (1|ID), 
-                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model26)
-
-
-
-
-#model 20 not working atm
-# Identify non-numeric columns
-non_numeric_cols <- c("req_action", "OutValence", "trial_number", "condition", "RT")
-
-# Convert non-numeric values to NA
-tus[, non_numeric_cols] <- lapply(tus[, non_numeric_cols], function(x) {
-  as.numeric(as.character(x))
-})
-
-# Replace missing values with column means
-tus[, non_numeric_cols] <- lapply(tus[, non_numeric_cols], function(x) {
-  ifelse(is.na(x), mean(x, na.rm = TRUE), x)
-})
-
-# Scale numeric columns
-scaled_tus <- tus
-scaled_tus[, non_numeric_cols] <- scale(tus[, non_numeric_cols])
-
-# Check the class of ID column
-class(scaled_tus$ID)
-
-# Convert ID to factor if it's not already a factor
-if (!is.factor(scaled_tus$ID)) {
-  scaled_tus$ID <- as.factor(scaled_tus$ID)
-}
-
-model20 <- glmer(correct ~ req_action * OutValence * trial_number * condition * RT + (1|ID),
-                 data = scaled_tus, family = binomial,
-                 glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-
-
+  #comparing models
+```{r}
 # Step 2: Create a data frame with model names and AIC values
 models_data <- data.frame(
   Model = c("model1", "model2", "model3", "model4", "model5", "model6", "model7", "model8", "model9", "model10", "model11", "model12",  "model13", "model14"),#, "model15", "model16", "model17", "model18", "model19"),
@@ -300,79 +244,103 @@ model_summaries[[1]]
 summ(model1)
 ```
 
+      
+      #followup_beha
+
+```{r}
+tus$ID <- factor(tus$ID)
+sum(is.na(tus$ID))
+
+#gives info accuracy is lower when on dacc, when win*ai, when followup_beha_press*ai and feedback_neutral:followup_behapress:conditionb.dacc
+# the estimate of 1.65 for "feedbackneutral" means that, holding other predictors constant, the log odds of a correct response are 1.65 higher when the feedback is neutral compared to when it's lose.the significant interaction term feedbackwin:conditionc.ai (-0.491679) indicates that the effect of "win" feedback compared to "lose" feedback on correct responses depends on the condition being "c.ai" compared to "a.sham". Specifically, holding other predictors constant, the log odds of a correct response decrease by 0.492 when the feedback is "win" compared to "lose" in the "c.ai" condition compared to the "a.sham" condition. followup_behapress:conditionc.ai (0.387) indicates that the effect of "press" followup behavior compared to "no_press" on correct responses depends on the condition being "c.ai" compared to "a.sham". Holding other predictors constant, the log odds of a correct response increase by 0.387 when the followup behavior is "press" compared to "no_press" in the "c.ai" condition compared to the "a.sham" condition.
+model20<-glmer(correct ~ feedback * followup_beha * condition +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model20)
+
+#conditions per se, not interaction is significant. Accuracy is lower when on ai or dacc
+model21<-glmer(correct ~ followup_beha * condition  +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model21)
+
+#good! after neutral and win feedback ai is significant. the accuracy is worse when the feedback is neutral and the condition is c.ai compared to their respective reference categories.the accuracy is worse when the feedback is win and the condition is c.ai compared to their respective reference categories.
+# --feedbackneutral:conditionc.ai: The estimate of -0.33924 indicates that, holding other factors constant, the log odds of a correct response decrease by 0.33924 when the feedback is neutral compared to when it's lose in the "c.ai" condition compared to the baseline condition "a.sham". This effect is statistically significant with a p-value of 0.000507.
+
+# --feedbackwin:conditionc.ai: The estimate of -0.60324 indicates that, holding other factors constant, the log odds of a correct response decrease by 0.60324 when the feedback is win compared to when it's lose in the "c.ai" condition compared to the baseline condition "a.sham". This effect is also statistically significant with a p-value of 9.18e-06.
+
+#In summary, both neutral and win feedback have a negative impact on correctness compared to lose feedback, specifically in the "c.ai" condition. This suggests that in condition "c.ai", regardless #of the type of feedback (neutral or win), the likelihood of a correct response decreases compared to the baseline condition "a.sham".
+model22<-glmer(correct ~ feedback * condition   +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22)
+
+#convert to a factor
+    #tus$followup_beha <- factor(tus$followup_beha_binary, levels = c("no_press", "press"))
+
+#condition and Cue affects follow_up_beaviour
+    #CueNGL:conditionb.dacc  0.35499    0.11541   3.076 0.002098 ** pressing more than sham
+    #CueNGW:conditionb.dacc  0.50238    0.10059   4.994 5.91e-07 *** pressing more than sham
+    #CueGW:conditionc.ai    -0.57620    0.11663  -4.940 7.80e-07 *** pressing less than sham
+    #CueNGW:conditionc.ai    0.33492    0.10038   3.337 0.000848 *** pressing more than sham
+model23<-glmer(followup_beha_binary ~ Cue * condition   +(1|ID) ,
+                 data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model23)
+
+```
+
+
+
+      #followup_correctfeed
+```{r}
+# Convert followup_response to factor
+#tus$followup_response <- factor(tus$followup_correctfeed, levels = c("no_press", "press"))
+
+# Subset the data to exclude the problematic level
+tus_subset <- subset(tus, followup_correctfeed_trinary != "2")
+
+#only dacc affect followup beha after correct feed
+model25 <- glmer(followup_correctfeed_trinary ~ condition  + (1|ID), 
+                   data  = tus_subset, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model25)
+
+#conditions are significant. worse when in stimulation
+    #followup_correctfeedwrong_feed_20%                  0.30147    0.08103   3.720 0.000199 ***
+    #conditionb.dacc                                    -0.19863    0.06354  -3.126 0.001772 ** 
+    #conditionc.ai                                      -0.19135    0.06195  -3.089 0.002011 ** 
+model26 <- glmer(correct ~ followup_correctfeed* condition  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model26)
+
+#conditionc.ai:CueGW    -0.53718    0.13276  -4.046 5.21e-05 ***pressing less
+#conditionb.dacc:CueNGL  0.40835    0.13379   3.052  0.00227 ** pressing more
+#conditionb.dacc:CueNGW  0.53198    0.11399   4.667 3.06e-06 ***pressing more
+#conditionc.ai:CueNGW    0.34267    0.11403   3.005  0.00265 ** pressing more
+model27 <- glmer(followup_correctfeed_trinary ~ condition*Cue  + (1|ID), 
+                   data  = tus_subset, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model27)
+
+```
+
+     #reward 
+```{r}
+#rewardreward:conditionc.ai        -0.4194     0.1694  -2.475  0.01331 *  faster after they were rewarded
+model28 <- glmer(correct ~ reward* condition  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model28)
+
+
+# Fit the model using the subsetted data to get actual_reward, the wrong_feedback is excluded, that we remain with actual reward
+#is singular...not good
+model29 <- glmer(correct ~ reward* condition  + (1|ID), 
+                   data  = tus_subset, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model29)
+```
+     
+     
+     #conflict congruent vs incongruent?
+```{r}
+
+```
+
 ```{r}
 # do not hot to combine the allmeans or alleffects to check the beta basic level main effects.
 ```
 
-#Plotting the effects? Help - NOT WORKING
+#Plotting the effects? 
 ```{r}
-#Not sure how to interpret the model (whichever I pick) or how to plot:
-acc <- allEffects(model_acc, xlevels=list(req_action=seq(0, 24, 6)),
-                   fixed.predictors=list(given.values=c(OutValenceWin =0.5)));acc
-
-as.data.frame(acc[[]])
-
-# the following are equivalent:
-eff.ne <- effect("OutValence*req_action", model_acc)
-Eff.ne <- Effect(c("OutValence", "req_action"), model_acc)
-all.equal(eff.ne$fit, Eff.ne$fit)
-
-# Assuming you have extracted the estimated effects into a data frame
-# For example, using as.data.frame(eff.cowles[[2]])-->
-# Create a ggplot object - not working yet
-acc<-as.data.frame(acc)
-ggplot(data =acc, aes(x = req_action, y = fit)) +
-  geom_point() +  # Add points to the plot
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +  # Add error bars
-  labs(x = "req_action", y = "Effect") +  # Label the axes
-  ggtitle("Estimated Effects of req_action")  # Add a title
-
-#or  #not working either - i do not know
-plot(acc, 'OutValence', axes=list(grid=TRUE,
-y=list(lab="condition"),
-x=list(rotate=90)),
-lines=list(lty=0))
 ```
 
 
-#run anovaBF (not the correct analysis as the DV is categorical - just trying)
-```{r}
-#drop NAs
-# Assuming 'df' is your data frame and 'column_name' is the name of the column you want to delete
-df <- subset(tus, select = -log_rt)
 
-df <- na.omit(df); View(df)
-df$ID <- as.factor(df$ID)
-df$correct <- as.integer(df$correct)
-df$req_action <- as.factor(df$req_action)
-df$condition <- as.factor(df$condition)
-df$trial_number <- as.factor(df$trial_number)
-df$OutValence <- as.factor(df$OutValence)
-df$Cue <- as.factor(df$Cue)
-df$block <- as.factor(df$block)
-
-
-#anovaBF IV = req_action
- accu <-anovaBF(correct ~ OutValence*req_action*condition*trial_number  + ID, data = df, whichRandom = "ID",
-   progress=FALSE); accu
-accu[17]/accu[12]
-accu/max(accu)#best models as denominator to so the closest ones
-
-#anovaBF IV = Cue - interaction between the Cue and the condition
-accu_cue <-anovaBF(correct ~ Cue*condition  + ID, data = df, whichRandom = "ID",
-   progress=FALSE)
-accu_cue[4]/accu_cue[3]
-lm(RT ~ condition +req_action +OutValence, data=tus)
-
-
-
-#banova!!!!!!!! - not working atm
-# Making sure JAGS is installed
-# It can be downloaded here http://mcmc-jags.sourceforge.net (the size is only 2.3 MB)
-
-BANOVA::BANOVA.run (correct ~ req_action, ~condition*req_action, data=df, model_name = 'Binomial', id = 'ID',
-                        as.integer(16), num_trials = as.integer(20), iter = 100, thin = 5, chains = 2)
-```
 
 #RTs
 
@@ -396,11 +364,10 @@ tus <- tus %>%
 
 ```
        
-       
-       
-
 
 #fit-and-bic equivalent of stepAIC for lmer
+
+     #WAY 1
 ```{r}
 # Function to create all combinations of predictors including interactions up to four variables
 get_combinations <- function(predictors) {
@@ -450,68 +417,58 @@ result <- fit_and_bic(data = tus, response = response_var, predictors = predicto
 print(result)
 ```
 
-
+     
+     #WAY 2
 #comparing between three model. This looks to be the best "model_rt_tn" (model 2 and 3)
 ```{r}
 tus$req_action <- relevel(tus$req_action, ref = "noGo")
 
-model_rt1 <- lmer(log_RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt1) 
+#conditionb.dacc                             1.938e-01  7.744e-02  2.668e+04   2.503 0.012327 *  slower
+#req_actionGo:OutValenceWin                 -3.836e-01  1.080e-01  2.667e+04  -3.550 0.000385 *** faster
+#req_actionGo:conditionb.dacc               -3.129e-01  1.094e-01  2.667e+04  -2.860 0.004236 ** faster
+#OutValenceWin:conditionb.dacc               3.151e-01  1.095e-01  2.667e+04   2.879 0.003990 ** slower
+#OutValenceWin:conditionc.ai                 4.725e-01  1.072e-01  2.667e+04   4.407 1.05e-05 *** much slower
+#req_actionGo:OutValenceWin:conditionc.ai   -9.288e-01  1.517e-01  2.667e+04  -6.122 9.36e-10 *** much faster
+model_rt1 <- lmer(log_RT ~ req_action*OutValence*condition +(1|ID), data  = tus, REML = FALSE) ;summary (model_rt1) 
 
-model_rt2 <- lmer(log_RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt2)#T
+
+
+#conditionb.dacc                                          3.283e-01  1.540e-01  2.667e+04   2.132  0.03304 *  slower
+#conditionc.ai                                            4.166e-01  1.507e-01  2.668e+04   2.765  0.00569 ** even slower
+#trial_number                                            -1.880e-03  5.808e-04  2.667e+04  -3.237  0.00121 ** makes them faster towards the end? as moving on
+#OutValenceWin:req_actionGo                              -5.488e-01  2.155e-01  2.667e+04  -2.546  0.01089 *  GW makes them faster
+#OutValenceWin:conditionc.ai                              6.386e-01  2.137e-01  2.667e+04   2.989  0.00280 ** win much slower in ai
+#req_actionGo:trial_number                                4.109e-03  8.215e-04  2.667e+04   5.002 5.71e-07 ***makes them faster as moving or the opposite onespecially for Go
+#conditionc.ai:trial_number                              -1.890e-03  8.161e-04  2.667e+04  -2.316  0.02059 *  makes them faster as moving for ai 
+#OutValenceWin:req_actionGo:conditionc.ai                -6.062e-01  3.024e-01  2.667e+04  -2.004  0.04503 *  GW for AI much faster
+model_rt2 <- lmer(log_RT ~ OutValence*req_action*condition*trial_number +(1|ID), data  = tus, REML = FALSE) ;summary (model_rt2)
 
 #model_rt_tnsn<- lmer(RT ~ req_action*OutValence*condition*trial_number*session +(1|ID), data  = tus, REML = FALSE) 
 #summary (model_rt_tnsn) # NO
 
-model_rt3 <- lmer(log_RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt3) # good - this one probably
+#conditionb.dacc                             1.924e-01  7.739e-02  2.668e+04   2.486 0.012942 *  
+#trial_number                               -9.997e-04  1.699e-04  2.667e+04  -5.883 4.07e-09 ***
+#OutValenceWin:req_actionGo                 -3.840e-01  1.080e-01  2.667e+04  -3.557 0.000376 ***
+#OutValenceWin:conditionb.dacc               3.144e-01  1.094e-01  2.667e+04   2.874 0.004057 ** 
+#OutValenceWin:conditionc.ai                 4.714e-01  1.072e-01  2.667e+04   4.399 1.09e-05 ***
+#req_actionGo:conditionb.dacc               -3.132e-01  1.093e-01  2.667e+04  -2.865 0.004179 ** 
+#OutValenceWin:req_actionGo:conditionc.ai   -9.284e-01  1.516e-01  2.667e+04  -6.124 9.27e-10 *** GW much faster
+model_rt3 <- lmer(log_RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus, REML = FALSE); summary (model_rt3) # good - this one probably
 
-model_rt4 <- lmer(log_RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt4) #good too
+#better than 3
+model_rt4 <- lmer(log_RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) ;summary (model_rt4) #good too
 
-model_rt5 <- lmer(log_RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt5)#
+#good
+model_rt5 <- lmer(log_RT ~ req_action*OutValence +  condition*trial_number +(1|ID), data  = tus, REML = FALSE) ; summary (model_rt5)#
 
-model_rt6 <- lmer(log_RT ~ Cue*condition + trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt6)#
+#good
+model_rt6 <- lmer(log_RT ~ Cue*condition + trial_number +(1|ID), data  = tus, REML = FALSE) ; summary (model_rt6)#
 
-model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) 
-summary (model_rt7)# main effects
+#good all significant
+model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus, REML = FALSE) ;summary (model_rt7)# main effects
 
-                                            #  !!!AI affectd by general feedback, not correct.
-#followup_beha
-model_rt8<-lmer(log_RT ~ feedback * followup_beha * condition  +(1|ID) ,
-                 data  = tus, REML = FALSE ); summary(model_rt8)
+model_rt8<- lmer(log_RT ~ Cue*condition* trial_number +(1|ID), data  = tus, REML = FALSE) ; summary (model_rt8)#not much
 
-model_rt9<-lmer(log_RT ~ followup_beha + condition  +(1|ID) ,
-                 data  = tus,  REML = FALSE); summary(model_rt9)
-
-model_rt10<-lmer(log_RT ~ followup_beha * condition  +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt10)
-
-model_rt11<-lmer(log_RT ~ feedback * condition  +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt11)
-
-#followup_response
-model_rt12<-lmer(log_RT ~ followup_response * condition  +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt12)
-   
-
-model_rt13<-lmer(log_RT ~ followup_response * condition * correct_feedback +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt13)
-
-model_rt14<-lmer(log_RT ~  condition * correct_feedback +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt14)
-
-model_rt15<-lmer(log_RT ~  condition + correct_feedback + followup_response +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt15)
-
-model_rt16<-lmer(log_RT ~  condition * followup_response +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt16)
-   
-model_rt17<-lmer(log_RT ~  correct_feedback +(1|ID) ,
-                 data  = tus, REML = FALSE); summary(model_rt17)
 
 # Perform Likelihood Ratio Test
 lr_test <- anova(model_rt1, model_rt2, model_rt3, model_rt4, model_rt5, model_rt6, model_rt7)
@@ -519,13 +476,70 @@ print(lr_test)
 p_value <- lr_test$Pr[2];p_value
 ```
 
+
+```{r}
+#followup_beha
+
+#well interesting
+model_rt8<-lmer(log_RT ~  followup_beha * condition*feedback*Cue  +(1|ID) ,
+                 data  = tus, REML = FALSE ); summary(model_rt8)
+
+#conditionb.dacc                           -2.894e-01  1.414e-01  2.636e+04  -2.047  0.04072 *  
+#conditionb.dacc:CueNGL                     4.946e-01  1.582e-01  2.636e+04   3.126  0.00178 ** 
+#followup_behapress:conditionb.dacc:CueNGL -6.889e-01  2.464e-01  2.635e+04  -2.796  0.00518 ** 
+#followup_behapress:conditionc.ai:CueNGL   -7.509e-01  2.463e-01  2.633e+04  -3.048  0.00230 **
+model_rt9<-lmer(log_RT ~ followup_beha * condition*Cue  +(1|ID) ,
+               data  = tus, REML = FALSE); summary(model_rt9)
+
+
+#model10<-glmer(followup_beha_binary~ condition*feedback*RT +(1|ID) ,
+               #  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model10)
+```
+
+
+
+#think about it before implementing....
+```{r}
+#followup_correctfeed
+model_rt12<-lmer(log_RT ~ followup_correctfeed * condition  +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt12)
+   
+
+model_rt13<-lmer(log_RT ~ followup_correctfeed * condition * correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt13)
+
+model_rt14<-lmer(log_RT ~  condition * correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt14)
+
+model_rt15<-lmer(log_RT ~  condition + correct_feedback + followup_correctfeed +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt15)
+
+model_rt16<-lmer(log_RT ~  condition * followup_correctfeed +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt16)
+   
+model_rt17<-lmer(log_RT ~  correct_feedback +(1|ID) ,
+                 data  = tus, REML = FALSE); summary(model_rt17)
+```
+
+  #reward RTs
+```{r}
+#rewardno_reward:conditionb.dacc   3.082e-01  1.427e-01  2.668e+04   2.159  0.03083 *  RT faster for dacc after expecting reward that did not get
+modelrt18 <- lmer(log_RT ~ reward* condition  + (1|ID), 
+                   data  = tus, REML = FALSE); summary(modelrt18)
+
+
+# nothing per condition, they were all affected equally for actual reward
+modelrt19 <- lmer(log_RT ~ reward* condition  + (1|ID), 
+                   data  = tus_subset, REML = FALSE); summary(modelrt19)
+``````
+
 #anovaBF for RTs
 predictors with + :  effects are assumed to be additive and independent of each other.
 predictors with * :  possibility the effect of one predictor on the outcome variable may vary depending on the level of another predictor -aptures the synergistic or conditional effects of predictors 
 ```{r}
 #run anovaBF IV = req_action and condition
 # Calculate Bayes factors with specified number of iterations
-rt_1 <- anovaBF( formula = log_RT ~ condition*Cue + ID, data = df,  whichRandom = "ID", progress = FALSE, iterations = 3000); summary (rt_1) # refers to the number of Monte Carlo samples used for approximation when computing Bayes factors. It specifies the number of samples used to estimate the marginal likelihoods of the models being compared.each iteration corresponds to one random sample drawn from the posterior distribution. By increasing the number of iterations, you obtain a more accurate approximation of the integral, leading to more precise estimates of the marginal likelihoods and, consequently, more reliable Bayes factors for model comparison. "Iterations" refers to the number of times the computer repeats a specific calculation to make sure it's accurate.unning a simulation or experiment. By doing it multiple times (more iterations), we can get a more reliable answer.
+rt_1 <- anovaBF( formula = log_RT ~ condition*Cue + ID, data = tus,  whichRandom = "ID", progress = FALSE, iterations = 3000); summary (rt_1) # refers to the number of Monte Carlo samples used for approximation when computing Bayes factors. It specifies the number of samples used to estimate the marginal likelihoods of the models being compared.each iteration corresponds to one random sample drawn from the posterior distribution. By increasing the number of iterations, you obtain a more accurate approximation of the integral, leading to more precise estimates of the marginal likelihoods and, consequently, more reliable Bayes factors for model comparison. "Iterations" refers to the number of times the computer repeats a specific calculation to make sure it's accurate.unning a simulation or experiment. By doing it multiple times (more iterations), we can get a more reliable answer.
 rt_1_inter<-rt_1[4]/rt_1[3]; summary(rt_1_inter) #2.299506 ±2.95% #large variation that's why I used iterations above
 
 
@@ -587,21 +601,30 @@ report_parameters(model_acc)
 
 
 #lspline #knots #learning curve
-Piecewise Linear Regression (Learning and Exploitation Phases)
+#Piecewise Linear Regression (Learning and Exploitation Phases)
 
 
-outcome:
-1. poly1 A linear component captures linear trends or patterns in the data. For example, if there is a constant increase or decrease in RT as trial_number increases, the linear component would capture this trend.
-2. poly2 A quadratic component captures nonlinear trends or patterns in the data. For example, if RT initially decreases and then increases (or vice versa) as trial_number increases, the quadratic component would capture this curvature.
+#outcome:
+#1. poly1 A linear component captures linear trends or patterns in the data. For example, if there is a constant increase or decrease in RT as trial_number increases, the linear component would capture this trend.
+#2. poly2 A quadratic component captures nonlinear trends or patterns in the data. For example, if RT initially decreases and then increases (or vice versa) as trial_number increases, the quadratic component would #capture this curvature.
 
 ```{r}
 # Identify the trial number where the learning curve starts to plateau
-knot <- 22
+knot <-16
 
 # Subset data for before and after the plateau
 learning_phase <- tus[tus$trial_number <= knot, ]
 exploitation_phase <- tus[tus$trial_number > knot, ]
+
+
+#same
+plateau_trial <- 16
+
+#Subset data for before and after the plateau
+before_plateau <- tus[tus$trial_number <= plateau_trial, ]
+after_plateau <- tus[tus$trial_number > plateau_trial, ]
 ```
+
 
 
 
@@ -647,9 +670,45 @@ summary(lmer_exploitation)
 #interaction RT*condition & correct*condition
 
 
-correct*condition = significant even in exploitation phase
+#correct*condition = significant even in exploitation phase
 
 ```{r}
+#Accuracy
+
+# Remove rows with missing values in correct or condition variables for before_plateau
+before_plateau <- before_plateau[complete.cases(before_plateau$correct, before_plateau$condition), ]
+# Remove rows with missing values in correct or condition variables for after_plateau
+after_plateau <- after_plateau[complete.cases(after_plateau$correct, after_plateau$condition), ]
+
+
+# Create interaction terms between correct and condition for before_plateau
+before_plateau$correct_condition <- interaction(before_plateau$correct, before_plateau$condition, drop = TRUE)
+# Create interaction terms between correct and condition for after_plateau
+after_plateau$correct_condition <- interaction(after_plateau$correct, after_plateau$condition, drop = TRUE)
+
+
+
+# Fit GLMM for correct before plateau
+#    -poly(correct_condition, degree = 2)1: represents the effect of the interaction between correctness and condition on the log-odds of the response 
+#when correct_condition is in its linear term. Specifically, it represents the change in log-odds of correctness associated with a one-unit change in the linear term of the correct_condition interaction.
+#    -poly(correct_condition, degree = 2)2: represents the effect of the interaction between correctness and condition on the log-odds of the response when correct_condition is in its quadratic term.
+#It captures any curvature or nonlinearity in the relationship between correctness and condition.
+glmer_before_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = before_plateau, family = binomial) #SIGNIFICANT
+
+
+
+# Fit GLMM for correct after plateau
+    # - poly(correct_condition, degree = 2)1  89.5137     2.6943  33.223   <2e-16 ***
+    # - poly(correct_condition, degree = 2)2  -0.1989     2.5786  -0.077    0.939
+glmer_after_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = after_plateau, family = binomial) #SIGNIFICANT the linear not the quadratic!!!!
+
+#
+# Print summaries of the models for correct
+summary(glmer_before_correct)
+summary(glmer_after_correct)
+
+
+
 #RT
 
 # Create interaction terms between RT and condition for before_plateau
@@ -659,36 +718,15 @@ before_plateau$RT_condition <- interaction(before_plateau$RT, before_plateau$con
 after_plateau$RT_condition <- interaction(after_plateau$RT, after_plateau$condition, drop = TRUE)
 
 #Fit GLMM for RT before plateau
-glmer_before_RT <- glmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = before_plateau, family = gaussian)
+lmer_before_RT <- lmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = before_plateau) #both poly's significant
 
 # Fit GLMM for RT after plateau
-glmer_after_RT <- glmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = after_plateau, family = gaussian)
+lmer_after_RT <- lmer(RT ~ poly(RT_condition, degree = 2) + (1 | ID), data = after_plateau)  #both poly's significant
 
 
 # Print summaries of the models for RT
-summary(glmer_before_RT)
-summary(glmer_after_RT)
-
-
-#Accuracy
-# Create interaction terms between correct and condition for before_plateau
-before_plateau$correct_condition <- interaction(before_plateau$correct, before_plateau$condition, drop = TRUE)
-
-# Create interaction terms between correct and condition for after_plateau
-after_plateau$correct_condition <- interaction(after_plateau$correct, after_plateau$condition, drop = TRUE)
-
-# Fit GLMM for correct before plateau
-glmer_before_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = before_plateau, family = binomial) #SIGNIFICANT
-
-# Fit GLMM for correct after plateau
-glmer_after_correct <- glmer(correct ~ poly(correct_condition, degree = 2) + (1 | ID), data = after_plateau, family = binomial) #SIGNIFICANT!!!!
-
-#
-# Print summaries of the models for correct
-summary(glmer_before_correct)
-summary(glmer_after_correct)
-
-
+summary(lmer_before_RT)
+summary(lmer_after_RT)
 
 ```
 
@@ -704,7 +742,7 @@ subsetting before and after, when plateau
 
 ```{r}
 # Identify the trial number where the learning curve starts to plateau
-plateau_trial <- 20
+plateau_trial <- 16
 
 
 # Subset data for before and after the plateau
@@ -731,7 +769,7 @@ glmer_after_correct <- glmer(correct ~  condition + (1 | ID), family = binomial,
 summary(lmer_before_RT)
 summary(glmer_before_correct)
 summary(lmer_after_RT)
-summary(glmer_after_correct)
+summary(glmer_after_correct) # conditions ai and dacc are significant
 
 
 ```
@@ -743,22 +781,35 @@ CONDITION*CUE
 ```{r}
 
 # Fit linear mixed-effects regression model for RT before plateau
-lmer_before_RT_cond*Cue <- lmer(RT ~  condition*Cue + (1 | ID), data = before_plateau)
+lmer_before_RT_condbyCue <- lmer(RT ~  condition*Cue + (1 | ID), data = before_plateau)
 
 # Fit generalized linear mixed-effects regression model for correct before plateau
-glmer_before_correct_cond*Cue <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = before_plateau)
+glmer_before_correct_condbyCue <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = before_plateau)
 
 # Fit linear mixed-effects regression model for RT after plateau
-lmer_after_RT_cond*Cue <- lmer(RT ~   condition*Cue  + (1 | ID), data = after_plateau)
+lmer_after_RT_condbyCue <- lmer(RT ~   condition*Cue  + (1 | ID), data = after_plateau)
 
 # Fit generalized linear mixed-effects regression model for correct after plateau
-glmer_after_correct_cond*Cue  <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = after_plateau) # dacc *** ai *
+glmer_after_correct_condbyCue  <- glmer(correct ~   condition*Cue  + (1 | ID), family = binomial, data = after_plateau) # dacc *** ai *
 
 # Print summaries of the models
-summary(lmer_before_RT_cond*Cue)
-summary(glmer_before_correct_cond*Cue)
-summary(lmer_after_RT_cond*Cue)
-summary(glmer_after_correct_cond*Cue)
+summary(lmer_before_RT_condbyCue) #CueNGL   -234.512     41.209 1820.764  -5.691 1.47e-08 ***
+summary(glmer_before_correct_condbyCue) #CueGW 0.71966    0.27019   2.663  0.00773 ** & CueNGW-0.78780    0.24365  -3.233  0.00122 ** 
+
+
+#conditionc.ai:CueGW      -53.7063    12.8317 24810.1398  -4.185 2.86e-05 *** 
+#conditionb.dacc:CueNGL    41.9872    13.0887 24810.1420   3.208  0.00134 **
+#conditionb.dacc:CueNGW    58.3265    13.0801 24810.1359   4.459 8.26e-06 ***
+#onditionc.ai:CueNGW      40.9987    12.8108 24810.1536   3.200  0.00137 ** 
+summary(lmer_after_RT_condbyCue)
+
+#conditionb.dacc        -0.18687    0.08155  -2.291  0.02194 *  
+#conditionc.ai           0.21945    0.08333   2.634  0.00845 ** 
+#conditionc.ai:CueGW    -0.67294    0.12500  -5.384 7.30e-08 ***
+#conditionc.ai:CueNGL   -0.36808    0.12511  -2.942  0.00326 ** 
+#conditionb.dacc:CueNGW -0.30522    0.10920  -2.795  0.00519 ** 
+#conditionc.ai:CueNGW   -0.65923    0.10913  -6.041 1.53e-09 ***
+summary(glmer_after_correct_condbyCue)
 
 ```
 
@@ -780,10 +831,11 @@ lmer_after_RT_con_val <- lmer(RT ~  condition*OutValence  + (1 | ID), data = aft
 glmer_after_correct_con_val  <- glmer(correct ~   condition*OutValence + (1 | ID), family = binomial, data = after_plateau) 
 
 # Print summaries of the models
-summary(lmer_before_RT_con_val)
+summary(lmer_before_RT_con_val) #OutValenceWin 113.771     30.228 1824.424   3.764 0.000173 ***
 summary(glmer_before_correct_con_val)
-summary(lmer_after_RT_con_val)
-summary(glmer_after_correct_con_val)
+summary(lmer_after_RT_con_val)#OutValenceWin 47.000      7.660 24815.775   6.136 8.61e-10 ***
+summary(glmer_after_correct_con_val)#conditionc.ai:OutValenceWin   -0.47713    0.08272  -5.768 8.02e-09 ***
+
 ```
 
 
@@ -821,7 +873,7 @@ summary(glmer_after_correct_con_block)
 ```
 
 
-OutValence * req_action * condition (not much sense but significant results if you change know according to diagram)
+OutValence * req_action * condition (not much sense but significant results if you change knot according to diagram)
 -when Go as reference more significant results
 ```{r}
 
