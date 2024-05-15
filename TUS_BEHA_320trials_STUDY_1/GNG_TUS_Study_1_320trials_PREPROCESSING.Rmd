@@ -366,6 +366,15 @@ tus$reward[tus$OutValence == "Avoid" & tus$feedback == "lose"] <- "punishment"
 
 ```
           
+          #behaviour following reward
+```{r}
+# Mutate column 'followup_beha_reward' showing response after reward based on groupings
+tus <- tus %>%
+  group_by(ID, condition, Cue, req_action, reward) %>%
+  mutate(followup_beha_reward = lead(response, order_by = trial_number + 1, default = NA))
+
+```
+          
 
 #Exlusion 3SDs still 30 participants
 ```{r}

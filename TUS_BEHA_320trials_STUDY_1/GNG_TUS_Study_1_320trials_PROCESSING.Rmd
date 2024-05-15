@@ -1447,3 +1447,56 @@ Cai and colleagues (2014): (1) rAI and salience networks may contribute to inhib
 - d) RTs followup after positive or negative feedback maybe, found for WIN only?  GW, NGW, GAL, NGL ? As, GW and NGW more salient that is why AI significant and GW more presses for AI? 
 -	E) follow up after positive and negative feedback only	
 -	
+
+
+#REWARD
+```{r}
+
+#create column to show the followup_beha after each levels of feedback
+
+tus_cl <- tus[!is.na(tus$Cue), ]
+tus_cl <- tus_cl[!is.na(tus_cl$reward), ]
+tus_cl <- tus_cl[!is.na(tus_cl$followup_beha_reward), ]
+
+# Plot for Cue
+# frequency of each category of the Cue variable 
+cue_reward <- ggplot(tus_cl, aes(x = reward, fill = Cue)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ response*condition) +
+  labs(x = "Reward", y = "Proportion of Choices", fill = "Cue") +
+  theme_minimal(); cue_reward
+
+
+#grouped_barplot
+grouped_barplot <- ggplot(tus_cl, aes(x = reward, fill = followup_beha_reward)) +
+  geom_bar(position = "dodge", stat = "count") +
+#  stat_summary(fun.data = mean_cl_normal, aes(y = ..count..), geom = "errorbarh", aes(group = condition), color = "black") +
+  facet_wrap(~ condition, strip.position = "bottom", scales = "free_x") +
+  labs(x = "Reward", y = "Count", fill = "Follow-up Behavior") +
+  theme_minimal();grouped_barplot
+
+
+
+## Calculate proportions for each group
+proportions <- tus_cl %>%
+  group_by(condition, reward, Cue, followup_beha_reward) %>%
+  summarise(count = n()) %>%
+  mutate(proportion = count / sum(count))
+
+# Pivot the data for heatmap
+heatmap_data <- proportions %>%
+  pivot_wider(names_from = followup_beha_reward, values_from = proportion, values_fill = 0)
+
+# Create heatmap
+heatmap_plot <- ggplot(heatmap_data, aes(x = Cue, y = reward, fill = press)) +
+  geom_tile() +
+  facet_grid(~ condition) +
+  labs(x = "Cue", y = "Reward", fill = "Proportion") +
+  scale_fill_gradient(low = "pink", high = "red") +
+  theme_minimal()
+
+heatmap_plot
+
+
+```
+

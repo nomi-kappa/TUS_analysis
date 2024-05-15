@@ -323,6 +323,24 @@ model28 <- glmer(correct ~ reward* condition  + (1|ID),
 #is singular...not good
 model29 <- glmer(correct ~ reward* condition  + (1|ID), 
                    data  = tus_subset, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model29)
+
+#follow_up_beha_reward
+#conditionb.dacc                           -0.18329    0.05854  -3.131  0.00174 ** 
+#conditionc.ai                             -0.13932    0.05733  -2.430  0.01509 *  
+model30 <- glmer(correct ~ followup_beha_reward* condition  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model30)
+
+# Convert followup_beha_reward to factor
+tus$followup_beha_reward <- factor(tus$followup_beha_reward)
+#conditionc.ai:CueGW    -0.58632    0.11753  -4.989 6.08e-07 *** ai press more after GW
+#conditionb.dacc:CueNGL  0.36209    0.11619   3.116  0.00183 ** dacc press more after NGL
+#conditionb.dacc:CueNGW  0.51984    0.10125   5.134 2.84e-07 *** dacc press more after NGW
+#conditionc.ai:CueNGW    0.32475    0.10131   3.206  0.00135 ** ai press more after NGW
+model31 <- glmer(followup_beha_reward~condition*Cue  + (1|ID), 
+                   data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model31)
+
+
+
 ```
      
      
@@ -531,6 +549,10 @@ modelrt18 <- lmer(log_RT ~ reward* condition  + (1|ID),
 # nothing per condition, they were all affected equally for actual reward
 modelrt19 <- lmer(log_RT ~ reward* condition  + (1|ID), 
                    data  = tus_subset, REML = FALSE); summary(modelrt19)
+
+
+modelrt20 <- lmer(log_RT ~ followup_beha_reward* condition*Cue  + (1|ID), 
+                   data  = tus); summary(modelrt20)
 ``````
 
 #anovaBF for RTs
