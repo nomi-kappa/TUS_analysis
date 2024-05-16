@@ -141,6 +141,9 @@ model4.c <- glmer(correct ~ condition * trial_number * OutValence +(1|ID) ,
 #not sure, but not bad
 model5 <- glmer(correct ~condition*trial_number + req_action + condition*req_action + OutValence + condition*OutValence + req_action*OutValence +(1|ID) , data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model5)#ignore most probably
 
+
+## Convert Cue to factor and relevel it
+tus$Cue <- relevel(factor(tus$Cue), ref = "GAL")
 # all significant
 model6 <- glmer(correct ~ Cue + condition +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model6) 
@@ -152,6 +155,7 @@ model7 <- glmer(correct ~ Cue + condition + OutValence + trial_number +(1|ID) ,
 #this is good
 model8 <- glmer(correct ~ Cue * condition + trial_number +(1|ID) , 
                  data  = tus, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model8) 
+
 
 #failed to converge but gives info
 model9 <- glmer(correct ~ Cue * condition * trial_number +(1|ID) , 

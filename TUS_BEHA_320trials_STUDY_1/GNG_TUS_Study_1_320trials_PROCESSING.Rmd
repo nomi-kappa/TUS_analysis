@@ -791,19 +791,22 @@ mean(c$n) #avg of 294 correct responses-->
    
    
 #proportion of RT response per type of Stimulation (sham, ai, dACC) 
+
+NEED TO EXCLUDE THE NO_PRESSES AS RT = 0.0001 AND LOWERS THE RESPONSES DOWN (FASTER)
 ```{r}
 #trial_by_trial behaviour RT 
-
-
 
 #for all
 
 # compute proportion of go responses for each participant (first sum per ID, then feed that into general summary)
-MeanRTpersub <- tus %>% group_by(ID, Cue, req_action, OutValence, block, TrialCount) %>% summarise(meanRT = mean(RT))
+MeanRTpersub <- tus %>%
+  filter(response != "no_press") %>%
+  group_by(ID, Cue, req_action, OutValence, block, TrialCount, response) %>%
+  summarise(meanRT = mean(RT))
 
 MeanRT <- MeanRTpersub %>% group_by(Cue, req_action, OutValence, block,  TrialCount) %>% summarise(meanRT = mean(meanRT))
 
-#plot of p(Go) responses 
+#plot of RT responses over time 
 ggplot(MeanRT) + 
   geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
@@ -816,7 +819,8 @@ ggplot(MeanRT) +
   facet_grid(~block)+
   theme_bw() +
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_RT_perBlock") +
-  xlim(0, 20)
+  xlim(0, 20) +
+  ylim(500, 900)
 
 
 
@@ -825,7 +829,8 @@ ggplot(MeanRT) +
 #AI - 
 ai <- subset(tus, condition == "c.ai")
 
-MeanRTpesppersub_ai <- ai %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(RT))
+MeanRTpesppersub_ai <- ai %>%
+  filter(response != "no_press") %>% group_by(ID, Cue, req_action, OutValence, TrialCount, response) %>% summarise(meanRT = mean(RT))
 
 MeanRTResp.ai <- MeanRTpesppersub_ai %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(meanRT))
 
@@ -833,9 +838,11 @@ MeanRTResp.ai <- MeanRTpesppersub_ai %>% group_by(Cue, req_action, OutValence, T
 ai_avg<- ggplot(MeanRTResp.ai) + 
   geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
+    #facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for AI_RT") +
-   xlim(NA, 20)+
- theme_bw() 
+   xlim(1, 20)+
+ theme_bw() +
+  ylim(400, 1000)
 
 
     #dACC - 
@@ -843,15 +850,17 @@ dacc <- subset(tus, condition == "b.dacc")
 #dacc <- na.omit(dacc)
 
 # compute proportion of go responses for each participant
-MeanRTpesppersub_dacc <- dacc %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(RT))
+MeanRTpesppersub_dacc <- dacc %>% filter(response != "no_press") %>% group_by(ID, Cue, req_action, OutValence, TrialCount, response)  %>% summarise(meanRT = mean(RT))
 MeanRTpersp.dacc <- MeanRTpesppersub_dacc %>% group_by(Cue, req_action, OutValence, TrialCount ) %>% summarise(meanRT = mean(meanRT))
 
 #plot
 dacc_avg<- ggplot(MeanRTpersp.dacc) + 
   geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
+    #  facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for dACC_RT")+
-   xlim(NA, 20)+ theme_bw() 
+   xlim(1, 20)+ theme_bw()  +
+  ylim(400, 1000)
 
 
 
@@ -859,7 +868,7 @@ dacc_avg<- ggplot(MeanRTpersp.dacc) +
 sham <- subset(tus, condition == "a.sham")
 
 # compute proportion of go responses for each participant
-MeanRTpersub_sham <- sham %>% group_by(ID, Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(RT))
+MeanRTpersub_sham <- sham %>%  filter(response != "no_press") %>% group_by(ID, Cue, req_action, OutValence, TrialCount, response) %>% summarise(meanRT = mean(RT))
 
 MeanRTResp.sham <- MeanRTpersub_sham %>% group_by(Cue, req_action, OutValence, TrialCount) %>% summarise(meanRT = mean(meanRT))
 
@@ -867,9 +876,11 @@ MeanRTResp.sham <- MeanRTpersub_sham %>% group_by(Cue, req_action, OutValence, T
 sham_avg<- ggplot(MeanRTResp.sham) + 
   geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
+     # facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for sham_RT") +
-   xlim(NA, 20)+
- theme_bw() 
+   xlim(1, 20)+
+ theme_bw()  +
+  ylim(400, 1000)
 
 #roll avg per CONDITION
 avg_rt <- ggarrange(sham_avg, ai_avg, dacc_avg,
@@ -890,7 +901,7 @@ avg_rt <- ggarrange(sham_avg, ai_avg, dacc_avg,
 GW <- subset(tus, Cue == "GW")
 
 # compute proportion of go responses for each participant
-MeanRTpersub_gw <- GW %>% group_by(ID, req_action, OutValence, TrialCount, condition) %>% summarise(meanRT = mean(RT))
+MeanRTpersub_gw <- GW %>%   filter(response != "no_press") %>%group_by(ID, req_action, OutValence, TrialCount, condition, response) %>% summarise(meanRT = mean(RT))
 MeanRTpersub_gw <- na.omit(MeanRTpersub_gw)
 MeanRTResp_gw <- MeanRTpersub_gw %>% group_by(req_action, OutValence, TrialCount, condition) %>% summarise(meanRT = mean(meanRT))
 
@@ -899,15 +910,15 @@ GW_rt<-ggplot(data=MeanRTResp_gw, mapping =aes(TrialCount, meanRT, colour=condit
   geom_smooth(linetype = "longdash", alpha = 0.3) +
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
-   xlim(NA, 20)+
-  ylim(0, 650)+
+   xlim(1, 20)+
+  ylim(NA, 900)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GW_RT") +theme_bw() 
 
 #GAL
 GAL <- subset(tus, Cue == "GAL")
 
 # compute proportion of go responses for each participant
-MeanRTpersub_gal <- GAL %>% group_by(ID, TrialCount, condition) %>% summarise(meanRT = mean(RT))
+MeanRTpersub_gal <- GAL %>%  filter(response != "no_press") %>%group_by(ID, TrialCount, condition) %>% summarise(meanRT = mean(RT))
 MeanRTpersub_gal <- na.omit(MeanRTpersub_gal)
 MeanRTResp_gal <- MeanRTpersub_gal %>% group_by(TrialCount, condition) %>% summarise(meanRT = mean(meanRT))
 
@@ -917,14 +928,14 @@ GAL_rt<-ggplot(data=MeanRTResp_gal, mapping =aes(TrialCount, meanRT, colour=cond
   scale_colour_brewer(palette = "Set1") +
    #facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(0, 650)+
+     ylim(400, 900)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GAL_RT") +theme_bw() 
 
 #NGW
 NGW <- subset(tus, Cue == "NGW")
 
 # compute proportion of go responses for each participant
-MeanRTpersub_NGW <- NGW %>% group_by(ID, TrialCount, condition) %>% summarise(meanRT = mean(RT))
+MeanRTpersub_NGW <- NGW %>% filter(response != "no_press") %>%group_by(ID, TrialCount, condition, response) %>% summarise(meanRT = mean(RT))
 MeanRTpersub_NGW <- na.omit(MeanRTpersub_NGW)
 MeanRTResp_NGW <- MeanRTpersub_NGW %>% group_by(TrialCount, condition) %>% summarise(meanRT = mean(meanRT))
 
@@ -934,7 +945,7 @@ NGW_rt<-ggplot(MeanRTResp_NGW) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-     ylim(0,650)+
+     ylim(400,900)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGW_RT") +theme_bw() 
 
 
@@ -943,7 +954,7 @@ NGW_rt<-ggplot(MeanRTResp_NGW) +
 NGL <- subset(tus, Cue == "NGL")
 
 # compute proportion of go responses for each participant
-MeanRTpersub_NGL <- NGL %>% group_by(ID, TrialCount, condition) %>% summarise(meanRT = mean(RT))
+MeanRTpersub_NGL <- NGL %>% filter(response != "no_press") %>%group_by(ID, TrialCount, condition, response) %>% summarise(meanRT = mean(RT))
 MeanRTpersub_NGL <- na.omit(MeanRTpersub_NGL)
 MeanRTResp_NGL <- MeanRTpersub_NGL %>% group_by(TrialCount, condition) %>% summarise(meanRT = mean(meanRT))
 
@@ -953,7 +964,7 @@ NGL_rt<-ggplot(MeanRTResp_NGL) +
   scale_colour_brewer(palette = "Set1") +
   # facet_grid(~condition)+
    xlim(NA, 20)+
-      coord_cartesian(ylim = c(0, 650))+
+      coord_cartesian(ylim = c(400, 900))+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGL_RT") + theme_bw() 
 
 
