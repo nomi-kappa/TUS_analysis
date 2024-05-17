@@ -237,7 +237,7 @@ tus <- tus %>%
   mutate(followup_beha = lead(response, order_by = trial_number, default = NA))
 
 # Count the number of occurrences for each level of the Cue column, to check is balanced
- cue_counts <- table(tus$Cue);print(cue_counts); View(tus)
+ cue_counts <- table(tus$Cue);print(cue_counts)
  
  
  
@@ -376,7 +376,7 @@ tus <- tus %>%
 ```
           
 
-#Exlusion 3SDs still 30 participants
+#Exlusion 3SDs still 31 participants
 ```{r}
 # Calculate mean accuracy per participant
 mean_accuracy_per_participant <- tus %>%
@@ -400,7 +400,7 @@ mean_accuracy_per_participant <- mean_accuracy_per_participant %>%
   mutate(excluded = ifelse(ID %in% excluded_participants$ID, "Excluded", "Included"))
 
 # Merge exclusion information back into tus dataset
-tus <- left_join(tus, mean_accuracy_per_participant, by = "ID")
+tus_included <- left_join(tus, mean_accuracy_per_participant, by = "ID")
 
 # Print number of participants before and after exclusion
 num_participants_before <- nrow(mean_accuracy_per_participant)
@@ -409,9 +409,6 @@ num_participants_after <- num_participants_before - nrow(excluded_participants)
 cat("Number of participants before exclusion:", num_participants_before, "\n")
 cat("Number of participants after exclusion:", num_participants_after, "\n")
 
-# View the updated tus dataset
-View(tus)
-
 
 ```
 
@@ -419,43 +416,30 @@ View(tus)
 ```{r}
 # Define function to filter data within ±3 standard deviations
 filter_within_3sds <- function(x) {
-  mean_x <- mean(x)
-  sd_x <- sd(x)
+  mean_x <- mean(x, na.rm = TRUE)
+  sd_x <- sd(x, na.rm = TRUE)
   lower_bound <- mean_x - 3 * sd_x
   upper_bound <- mean_x + 3 * sd_x
   return(x >= lower_bound & x <= upper_bound)
 }
 
 # Filter data within ±3 standard deviations per ID and per condition
-filtered_tus <- tus %>%
+included_tus <- tus %>%
   group_by(ID, condition) %>%
-  filter(filter_within_3sds(RT))
-
-# Identify excluded participants per condition
-excluded_participants_per_condition <- filtered_tus %>%
-  group_by(ID, condition) %>%
-  summarise(excluded = ifelse(n() == 0, "Excluded", "Included"))
-
-# Merge exclusion information back into the original dataset
-tus <- left_join(tus, excluded_participants_per_condition, by = c("ID", "condition"))
+  filter(filter_within_3sds(RT)) %>%
+  ungroup()
 
 # Print number of participants before and after exclusion per condition
 num_participants_before_per_condition <- tus %>%
   distinct(ID, condition) %>%
-  summarise(num_participants = n()) %>%
-  nrow()
+  summarise(num_participants = n())
 
-num_participants_after_per_condition <- excluded_participants_per_condition %>%
-  filter(excluded == "Included") %>%
+num_participants_after_per_condition <- included_tus %>%
   distinct(ID, condition) %>%
-  summarise(num_participants = n()) %>%
-  nrow()
+  summarise(num_participants = n())
 
-cat("Number of participants before exclusion per condition:", num_participants_before_per_condition, "\n")
-cat("Number of participants after exclusion per condition:", num_participants_after_per_condition, "\n")
-
-#pr
-
+cat("Number of participants before exclusion per condition:", num_participants_before_per_condition$num_participants, "\n")
+cat("Number of participants after exclusion per condition:", num_participants_after_per_condition$num_participants, "\n")
 
 # Print conditions per ID before exclusion
 conditions_per_ID_before <- tus %>%
@@ -463,35 +447,39 @@ conditions_per_ID_before <- tus %>%
   distinct(ID, condition) %>%
   arrange(ID)  # Sort by ID for clarity
 
-print("Conditions per ID before exclusion:")
+cat("Conditions per ID before exclusion:\n")
 print(conditions_per_ID_before)
 
 # Print conditions per ID after exclusion
-conditions_per_ID_after <- filtered_tus %>%
+conditions_per_ID_after <- included_tus %>%
   distinct(ID, condition) %>%
   arrange(ID)  # Sort by ID for clarity
 
-print("Conditions per ID after exclusion:")
+cat("Conditions per ID after exclusion:\n")
 print(conditions_per_ID_after)
 
 # Count conditions per ID before exclusion
 conditions_count_before <- tus %>%
   filter(!is.na(correct)) %>%
   group_by(ID) %>%
-  summarise(num_conditions = n_distinct(condition)) %>%
+  summarise(num_conditions = n_distinct(condition), .groups = 'drop') %>%
   arrange(ID)  # Sort by ID for clarity
 
-print("Conditions count per ID before exclusion:")
+cat("Conditions count per ID before exclusion:\n")
 View(conditions_count_before)
 
 # Count conditions per ID after exclusion
-conditions_count_after <- filtered_tus %>%
+conditions_count_after <- included_tus %>%
   group_by(ID) %>%
-  summarise(num_conditions = n_distinct(condition)) %>%
+  summarise(num_conditions = n_distinct(condition), .groups = 'drop') %>%
   arrange(ID)  # Sort by ID for clarity
 
-print("Conditions count per ID after exclusion:")
+cat("Conditions count per ID after exclusion:\n")
 View(conditions_count_after)
+
+# View the new dataset with only included participants
+View(included_tus)
+
 
 
 ```
@@ -499,10 +487,26 @@ View(conditions_count_after)
 #deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI
 ```{r}
 # Exclude specified rows
-tus_excluded <- tus %>%
+tus_included <- tus_included %>%
   filter(!(block == 4 & ID == "JAKA0154" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SSHW0093" & condition == "b.dacc")) %>%
-  filter(!(block == 4 & ID == "SINB0180" & condition == "c.ai"))
+  filter(!(block == 4 & ID == "SINB0180" & condition == "c.ai"))%>%
+  filter(!(block == 4 & ID == "SKKY0189" & condition == "b.dacc")) %>%
+  filter(!(block == 4 & ID == "SKKY0189" & condition == "c.ai"))
+
+```
+
+```{r}
+
+# Create the table
+tus_table <- table(tus$ID, tus$stim_ID, tus$condition)
+
+# Print all matrices
+for (cond in dimnames(tus_table)[[3]]) {
+  cat("Condition:", cond, "\n")
+  print(tus_table[, , cond])
+  cat("\n")  # Add a newline for better readability
+}
 
 
 ```
@@ -511,8 +515,7 @@ tus_excluded <- tus %>%
  ##write.csv
 ```{r}
 write.csv(tus, "GNG_TUS_S1.csv")
-write.csv(tus, "GNG_tus_excluded_S1.csv")
-
+write.csv(included_tus, "GNG_tus_included_S1.csv")
 ```
 
 

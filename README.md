@@ -21,7 +21,7 @@ YOU WILL NEED:
 
 - EITHER 
 the three files for this study 
-1. GNG_TUS_Study_1_320trials_PREPROCESSING- where "GNG_TUS_S1.csv file" is generated, 
+1. GNG_TUS_Study_1_320trials_PREPROCESSING- where "GNG_TUS_S1.csv file" and the "GNG_tus_included_S1.csv are generated (the 2nd excludes some blocks due to technical problems), 
 2. GNG_TUS_Study_1_320trials_PROCESSING and 
 3. GNG_TUS_Study_1_320trials_ANALYSIS 
 
