@@ -9,7 +9,7 @@ output: html_document
 ```{r setup, include=FALSE}
 library(readr)
 tus <- read_csv("GNG_TUS_S1.csv")
-View(tus)
+tus_excluded<- read_csv("GNG_tus_excluded_S1.csv")
 ```
 
 #Load libraries
@@ -439,26 +439,6 @@ yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,
                   point.bg = "white",
                   point.cex = .7)  + facet_grid(~condition) 
 
-
-#not workinh --> empty
-#or per all, per ID (mean of means) --> NULL = probably not correct thing for pirate plot
-yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,    
-                  data = tus_correct_sub_gen,           
-                  theme = 2,
-                 # main = "Condition",
-                  ylab = "(p) of correct per Sub",
-                  ylim = c(0.4,1.15),
-                  bean.f.o = .4, # Bean fill
-                  bean.b.o = .2, # Light bean border
-                  point.o = .5, # Points (opacity)
-                  inf.disp = "line",
-                  inf.f.o = 0.8, # Inference fill
-                  inf.b.o = 0.8, # Inference border
-                  avg.line.o = 0, # Average line
-                  point.pch = 21,
-                  point.bg = "white",
-                  point.cex = .7)  + 
-                  facet_grid(~condition) 
 
 
 # Calculate mean and standard error per condition and req_action

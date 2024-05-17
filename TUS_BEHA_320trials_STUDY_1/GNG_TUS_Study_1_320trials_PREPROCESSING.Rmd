@@ -496,9 +496,23 @@ View(conditions_count_after)
 
 ```
 
+#deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI
+```{r}
+# Exclude specified rows
+tus_excluded <- tus %>%
+  filter(!(block == 4 & ID == "JAKA0154" & condition == "b.dacc")) %>%
+  filter(!(block == 4 & ID == "SSHW0093" & condition == "b.dacc")) %>%
+  filter(!(block == 4 & ID == "SINB0180" & condition == "c.ai"))
+
+
+```
+
+
  ##write.csv
 ```{r}
 write.csv(tus, "GNG_TUS_S1.csv")
+write.csv(tus, "GNG_tus_excluded_S1.csv")
+
 ```
 
 
