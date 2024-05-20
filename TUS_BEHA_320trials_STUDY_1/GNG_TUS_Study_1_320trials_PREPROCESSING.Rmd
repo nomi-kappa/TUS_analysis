@@ -494,6 +494,13 @@ tus_included <- tus_included %>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "c.ai"))
 
+#also exclude any trials that Cue presented >20
+tus_included_without_biggerthan20<-tus_included %>%
+  filter(!( ID == "JAKA0154" & condition == "b.dacc")) %>%
+  filter(!(ID == "SSHW0093" & condition == "b.dacc")) %>%
+  filter(!(ID =="SINB0180" & condition == "c.ai"))
+
+
 ```
 
 ```{r}
@@ -516,6 +523,8 @@ for (cond in dimnames(tus_table)[[3]]) {
 ```{r}
 write.csv(tus, "GNG_TUS_S1.csv")
 write.csv(included_tus, "GNG_tus_included_S1.csv")
+write.csv(tus_included_without_biggerthan20, "GNG_tus_tus_included_without_biggerthan20_S1.csv")
+
 ```
 
 
