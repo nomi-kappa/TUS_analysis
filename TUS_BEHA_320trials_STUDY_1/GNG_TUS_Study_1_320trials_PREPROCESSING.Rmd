@@ -523,7 +523,7 @@ for (cond in dimnames(tus_table)[[3]]) {
 ```{r}
 write.csv(tus, "GNG_TUS_S1.csv")
 write.csv(included_tus, "GNG_tus_included_S1.csv")
-write.csv(tus_included_without_biggerthan20, "GNG_tus_tus_included_without_biggerthan20_S1.csv")
+write.csv(tus_included_without_biggerthan20, "GNG_tus_included_without_biggerthan20_S1.csv")
 
 ```
 

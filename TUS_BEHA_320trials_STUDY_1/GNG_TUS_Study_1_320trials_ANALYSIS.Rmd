@@ -10,7 +10,7 @@ output: html_document
 library(readr)
 tus <- read_csv("GNG_TUS_S1.csv")
 tus_included<- read_csv("GNG_tus_included_S1.csv")
-tus_included_without_biggerthan20<- read_csv("tus_included_without_biggerthan20.csv")
+tus_included_without_biggerthan20<- read_csv("GNG_tus_included_without_biggerthan20_S1.csv")
 
 
 ```
@@ -137,6 +137,10 @@ model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1
 model3 <- glmer(correct ~ OutValence * condition + req_action  + trial_number +(1|ID) , 
                  data  = tus_included_without_biggerthan20, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3) 
 
+
+#good
+model3.b <- glmer(correct ~ OutValence * condition +(1|ID) , 
+                 data  = tus_included_without_biggerthan20, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.b) 
 #relatively good
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
                  data  = tus_included_without_biggerthan20, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model4) 
@@ -518,7 +522,7 @@ model_rt5 <- lmer(log_RT ~ Cue*condition + trial_number +(1|ID), data  = tus_inc
 model_rt6 <- lmer(log_RT ~ Cue*condition  +(1|ID), data  = tus_included_without_biggerthan20, REML = FALSE) ; summary (model_rt6)#
 
 #good all significant
-model_rt7 <- lmer(log_RT ~ condition + OutValence + req_action +trial_number +(1|ID), data  = tus_included_without_biggerthan20, REML = FALSE) ;summary (model_rt7)# main effects
+model_rt7 <- lmer(log_RT ~ condition + OutValence  +trial_number +(1|ID), data  = tus_included_without_biggerthan20, REML = FALSE) ;summary (model_rt7)# main effects
 
 model_rt8<- lmer(log_RT ~ Cue*condition* trial_number +(1|ID), data  = tus_included_without_biggerthan20, REML = FALSE) ; summary (model_rt8)#not much
 
