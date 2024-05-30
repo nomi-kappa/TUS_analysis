@@ -1,0 +1,85 @@
+---
+title: "GNG_TUS_Study_1_320trials_preprocessing"
+author: "nomi"
+date: "2023-10-31"
+output: html_document
+---
+
+ 
+
+# LOAD LIBRARIES
+```{r}
+#library(Rccp)
+#library(rlang)
+library(tibbletime)
+library(purrr)
+library(stringr)
+library(report)
+#library(ggplot)
+library(ggplot2)
+library(dplyr)
+#library(lmer)
+library(tidyverse)
+library(patchwork)
+library(ggpubr)
+library(jtools) #for explanation of lmer
+library(yarr)
+library (yarrr)
+library(afex)
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
+#library(ggpirate)
+#p_load ( rms, htmltools, bridgesampling, rstanarm, magrittr, scales, RColorBrewer, 
+# parsnip, zoo, wesanderson, yarr, BiocManager, afex, GGally, lmerTest, aod, splines)
+```
+
+
+
+    #PREPROCESSING
+
+## insert .txt files
+```{r}
+pilot<- tibble(filename = list.files("pilot_data", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+test_jitters<- tibble(filename = list.files("test_jitters", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+
+test_rt_jitter_nomi<- tibble(filename = list.files("test_rt_jitter_nomi", "*.txt", full.names=TRUE)) %>% 
+    group_by(filename) %>% 
+    do(read.table(.$filename))
+```
+
+```
+
+## Set variable names
+```{r}
+pilot <- pilot %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed"))
+
+
+test_jitters <- test_jitters %>% set_names(c("ID", "jitter1", 
+              "jitter2", "stim_ID", "GW", "GAL", "NGW", "NGL",  "break", "block"))
+   
+   test_rt_jitter_nomi <- test_rt_jitter_nomi %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
+              "jitter2", "RT", "outcomefeed"))           
+              
+```
+
+
+#
+ ##write.csv
+```{r}
+write.csv(pilot, "pilot.csv")
+
+write.csv(test_jitters, "test_jitters.csv")
+
+write.csv(test_rt_jitter_nomi, "test_rt_jitter_nomi.csv")
+
+
+```
+
+
+

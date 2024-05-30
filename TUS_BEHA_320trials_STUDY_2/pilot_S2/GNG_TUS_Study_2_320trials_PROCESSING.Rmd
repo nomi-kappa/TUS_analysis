@@ -1,0 +1,129 @@
+---
+title: "GNG_TUS_Study_1_320trials_PROCESSING"
+author: "nomi"
+date: "2023-10-31"
+output: html_document
+---
+
+#READ FILE
+```{r setup, include=FALSE}
+library(readr)
+pilot <- read_csv("pilot.csv")
+test_jitters <- read_csv("test_jitters.csv")
+
+test_rt_jitter_nomi <- read_csv("test_rt_jitter_nomi.csv")
+
+```
+
+#Load libraries
+```{r}
+library(tibbletime)
+library(purrr)
+library(stringr)
+library(report)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(ggpubr)
+library(yarr)
+library (yarrr)
+library(afex)
+#install.packages("devtools")
+#devtools::install_github("mikabr/ggpirate")
+library(ggpirate)
+```
+
+
+ 
+ #PROCESSING
+
+
+## Distribution of RT - pilot data - nomi test with new  jitter
+```{r}
+pilot <- subset(pilot, RT != "0") # exlude 0s (no presses)
+RT_presses <-pilot%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE));RT_presses #%>%
+ggplot(data = RT_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()+ ggtitle ("Distribution of RT for presses") 
+
+
+#nomi new jitter
+nomi <- subset(test_rt_jitter_nomi, RT != "0") # exlude 0s (no presses)
+RT_presses <-test_rt_jitter_nomi%>%  group_by(RT, ID) %>% 
+  summarise(Mean_RT = mean(RT, na.rm = TRUE))
+ggplot(data = RT_presses, 
+       aes(x = Mean_RT)) + 
+  geom_histogram()+ ggtitle ("Distribution of RT for presses-nomi") 
+
+
+```
+
+Distribution of jitter 1 and 2 - pilot
+```{r}
+jitter_1 <-pilot%>%  group_by(jitter1, ID) %>% 
+  summarise(jitter1 = mean(jitter1, na.rm = TRUE));jitter_1 #%>%
+ggplot(data = jitter_1, 
+       aes(x = jitter1)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter1") ; mean(pilot$jitter1, na.rm = TRUE)
+
+
+
+jitter_2 <-pilot%>%  group_by(jitter2, ID) %>% 
+  summarise(jitter2 = mean(jitter2, na.rm = TRUE));jitter_1 #%>%
+ggplot(data = jitter_2, 
+       aes(x = jitter2)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter2") ; mean(pilot$jitter2, na.rm = TRUE)
+
+
+
+```
+
+
+##########testing jitters with new poisson distribution for both
+
+Distribution of jitter 1 and 2 -test_jitters
+```{r}
+jitter_1 <-test_jitters%>%  group_by(jitter1, ID) %>% 
+  summarise(jitter1 = mean(jitter1, na.rm = TRUE));jitter_1 #%>%
+ggplot(data = jitter_1, 
+       aes(x = jitter1)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter1-test") ; mean(test_jitters$jitter1, na.rm = TRUE)
+
+
+
+jitter_2 <-test_jitters%>%  group_by(jitter2, ID )%>% 
+  summarise(jitter2 = mean(jitter2, na.rm = TRUE))
+ggplot(data = jitter_2, 
+       aes(x = jitter2)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter2-test") ; mean(test_jitters$jitter2, na.rm = TRUE)
+
+
+
+
+jitter_1_nomi <-test_rt_jitter_nomi%>%  group_by(jitter1, ID) %>% 
+  summarise(jitter1 = mean(jitter1, na.rm = TRUE)) #%>%
+ggplot(data = jitter_1_nomi, 
+       aes(x = jitter1)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter1-nomi")  ; mean(test_rt_jitter_nomi$jitter1, na.rm = TRUE)
+
+
+
+jitter_2_nomi <-test_rt_jitter_nomi%>%  group_by(jitter2, ID) %>% 
+  summarise(jitter1 = mean(jitter1, na.rm = TRUE)) #%>%
+ggplot(data = jitter_2_nomi, 
+       aes(x = jitter2)) + 
+  geom_histogram()+ ggtitle ("Distribution of jitter2-nomi") ; mean(test_rt_jitter_nomi$jitter2, na.rm = TRUE)
+
+```
+
+data check - jitters-test
+```{r}
+
+# Create the table
+table(test_jitters$ID, test_jitters$stim_ID)
+
+
+```
+
