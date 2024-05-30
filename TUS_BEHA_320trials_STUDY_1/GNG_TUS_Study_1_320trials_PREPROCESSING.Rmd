@@ -376,6 +376,11 @@ tus <- tus %>%
 ```
           
 
+
+#EXCLUSIONS AND SUBSETS
+
+
+
 #Exlusion 3SDs still 31 participants
 ```{r}
 # Calculate mean accuracy per participant
@@ -400,7 +405,7 @@ mean_accuracy_per_participant <- mean_accuracy_per_participant %>%
   mutate(excluded = ifelse(ID %in% excluded_participants$ID, "Excluded", "Included"))
 
 # Merge exclusion information back into tus dataset
-tus_included <- left_join(tus, mean_accuracy_per_participant, by = "ID")
+tus <- left_join(tus, mean_accuracy_per_participant, by = "ID"); View(tus)
 
 # Print number of participants before and after exclusion
 num_participants_before <- nrow(mean_accuracy_per_participant)
@@ -412,34 +417,59 @@ cat("Number of participants after exclusion:", num_participants_after, "\n")
 
 ```
 
-# Exclusion 3sd per condition and ID
+# Exclusion 3sd per condition and ID (none)
 ```{r}
-# Define function to filter data within ±3 standard deviations
-filter_within_3sds <- function(x) {
-  mean_x <- mean(x, na.rm = TRUE)
-  sd_x <- sd(x, na.rm = TRUE)
-  lower_bound <- mean_x - 3 * sd_x
-  upper_bound <- mean_x + 3 * sd_x
-  return(x >= lower_bound & x <= upper_bound)
-}
+# Calculate mean and standard deviation for each condition
+condition_stats <- tus %>%
+  group_by(condition) %>%
+  summarise(
+    mean_correct = mean(correct, na.rm = TRUE),
+    sd_correct = sd(correct, na.rm = TRUE)
+  )
 
-# Filter data within ±3 standard deviations per ID and per condition
-included_tus <- tus %>%
+# Print the mean and standard deviation for each condition
+cat("Mean and Standard Deviation for each condition:\n")
+print(condition_stats)
+
+# Join the statistics back to the original data
+tus <- tus %>%
+  left_join(condition_stats, by = "condition")
+
+# Calculate the mean accuracy for each ID and condition
+id_condition_stats <- tus %>%
   group_by(ID, condition) %>%
-  filter(filter_within_3sds(RT)) %>%
-  ungroup()
+  summarise(mean_correct_per_id = mean(correct, na.rm = TRUE), .groups = 'drop')
+
+# Join the ID-condition stats back to the statistics
+id_condition_stats <- id_condition_stats %>%
+  left_join(condition_stats, by = "condition")
+
+# Identify IDs that fall outside the ±3 SD range for any condition
+excluded_ids <- id_condition_stats %>%
+  filter(mean_correct_per_id < (mean_correct - 3 * sd_correct) |
+         mean_correct_per_id > (mean_correct + 3 * sd_correct)) %>%
+  distinct(ID)
+
+# Filter out excluded IDs from the original data
+tus_filtered <- tus %>%
+  filter(!(ID %in% excluded_ids$ID))
 
 # Print number of participants before and after exclusion per condition
-num_participants_before_per_condition <- tus %>%
+num_before_condition <- tus %>%
   distinct(ID, condition) %>%
-  summarise(num_participants = n())
+  group_by(condition) %>%
+  summarise(num_participants = n(), .groups = 'drop')
 
-num_participants_after_per_condition <- included_tus %>%
+num_after_condition <- tus_filtered %>%
   distinct(ID, condition) %>%
-  summarise(num_participants = n())
+  group_by(condition) %>%
+  summarise(num_participants = n(), .groups = 'drop')
 
-cat("Number of participants before exclusion per condition:", num_participants_before_per_condition$num_participants, "\n")
-cat("Number of participants after exclusion per condition:", num_participants_after_per_condition$num_participants, "\n")
+cat("Number of participants before exclusion per condition:\n")
+print(num_before_condition)
+
+cat("\nNumber of participants after exclusion per condition:\n")
+print(num_after_condition)
 
 # Print conditions per ID before exclusion
 conditions_per_ID_before <- tus %>%
@@ -447,15 +477,15 @@ conditions_per_ID_before <- tus %>%
   distinct(ID, condition) %>%
   arrange(ID)  # Sort by ID for clarity
 
-cat("Conditions per ID before exclusion:\n")
+cat("\nConditions per ID before exclusion:\n")
 print(conditions_per_ID_before)
 
 # Print conditions per ID after exclusion
-conditions_per_ID_after <- included_tus %>%
+conditions_per_ID_after <- tus_filtered %>%
   distinct(ID, condition) %>%
   arrange(ID)  # Sort by ID for clarity
 
-cat("Conditions per ID after exclusion:\n")
+cat("\nConditions per ID after exclusion:\n")
 print(conditions_per_ID_after)
 
 # Count conditions per ID before exclusion
@@ -465,48 +495,58 @@ conditions_count_before <- tus %>%
   summarise(num_conditions = n_distinct(condition), .groups = 'drop') %>%
   arrange(ID)  # Sort by ID for clarity
 
-cat("Conditions count per ID before exclusion:\n")
+cat("\nConditions count per ID before exclusion:\n")
 View(conditions_count_before)
 
 # Count conditions per ID after exclusion
-conditions_count_after <- included_tus %>%
+conditions_count_after <- tus_filtered %>%
   group_by(ID) %>%
   summarise(num_conditions = n_distinct(condition), .groups = 'drop') %>%
   arrange(ID)  # Sort by ID for clarity
 
-cat("Conditions count per ID after exclusion:\n")
+cat("\nConditions count per ID after exclusion:\n")
 View(conditions_count_after)
 
-# View the new dataset with only included participants
-View(included_tus)
 
 
+View(tus_filtered)
 
 ```
+
+
 
 #deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI
 ```{r}
 # Exclude specified rows
-tus_included <- tus_included %>%
+tus_filtered <- tus_filtered %>%
   filter(!(block == 4 & ID == "JAKA0154" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SSHW0093" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SINB0180" & condition == "c.ai"))%>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "c.ai"))
-
+```
 #also exclude any trials that Cue presented >20
-tus_included_without_biggerthan20<-tus_included %>%
-  filter(!( ID == "JAKA0154" & condition == "b.dacc")) %>%
-  filter(!(ID == "SSHW0093" & condition == "b.dacc")) %>%
-  filter(!(ID =="SINB0180" & condition == "c.ai"))
+```{r}
+#tus_filtered<-tus_filtered %>%
+ # filter(!( ID == "JAKA0154" & condition == "b.dacc")) %>%
+ # filter(!(ID == "SSHW0093" & condition == "b.dacc")) %>%
+ # filter(!(ID =="SINB0180" & condition == "c.ai"))
+#View(tus_filtered)
 
 
+# Filter out the rows where TrialCount is greater than 20
+tus_filtered_valid <- tus_filtered %>%
+  group_by(ID, condition, block, Cue) %>%
+  filter(TrialCount <= 20) %>%
+  ungroup()
+
+View(tus_filtered_valid)
 ```
 
 ```{r}
 
 # Create the table
-tus_table <- table(tus$ID, tus$stim_ID, tus$condition)
+tus_table <- table(tus_filtered_valid$ID, tus_filtered_valid$stim_ID, tus_filtered_valid$condition)
 
 # Print all matrices
 for (cond in dimnames(tus_table)[[3]]) {
@@ -524,8 +564,44 @@ for (cond in dimnames(tus_table)[[3]]) {
 write.csv(tus, "GNG_TUS_S1.csv")
 write.csv(included_tus, "GNG_tus_included_S1.csv")
 write.csv(tus_included_without_biggerthan20, "GNG_tus_included_without_biggerthan20_S1.csv")
+write.csv(tus_filtered_valid, "GNG_tus_filtered_valid_S1.csv") # 4blocks with inconsistencies for some and any trials that cue is presented over 20 times per block
 
 ```
 
+#exclude accuracy around chance 50% - decide tomorrow¬¬!!!!!!
+```{r}
+# Calculate mean accuracy per ID per condition
+mean_accuracy_data <- tus_filtered_valid %>%
+  group_by(ID, condition) %>%
+  summarize(mean_accuracy = mean(correct, na.rm = TRUE))
+
+# Identify IDs and conditions that have mean accuracy below 55%
+excluded_ids_conditions <- mean_accuracy_data %>%
+  filter(mean_accuracy < 0.55) 
+# Filter the original dataset to exclude IDs and conditions with mean accuracy below 55%
+tus_filtered_ex <- tus_included %>%
+  anti_join(excluded_ids_conditions, by = c("ID", "condition"))
+
+# View the updated dataset
+View(tus_filtered_ex)
+
+
+write.csv(tus_filtered_ex, "tus_filtered_ex.csv")
+```
+
+#exclude score point very low  
+```{r}
+#tus_clean_allexs<-tus_filtered_valid %>%
+# filter(!( ID == "JAKA0154" & condition == "c.ai")) %>% #low score
+#  filter(!(ID == "KTGO2025" & condition == "b.dacc")) %>% #low score
+# filter(!( ID == "ZHHS0560" & condition == "c.ai")) %>%
+#   filter(!( ID == "ZHHS0560" & condition == "a.sham")) %>%
+#filter(!( ID == "TRWL0072" & condition == "a.sham")) %>%
+ # filter(!( ID == "TRWL0072" & condition == "b.dacc")) 
+ 
+
+
+
+```
 
 
