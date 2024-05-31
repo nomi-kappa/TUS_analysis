@@ -577,9 +577,9 @@ mean_accuracy_data <- tus_filtered_valid %>%
 
 # Identify IDs and conditions that have mean accuracy below 55%
 excluded_ids_conditions <- mean_accuracy_data %>%
-  filter(mean_accuracy < 0.55) 
+  filter(mean_accuracy < 0.50) 
 # Filter the original dataset to exclude IDs and conditions with mean accuracy below 55%
-tus_filtered_ex <- tus_included %>%
+tus_filtered_ex <- tus_filtered_valid %>%
   anti_join(excluded_ids_conditions, by = c("ID", "condition"))
 
 # View the updated dataset
