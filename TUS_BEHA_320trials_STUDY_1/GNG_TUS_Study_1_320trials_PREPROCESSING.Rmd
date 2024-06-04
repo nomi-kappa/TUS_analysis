@@ -375,8 +375,118 @@ tus <- tus %>%
 
 ```
           
+          
+          RT_min column - replacing 0s to 0.001
+```{r}
+tus <- tus %>%
+  mutate(RT_min = ifelse(RT == 0, 0.001, RT))
+
+tus_play <- tus 
+```
+
+          # IES 
+
+IES = RT/1 - PE (proportion of errors) OR
+IES = RT/PC (proportion of correct responses)
+
+1. so I need to find the proportion of correct responses first per participant, Cue, condition
+2. calculate their IES
+3. summarize per condition and Cue maybe? 
 
 
+```{r}
+
+```
+
+
+
+
+
+
+
+          
+          # not sure whether IES calculation is correct - problem with the WIN cues as by default have low or 0 proportion of errors. Especially aIns even if less accuracy in GW they were pressing fast, so it turns out to have a better IES score than the other conditions.
+  #A. Calculate the IES for each row:
+```{r}
+# Calculate proportion of correct responses
+tus$correct_proportion <- tus$correct / 100  # Assuming correct is given as a percentage
+
+# Calculate IES
+tus$IES <- tus$RT_min / (1 - tus$correct_proportion)
+
+# Selectively show columns
+tus[, (ncol(tus) - 5):(ncol(tus))]
+
+# Summarize by condition
+IES_by_cond_cue_id<- tus %>%
+  group_by(ID, condition, Cue) %>%
+  summarise(
+    mean_IES = mean(IES, na.rm = TRUE),  # Calculate the mean IES for each condition
+    sd_IES = sd(IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
+    n = n()  # Count the number of observations for each condition
+  )
+
+IES_by_cond_cue<- IES_by_cond_cue_id %>%
+  group_by(condition, Cue) %>%
+  summarise(
+    mean_IES = mean(mean_IES, na.rm = TRUE),  # Calculate the mean IES for each condition
+    sd_IES = sd(sd_IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
+    n = n()  # Count the number of observations for each condition
+  )
+
+print(IES_by_cond_cue) #done by ID first
+
+
+#or
+# Step 3: Summarize IES per condition and cue
+summary <- tus %>%
+  group_by(condition) %>%
+  summarize(mean_IES = mean(IES, na.rm = TRUE))
+
+```
+ 
+ 
+ 
+ 
+```{r}
+library(ggplot2)
+
+# Filter data for cues GW and GAL
+GW_GAL_data <- filter(IES_by_cond_cue, Cue %in% c("GW", "GAL"))
+
+# Create plot for cues GW and GAL
+plot_GW_GAL <- ggplot(GW_GAL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Mean IES for GW and GAL by Condition",
+       x = "Condition",
+       y = "Mean IES",
+       fill = "Cue") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(400, NA)) +
+  facet_wrap(~ Cue, scales = "free_y")
+
+# Filter data for cues NGW and NGL
+NGW_NGL_data <- filter(IES_by_cond_cue, Cue %in% c("NGW", "NGL"))
+
+# Create plot for cues NGW and NGL
+plot_NGW_NGL <- ggplot(NGW_NGL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Mean IES for NGW and NGL by Condition",
+       x = "Condition",
+       y = "Mean IES",
+       fill = "Cue") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0, NA)) +
+ facet_wrap(~ Cue, scales = "free_y")
+
+# Display plots
+plot_GW_GAL
+plot_NGW_NGL
+
+```
+ 
 #EXCLUSIONS AND SUBSETS
 
 
@@ -496,7 +606,7 @@ conditions_count_before <- tus %>%
   arrange(ID)  # Sort by ID for clarity
 
 cat("\nConditions count per ID before exclusion:\n")
-View(conditions_count_before)
+#View(conditions_count_before)
 
 # Count conditions per ID after exclusion
 conditions_count_after <- tus_filtered %>%
@@ -505,17 +615,17 @@ conditions_count_after <- tus_filtered %>%
   arrange(ID)  # Sort by ID for clarity
 
 cat("\nConditions count per ID after exclusion:\n")
-View(conditions_count_after)
+#View(conditions_count_after)
 
 
 
-View(tus_filtered)
+#View(tus_filtered)
 
 ```
 
 
 
-#deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI
+#deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI because it contains NAs
 ```{r}
 # Exclude specified rows
 tus_filtered <- tus_filtered %>%
@@ -525,6 +635,8 @@ tus_filtered <- tus_filtered %>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "b.dacc")) %>%
   filter(!(block == 4 & ID == "SKKY0189" & condition == "c.ai"))
 ```
+
+
 #also exclude any trials that Cue presented >20
 ```{r}
 #tus_filtered<-tus_filtered %>%
@@ -540,9 +652,10 @@ tus_filtered_valid <- tus_filtered %>%
   filter(TrialCount <= 20) %>%
   ungroup()
 
-View(tus_filtered_valid)
+#View(tus_filtered_valid)
 ```
 
+#view conditions by cue per id
 ```{r}
 
 # Create the table
@@ -554,9 +667,53 @@ for (cond in dimnames(tus_table)[[3]]) {
   print(tus_table[, , cond])
   cat("\n")  # Add a newline for better readability
 }
+```
 
+
+#check presses GW always pressed and NGW never pressed or the opposite to exclude outliers. Data seems OK. A 2nd pair of eyes is needed. 
+```{r}
+# Calculate the number of presses for each cue per ID
+presses_per_cue <- tus_filtered_valid %>%
+  group_by(ID, Cue, condition) %>%
+  summarize(num_presses = sum(response == "press"))
+
+# View the result
+#View(presses_per_cue)
 
 ```
+
+
+
+   #Summarize IES by condition to check
+```{r}
+# Summarize by condition
+IES_by_cond_cue_id<- tus_filtered_valid %>%
+  group_by(ID, condition, Cue) %>%
+  summarise(
+    mean_IES = mean(IES, na.rm = TRUE),  # Calculate the mean IES for each condition
+    sd_IES = sd(IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
+    n = n()  # Count the number of observations for each condition
+  )
+
+IES_by_cond_cue<- IES_by_cond_cue_id %>%
+  group_by(condition, Cue) %>%
+  summarise(
+    mean_IES = mean(mean_IES, na.rm = TRUE),  # Calculate the mean IES for each condition
+    sd_IES = sd(sd_IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
+    n = n()  # Count the number of observations for each condition
+  )
+
+print(IES_by_cond_cue) #done by ID first
+
+
+
+#or
+# Step 3: Summarize IES per condition and cue
+summary <- tus_filtered_valid %>%
+  group_by(condition, Cue) %>%
+  summarize(mean_IES = mean(IES, na.rm = TRUE))
+```
+
 
 
  ##write.csv
@@ -598,10 +755,5 @@ write.csv(tus_filtered_ex, "tus_filtered_ex.csv")
 #   filter(!( ID == "ZHHS0560" & condition == "a.sham")) %>%
 #filter(!( ID == "TRWL0072" & condition == "a.sham")) %>%
  # filter(!( ID == "TRWL0072" & condition == "b.dacc")) 
- 
-
-
-
 ```
-
 
