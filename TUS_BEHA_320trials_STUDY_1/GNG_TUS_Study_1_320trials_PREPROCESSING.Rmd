@@ -222,10 +222,11 @@ tus <- tus %>%
 ```
     
         #'followup_beha' showing response after feedback + 1 in trial_number
-#behaviour after loss and after winning feedback. Adding a column based on feedback 
-showing what response/behaviour they have chosen, go or noGo (press or no_press). Maybe something like
-for feedback [i], mutate column [followup_beha] showing response after feedback +1 in trial_number,
-grouping by ID and condition.
+#behaviour after loss and after winning feedback general (followup_beha, followup_beha_binary) 
+
+Explained: Columns 
+1. a "followup_beha" column based on feedback showing what response/behaviour they have chosen, go or noGo (press or no_press) after general feedback, neutral, loss, win). 
+2. a "followup_beha_binary" column that recodes the followup_beha column as binary (0 for "no_press" and 1 for "press")
 ```{r}
 
 # Convert feedback column to a factor (if it's not already a factor)
@@ -240,8 +241,7 @@ tus <- tus %>%
  cue_counts <- table(tus$Cue);print(cue_counts)
  
  
- 
- # Recode followup_beha as binary (0 for "no_press" and 1 for "press")
+# Recode followup_beha as binary (0 for "no_press" and 1 for "press")
 tus$followup_beha_binary <- as.numeric(tus$followup_beha == "press")
 
 # Check the recoded variable
@@ -252,7 +252,8 @@ table(tus$followup_beha_binary)
               # whether they are correct after a correct feedback
               Find the follow up behaviour after receiving the correct feedback (or whether they were correct after receiving the correct feedback 80% and not the 20%)
 
-correct feedback
+Explained:
+1. "correct_feedback" column
   when NGL and response:no_press and  feedback neutral, then 1 else 0 =>  add to column -> correct_feedback 
   when GW and response: press and and feedback win, then 1, else 0 =>  add to column -> correct_feedback
   when GAL and response press and and feedback neutral, then 1, else 0=>  add tocolumn ->correct_feedback
@@ -261,12 +262,16 @@ correct feedback
   
   
 following correct action (whether they were correct after receiving the correct feedback 80% and not the 20%)
-
 !!!!!!!!!!!!!!!!!! NEUTRAL is ALSO correct when NGL and GAL and they get 0 and feedback was 0
-  
+
+2. "followup_correctfeed" behaviour column, is followup_response after correct feedback (press, no_press, wrong_feed_20%) 
+
+3. "followup_wrong_feed" behaviour column, is what they did after received the unexpected wrong feedback (20%) 
+
+4. "followup_correctfeed_trinary"column is the "followup_correctfeed" coded trinary; (0 for "no_press", 1 for "press", 2 for "wrong_feed_20%). Not sure if of any use.
   
 ```{r}
-# Step 1: Calculate correct_feedback based on specified conditions (check in which instanses feedback was correct 80%) - all good!
+# Step 1: Calculate correct_feedback based on specified conditions (check in which instance feedback was correct 80%) - all good!
 tus <- tus %>%
   mutate(correct_feedback = case_when(
     is.na(Cue) ~ NA_real_,  # If Cue is NA, assign NA to correct_feedback
@@ -286,12 +291,12 @@ tus <- tus %>%
         table(tus$correct_feedback)
 
                     
-total_count <- 26240
-count_0s <- 4904
-count_1s <- 21156
-count_lose <- 3910
-count_win <- 8503
-count_nutral <- 13647
+total_count <- 28500
+count_0s <- 5365
+count_1s <- 23153
+count_lose <- 4254
+count_win <- 9328
+count_nutral <- 14918
 
       # Calculate proportions 
           count_0s <- count_0s / total_count; print(count_0s)
@@ -316,10 +321,7 @@ tus <- tus %>%
 
 # Calculate the percentage of instances of "wrong_feed_20%" in followup_correctfeed column
 wrong_feedback_percentage <- mean(tus$followup_correctfeed == "wrong_feed_20%") * 100
-
-wrong_feedback_percentage # 20.37 ! perfect
-
-
+wrong_feedback_percentage # 20.69 ! perfect
 
 
 # Recode followup_correctfeed as trinary (0 for "no_press", 1 for "press", 2 for "wrong_feed_20%")
@@ -332,22 +334,31 @@ table(tus$followup_correctfeed_trinary)
 
 ```
 
+         
+         
           #Actual reward, excluding wrong feedback (20%) column - called: actual_reward
-          FOR GW & NGW: correctfeedback == 1 & feedback == win & correct ==1 then "reward"
-          FOR GW & NGW: correctfeedback == 1 & feedback == neutral & correct ==0 then "no_reward"
-          FOR NGL & GAL: correctfeedback == 1 & feedback == lose & correct ==0 then "punishment"
-          FOR NGL & GAL: correctfeedback == 1 & feedback == neutral & correct ==1 then "no_punishment"
+         
+         
+  "actual_reward" column
+  
+  FOR GW & NGW: correctfeedback == 1 & feedback == win & correct ==1 then "reward"
+  FOR GW & NGW: correctfeedback == 1 & feedback == neutral & correct ==0 then "no_reward"
+  FOR NGL & GAL: correctfeedback == 1 & feedback == lose & correct ==0 then "punishment"
+  FOR NGL & GAL: correctfeedback == 1 & feedback == neutral & correct ==1 then "no_punishment"
           
           #Reward in general column - called: reward
-          Valence == Win & feedback == win, then "reward"
-          Valence == Win & feedback == neutral, then "no_reward"          
-          Valence == lose & feedback == neutral, then "no_punishment"
-          Valence == lose & feedback == lose, then "punishment"
+  
+  "reward" column      
+  
+  Valence == Win & feedback == win, then "reward"
+  Valence == Win & feedback == neutral, then "no_reward"          
+  Valence == lose & feedback == neutral, then "no_punishment"
+  Valence == lose & feedback == lose, then "punishment"
 
           
 ```{r}
 # actual_reward 
-tus$actual_reward <- NA  # Initialize the column with NA values
+tus$actual_reward <- NA  # Initialize the column with NA values (not counting the wrong_feed_20%)
 
 # Define conditions for actual_reward column
 tus$actual_reward[tus$Cue %in% c("GW", "NGW") & tus$correct_feedback == 1 & tus$feedback == "win" & tus$correct == 1] <- "reward"
@@ -356,7 +367,7 @@ tus$actual_reward[tus$Cue %in% c("NGL", "GAL") & tus$correct_feedback == 1 & tus
 tus$actual_reward[tus$Cue %in% c("NGL", "GAL") & tus$correct_feedback == 1 & tus$feedback == "neutral" & tus$correct == 1] <- "no_punishment"
 
 # reward 
-tus$reward <- NA  # Initialize the column with NA values
+tus$reward <- NA  # Initialize the column with NA values (not needed I think as all belong in one of four conditions below)
 
 # Define conditions for reward column
 tus$reward[tus$OutValence == "Win" & tus$feedback == "win"] <- "reward"
@@ -367,6 +378,9 @@ tus$reward[tus$OutValence == "Avoid" & tus$feedback == "lose"] <- "punishment"
 ```
           
           #behaviour following reward
+          
+  "followup_beha_reward" column. Behaviour after general/raw reward
+          
 ```{r}
 # Mutate column 'followup_beha_reward' showing response after reward based on groupings
 tus <- tus %>%
@@ -384,8 +398,11 @@ tus <- tus %>%
 tus_play <- tus 
 ```
 
-          # IES 
+          
+          # IES (nverse Efficiency Score) for Studying Speed-Accuracy Performance
+            - the lowest the IES the better the performance
 
+Formula:
 IES = RT/1 - PE (proportion of errors) OR
 IES = RT/PC (proportion of correct responses)
 
@@ -394,18 +411,10 @@ IES = RT/PC (proportion of correct responses)
 3. summarize per condition and Cue maybe? 
 
 
-```{r}
-
-```
-
-
-
-
-
-
-
           
-          # not sure whether IES calculation is correct - problem with the WIN cues as by default have low or 0 proportion of errors. Especially aIns even if less accuracy in GW they were pressing fast, so it turns out to have a better IES score than the other conditions.
+          # not sure whether IES calculation is correct - problem with the WIN cues as by default have low or 0 proportion of errors. 
+          Especially aIns even if less accuracy in GW they were pressing fast, so it turns out to have a better IES score than the other conditions.
+  
   #A. Calculate the IES for each row:
 ```{r}
 # Calculate proportion of correct responses
@@ -434,20 +443,19 @@ IES_by_cond_cue<- IES_by_cond_cue_id %>%
     n = n()  # Count the number of observations for each condition
   )
 
-print(IES_by_cond_cue) #done by ID first
+print(IES_by_cond_cue) #done by ID first - this one is good
 
 
 #or
 # Step 3: Summarize IES per condition and cue
 summary <- tus %>%
-  group_by(condition) %>%
+  group_by(condition, Cue) %>%
   summarize(mean_IES = mean(IES, na.rm = TRUE))
 
 ```
  
  
- 
- 
+      #plot of the above per Cue (IES_by_cond_cue)
 ```{r}
 library(ggplot2)
 
@@ -487,11 +495,18 @@ plot_NGW_NGL
 
 ```
  
-#EXCLUSIONS AND SUBSETS
 
 
+      #EXCLUSIONS AND SUBSETS
 
-#Exlusion 3SDs still 31 participants
+
+#Exlusion 3SDs still 32 participants
+
+
+Columns:
+
+1. "mean_accuracy" column per participant
+2. "excluded" column to shor whether included or excluded
 ```{r}
 # Calculate mean accuracy per participant
 mean_accuracy_per_participant <- tus %>%
@@ -527,7 +542,14 @@ cat("Number of participants after exclusion:", num_participants_after, "\n")
 
 ```
 
-# Exclusion 3sd per condition and ID (none)
+      # Exclusion 3sd per condition and ID (none)
+
+new data set "tus_filtered"
+
+Columns added:
+1. "mean_correct"  (per condition this time)
+2. "sd_correct"    (per condition this time)
+
 ```{r}
 # Calculate mean and standard deviation for each condition
 condition_stats <- tus %>%
@@ -619,13 +641,14 @@ cat("\nConditions count per ID after exclusion:\n")
 
 
 
-#View(tus_filtered)
+View(tus_filtered)
 
 ```
 
 
 
-#deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC AND SINB0180 AI because it contains NAs
+      #deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC, SINB0180 AI and SKKY0189 because it contains NAs
+      
 ```{r}
 # Exclude specified rows
 tus_filtered <- tus_filtered %>%
@@ -637,29 +660,28 @@ tus_filtered <- tus_filtered %>%
 ```
 
 
-#also exclude any trials that Cue presented >20
+    # exclude any trials that Cue presented >20
 ```{r}
-#tus_filtered<-tus_filtered %>%
- # filter(!( ID == "JAKA0154" & condition == "b.dacc")) %>%
- # filter(!(ID == "SSHW0093" & condition == "b.dacc")) %>%
- # filter(!(ID =="SINB0180" & condition == "c.ai"))
-#View(tus_filtered)
+tus_filtered<-tus_filtered %>%
+ filter(!( ID == "EEMR0429" & condition == "b.dacc")) %>%
+ filter(!(ID == "EEMR0429" & condition == "a.sham")) %>%
+ filter(!(ID =="SINB0180" & condition == "c.ai"))
 
 
 # Filter out the rows where TrialCount is greater than 20
-tus_filtered_valid <- tus_filtered %>%
+tus_filtered <- tus_filtered %>%
   group_by(ID, condition, block, Cue) %>%
   filter(TrialCount <= 20) %>%
   ungroup()
 
-#View(tus_filtered_valid)
+View(tus_filtered)
 ```
 
 #view conditions by cue per id
 ```{r}
 
 # Create the table
-tus_table <- table(tus_filtered_valid$ID, tus_filtered_valid$stim_ID, tus_filtered_valid$condition)
+tus_table <- table(tus_filtered$ID, tus_filtered$stim_ID, tus_filtered$condition)
 
 # Print all matrices
 for (cond in dimnames(tus_table)[[3]]) {
@@ -670,80 +692,49 @@ for (cond in dimnames(tus_table)[[3]]) {
 ```
 
 
-#check presses GW always pressed and NGW never pressed or the opposite to exclude outliers. Data seems OK. A 2nd pair of eyes is needed. 
+    #check presses GW always pressed and NGW never pressed or the opposite to exclude outliers. 
+      Data seems OK. A 2nd pair of eyes is needed. 
 ```{r}
 # Calculate the number of presses for each cue per ID
-presses_per_cue <- tus_filtered_valid %>%
+presses_per_cue <- tus_filtered %>%
   group_by(ID, Cue, condition) %>%
   summarize(num_presses = sum(response == "press"))
 
 # View the result
-#View(presses_per_cue)
+View(presses_per_cue)
 
-```
-
-
-
-   #Summarize IES by condition to check
-```{r}
-# Summarize by condition
-IES_by_cond_cue_id<- tus_filtered_valid %>%
-  group_by(ID, condition, Cue) %>%
-  summarise(
-    mean_IES = mean(IES, na.rm = TRUE),  # Calculate the mean IES for each condition
-    sd_IES = sd(IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
-    n = n()  # Count the number of observations for each condition
-  )
-
-IES_by_cond_cue<- IES_by_cond_cue_id %>%
-  group_by(condition, Cue) %>%
-  summarise(
-    mean_IES = mean(mean_IES, na.rm = TRUE),  # Calculate the mean IES for each condition
-    sd_IES = sd(sd_IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
-    n = n()  # Count the number of observations for each condition
-  )
-
-print(IES_by_cond_cue) #done by ID first
-
-
-
-#or
-# Step 3: Summarize IES per condition and cue
-summary <- tus_filtered_valid %>%
-  group_by(condition, Cue) %>%
-  summarize(mean_IES = mean(IES, na.rm = TRUE))
 ```
 
 
 
  ##write.csv
 ```{r}
+#data set with no exclusions
 write.csv(tus, "GNG_TUS_S1.csv")
-write.csv(included_tus, "GNG_tus_included_S1.csv")
-write.csv(tus_included_without_biggerthan20, "GNG_tus_included_without_biggerthan20_S1.csv")
-write.csv(tus_filtered_valid, "GNG_tus_filtered_valid_S1.csv") # 4blocks with inconsistencies for some and any trials that cue is presented over 20 times per block
+
+#working on this one at the moment - some exclusions, see comment next to it
+write.csv(tus_filtered, "GNG_tus_filtered_S1.csv") # 4blocks with inconsistencies for some and any trials that cue is presented over 20 times per block (exclude also 3 conds eemr and sinb)
 
 ```
 
-#exclude accuracy around chance 50% - decide tomorrow¬¬!!!!!!
+#exclude accuracy around chance 50% - need to decide!!!
 ```{r}
 # Calculate mean accuracy per ID per condition
-mean_accuracy_data <- tus_filtered_valid %>%
-  group_by(ID, condition) %>%
-  summarize(mean_accuracy = mean(correct, na.rm = TRUE))
+    #mean_accuracy_data <- tus_filtered_valid %>%
+    #group_by(ID, condition) %>%
+    #summarize(mean_accuracy = mean(correct, na.rm = TRUE))
 
 # Identify IDs and conditions that have mean accuracy below 55%
-excluded_ids_conditions <- mean_accuracy_data %>%
-  filter(mean_accuracy < 0.50) 
+    #excluded_ids_conditions <- mean_accuracy_data %>%
+    #filter(mean_accuracy < 0.50) 
 # Filter the original dataset to exclude IDs and conditions with mean accuracy below 55%
-tus_filtered_ex <- tus_filtered_valid %>%
-  anti_join(excluded_ids_conditions, by = c("ID", "condition"))
+    #tus_filtered_ex <- tus_filtered_valid %>%
+    #anti_join(excluded_ids_conditions, by = c("ID", "condition"))
 
-# View the updated dataset
-View(tus_filtered_ex)
+#View(tus_filtered_ex)
 
 
-write.csv(tus_filtered_ex, "tus_filtered_ex.csv")
+#write.csv(tus_filtered_ex, "tus_filtered_ex.csv")
 ```
 
 #exclude score point very low  
