@@ -418,7 +418,7 @@ IES = RT/PC (proportion of correct responses)
   #A. Calculate the IES for each row:
 ```{r}
 # Calculate proportion of correct responses
-tus$correct_proportion <- tus$correct / 100  # Assuming correct is given as a percentage
+tus$correct_proportion <- tus$correct / 100  #  correct is given as a percentage
 
 # Calculate IES
 tus$IES <- tus$RT_min / (1 - tus$correct_proportion)
@@ -466,13 +466,13 @@ GW_GAL_data <- filter(IES_by_cond_cue, Cue %in% c("GW", "GAL"))
 plot_GW_GAL <- ggplot(GW_GAL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
-  labs(title = "Mean IES for GW and GAL by Condition",
+  labs(title = "Mean IES for Go Cues by Condition",
        x = "Condition",
        y = "Mean IES",
        fill = "Cue") +
   theme_minimal() +
   coord_cartesian(ylim = c(400, NA)) +
-  facet_wrap(~ Cue, scales = "free_y")
+ facet_wrap(~ Cue, scales = "free_y")
 
 # Filter data for cues NGW and NGL
 NGW_NGL_data <- filter(IES_by_cond_cue, Cue %in% c("NGW", "NGL"))
@@ -481,17 +481,23 @@ NGW_NGL_data <- filter(IES_by_cond_cue, Cue %in% c("NGW", "NGL"))
 plot_NGW_NGL <- ggplot(NGW_NGL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
-  labs(title = "Mean IES for NGW and NGL by Condition",
+  labs(title = "Mean IES for noGo Cues by Condition",
        x = "Condition",
        y = "Mean IES",
        fill = "Cue") +
   theme_minimal() +
-  coord_cartesian(ylim = c(0, NA)) +
+  coord_cartesian(ylim = c(0, NA))+
  facet_wrap(~ Cue, scales = "free_y")
 
 # Display plots
 plot_GW_GAL
 plot_NGW_NGL
+
+
+
+#plot IES by condition only
+   #no, plot is not good or correct as sd is from 0.001 for ngw cues to high. so better seperate by go vs nogo cues
+
 
 ```
  

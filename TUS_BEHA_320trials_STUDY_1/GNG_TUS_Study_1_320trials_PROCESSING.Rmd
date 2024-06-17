@@ -115,38 +115,38 @@ ggplot(MeanGoResp) +
 ## Session 
 ### It seems to be significant. In the first session they do worse.
 ```{r}
-# compute proportion of correct responses for each participant
-tus_correct_sub <- tus_filtered %>% group_by(ID, OutValence, session,  condition, req_action) %>% summarise(correct = mean(correct))
-# compute mean proportion of go responses 
-tus_correct <- tus_correct_sub %>% group_by(OutValence, session, req_action, condition) %>% summarise(correct = mean(correct))
+# Compute proportion of correct responses for each participant
+tus_correct_sub <- tus_filtered %>%
+  group_by(ID, OutValence, session, condition, req_action) %>%
+  summarise(correct = mean(correct, na.rm = TRUE), .groups = "drop")
 
+# Compute mean proportion of correct responses
+tus_correct <- tus_correct_sub %>%
+  group_by(OutValence, session, req_action, condition) %>%
+  summarise(correct = mean(correct, na.rm = TRUE), .groups = "drop")
 
-#plot session
-
-  #re-ordering levels to show as 1,2,3 in the x-axis
+# Re-ordering levels to show as 1, 2, 3 in the x-axis
 tus_correct$session <- factor(tus_correct$session, levels = c("1", "2", "3"))
 
-pirateplot(formula = correct ~ session +condition,
+# Plot session using pirateplot
+pirateplot(formula = correct ~ session + condition,
            data = tus_correct,
-                           theme = 0,
-           #main = "Fully customized pirateplot",
-           #pal = "southpark", # southpark color palette
+           theme = 0,
            bean.f.o = .7, # Bean fill
            point.o = .3, # Points
            inf.f.o = .3, # Inference fill
            inf.b.o = .8, # Inference border
            avg.line.o = 1, # Average line
            bar.f.o = .5, # Bar
-           inf.f.col = "white", # Inf fill col
-           inf.b.col = "black", # Inf border col
-           avg.line.col = "black", # avg line col
-           #bar.f.col = gray(.8), # bar filling color
+           inf.f.col = "white", # Inf fill color
+           inf.b.col = "black", # Inf border color
+           avg.line.col = "black", # Avg line color
            point.pch = 21,
            point.bg = "white",
            point.col = "black",
            point.cex = .7)
-         # ylim = c(0.1, 1.0))
-
+# Adjust the y-axis limits
+pirate_plot + coord_cartesian(ylim = c(0.1, 1.0))
 #without "condition"
 pirateplot(formula = correct ~ session,
            data = tus_correct,
@@ -328,7 +328,7 @@ cues
 
 ## Probability of correct per participant ***IS THAT CORRECT?***
 ```{r}
-tus_correct<-tus_filtered %>%  group_by(ID, OutValence,condition, req_action) %>% summarise(correct = mean(correct))
+tus_correct<-tus_filtered %>%  group_by(ID, Valence=OutValence,condition, Action=req_action) %>% summarise(correct = mean(correct))
 #tus_correct_sub_gen <- tus_correct %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
 tus_correct<-na.omit(tus_correct)
 # Identify outliers
@@ -336,7 +336,7 @@ outliers <- boxplot.stats(tus_correct$correct)$out
 # Remove outliers from the dataset
 tus_correct <- tus_correct[!tus_correct$correct %in% outliers, ]
 # Plot without outliers
-yarrr::pirateplot(formula = correct ~ condition + req_action + OutValence,    
+yarrr::pirateplot(formula = correct ~ condition + Action + Valence,    
                   data = tus_correct,           
                   theme = 2,
                   # main = "Proba_correct/condition",
@@ -355,7 +355,7 @@ yarrr::pirateplot(formula = correct ~ condition + req_action + OutValence,
 
 
 ##maybe this to be the same as the RTs
-yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,    
+yarrr::pirateplot(formula = correct ~  Action + Valence + condition,    
                   data = tus_correct,           
                   theme = 2,
                  # main = "Condition",
@@ -376,12 +376,12 @@ yarrr::pirateplot(formula = correct ~  req_action + OutValence + condition,
 
 # Calculate mean and standard error per condition and req_action
 summary_data <- tus_correct %>%
-  group_by(condition, req_action, OutValence) %>%
+  group_by(Action, condition, Valence) %>%
   summarise(mean_correct = mean(correct),
             se_correct = sd(correct, na.rm = TRUE) / sqrt(n()))
 
 # Plot with error bars 
-ggplot(summary_data, aes(x = req_action, y = mean_correct, fill = OutValence)) +
+ggplot(summary_data, aes(x = Action, y = mean_correct, fill = Valence)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.7) +  # Increase width for thicker bars
   geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
                 position = position_dodge(width = 0.75), width = 0.25) +  # Adjust width for error bars
@@ -482,13 +482,13 @@ ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = conditio
 
 
 
-#not sure
+#not sure, because it shows that NGW for AI is lower when i am excluding above 0.5 accuracy
 # 3. YET ANOTHET PIRATE PLOT,  (named: Acc_perall5)
 # Filter the data to exclude values outside the desired y-axis range
-tus_filt <- tus_correct %>% filter(correct >= 0.5 & correct <= 1)
+tus_filt <- tus_correct %>% filter(correct >= 0.43 & correct <= 1)
 
 #pirate plot
-pirateplot(formula = correct ~ condition  + req_action +OutValence,
+pirateplot(formula = correct ~ condition  + Action +Valence,
            data = tus_filt,
                            theme = 0,
            #main = "Fully customized pirateplot",
@@ -557,7 +557,7 @@ pirateplot <- pirateplot(formula = mean_presses ~ condition + req_action + OutVa
 ######NB do it per participant - the dots not all RTs in the plot)
       #filter data to exclude very high values
 # Filter data
-filtered_data_rt <- tus_filtered %>% filter(RT >= 500, RT <= 850)
+filtered_data_rt <- tus_filtered %>% filter(RT >= 600, RT <= 800)
 
 # Calculate mean reaction time per participant
 mean_rt <- filtered_data_rt %>%
@@ -588,7 +588,7 @@ pirateplot(formula = mean_RT ~ condition + req_action + OutValence,
 Meanrtpersub_rt <- tus_filtered %>% group_by(req_action, OutValence, condition, response, RT) %>% summarise(mean_rt = mean(RT))
 Meanrtpersub_rt <- na.omit(Meanrtpersub_rt)
 #Meanrt_rt <- Meanrtpersub_rt %>% group_by(req_action, OutValence, condition) %>% summarise(mean_rt = mean(mean_rt_per_Subject))
-Meanrtpersub_rt <- Meanrtpersub_rt %>% filter(RT >= 200, RT <= 950)%>% filter(response != "no_press")
+Meanrtpersub_rt <- Meanrtpersub_rt %>% filter(RT >= 300, RT <= 800)%>% filter(response != "no_press")
 
 pirateplot(formula =  mean_rt ~ condition + OutValence + req_action,
            data = Meanrtpersub_rt,
@@ -979,7 +979,6 @@ print(combined_plot)
 ```
  
  
- 
  ## RTs for participants 
 ```{r}
 
@@ -1080,7 +1079,7 @@ print(combined_rt)
 ```{r}
 
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-feed <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition"))
+feed <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition"))
 
 # Exclude NA values
 feed <- na.omit(feed)
@@ -1105,17 +1104,24 @@ mean_proportion_feed_data_r <- feed_data_r %>%
   mutate(mean_proportion_r = count / total_count)
 
 
+# Calculate standard errors for each group combination
+error_data <- mean_proportion_feed_data_r %>%
+  group_by(condition, followup_beha, feedback) %>%
+  summarise(mean_proportion_r = mean(mean_proportion_r),
+            std_err = sd(mean_proportion_r) / sqrt(n())) %>%
+  ungroup()
 
-   # Create a grouped bar plot showing the distribution of follow-up behaviors after each type of feedback and condition
+# Plot with error bars
 ggplot(mean_proportion_feed_data_r, aes(x = condition, y = mean_proportion_r, fill = followup_beha)) +
   geom_bar(position = "dodge", stat = "identity") +
+  geom_errorbar(data = error_data, aes(ymin = mean_proportion_r - std_err, ymax = mean_proportion_r + std_err),
+                position = position_dodge(width = 0.9), width = 0.25) +  # Error bars
   facet_wrap(~ feedback, scales = "free") +  # Facet by feedback
   labs(title = "Mean Proportion of Response after Different Types of Feedback and Condition",
        x = "Condition", y = "Mean Proportion") +
   scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
   theme_minimal() +
-  scale_y_continuous(limits = c(0, 0.7), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
-
+  scale_y_continuous(limits = c(0, 0.7), breaks = seq(0, 0.7, 0.1))  # Set y-axis limit and breaks
 
 
 
@@ -1123,7 +1129,7 @@ ggplot(mean_proportion_feed_data_r, aes(x = condition, y = mean_proportion_r, fi
                                   #accuracy
 
 # A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-accuracy_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "correct", "condition"))
+accuracy_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "correct", "condition"))
 
 # Exclude NA values
 accuracy_data <- na.omit(accuracy_data)
@@ -1147,7 +1153,7 @@ ggplot(accuracy_data, aes(x = feedback, fill = followup_beha, y = correct)) +
 
        #mean condition accuracy
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "correct"))
+feedback_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "condition", "correct"))
 
 # Exclude NA values
 feedback_data <- na.omit(feedback_data)
@@ -1170,7 +1176,7 @@ ggplot(accuracy_data, aes(x = feedback, y = correct, fill = followup_beha)) +
                                   #mean RT
 
 #A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-rt_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha","condition", "RT"))
+rt_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha","condition", "RT", "req_action", "OutValence"))
 
 # Exclude NA values
 rt_data <- na.omit(rt_data)
@@ -1185,11 +1191,22 @@ ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
   coord_cartesian(ylim = c(0, 600))
 
 # Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
+ggplot(rt_data, aes(x = feedback, fill = feedback, y = RT)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
+       x = "Feedback", y = "Mean Reaction Time") +
+  scale_fill_manual(values = c("lose" = "pink", "win" = "lightgreen", neutral ="lightyellow")) +
+  theme_minimal()+
+  facet_wrap(~req_action*condition)+
+  coord_cartesian(ylim = c(0, 600))
+
+
+# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
 ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
   geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
   labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
        x = "Feedback", y = "Mean Reaction Time") +
-  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+ scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
   theme_minimal()+
   facet_wrap(~condition)+
   coord_cartesian(ylim = c(0, 600))
@@ -1283,7 +1300,7 @@ ggplot(feedback_data, aes(x = feedback, fill = followup_beha)) +
    # foolow_up beha per cue interesting
 ```{r}
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-feedback_data <- subset(tus, feedback %in% c("win", "lose", "neutral"), 
+feedback_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), 
                         select = c("feedback", "followup_beha", "condition", "Cue"))
 
 # Exclude NA values
@@ -1338,7 +1355,7 @@ ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_b
 ```{r}
 
    #Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-feedback_data_r <- subset(tus, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_correctfeed", "condition"))
+feedback_data_r <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_correctfeed", "condition"))
 
 # Exclude NA values
 feedback_data_r <- na.omit(feedback_data_r)
@@ -1382,7 +1399,7 @@ ggplot(mean_proportion_r, aes(x = feedback, y = mean_proportion_r,fill = followu
              #[per cue]
 
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-feedback_data_rcue <- subset(tus, feedback %in% c("win", "lose", "neutral"), 
+feedback_data_rcue <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), 
                         select = c("feedback", "followup_correctfeed", "condition", "Cue"))
 
 # Exclude NA values and wrongfeedback
@@ -1425,7 +1442,7 @@ ggplot(mean_proportion_rcue, aes(x = feedback, y = mean_proportion_rcue, fill = 
 
 ```
 
-RTs correct feedback
+RTs reward
 ```{r}
 
 ```
@@ -1445,53 +1462,46 @@ Cai and colleagues (2014): (1) rAI and salience networks may contribute to inhib
 -	
 
 
-#REWARD
+#REWARD accuracy
 ```{r}
 
-#create column to show the followup_beha after each levels of feedback
 
-tus_cl <- tus[!is.na(tus$Cue), ]
-tus_cl <- tus_cl[!is.na(tus_cl$reward), ]
-tus_cl <- tus_cl[!is.na(tus_cl$followup_beha_reward), ]
+# Filter data
+tus_cl <- tus_filtered %>%
+  filter(!is.na(Cue), !is.na(reward), !is.na(followup_beha_reward), !is.na(feedback))
 
-# Plot for Cue
-# frequency of each category of the Cue variable 
-cue_reward <- ggplot(tus_cl, aes(x = reward, fill = Cue)) +
-  geom_bar(position = "fill") +
-  facet_wrap(~ response*condition) +
-  labs(x = "Reward", y = "Proportion of Choices", fill = "Cue") +
-  theme_minimal(); cue_reward
-
-
-#grouped_barplot
-grouped_barplot <- ggplot(tus_cl, aes(x = reward, fill = followup_beha_reward)) +
-  geom_bar(position = "dodge", stat = "count") +
-#  stat_summary(fun.data = mean_cl_normal, aes(y = ..count..), geom = "errorbarh", aes(group = condition), color = "black") +
-  facet_wrap(~ condition, strip.position = "bottom", scales = "free_x") +
-  labs(x = "Reward", y = "Count", fill = "Follow-up Behavior") +
-  theme_minimal();grouped_barplot
-
-
-
-## Calculate proportions for each group
+# Calculate proportions and standard errors for each combination of condition, reward, followup_beha_reward, and feedback
 proportions <- tus_cl %>%
-  group_by(condition, reward, Cue, followup_beha_reward) %>%
-  summarise(count = n()) %>%
-  mutate(proportion = count / sum(count))
+  group_by(condition, reward, followup_beha_reward, feedback) %>%
+  summarise(
+    RT = mean(RT, na.rm = TRUE),
+    se = sd(RT, na.rm = TRUE) / sqrt(n()),
+    .groups = 'drop'
+  )
 
-# Pivot the data for heatmap
-heatmap_data <- proportions %>%
-  pivot_wider(names_from = followup_beha_reward, values_from = proportion, values_fill = 0)
-
-# Create heatmap
-heatmap_plot <- ggplot(heatmap_data, aes(x = Cue, y = reward, fill = press)) +
-  geom_tile() +
-  facet_grid(~ condition) +
-  labs(x = "Cue", y = "Reward", fill = "Proportion") +
-  scale_fill_gradient(low = "pink", high = "red") +
+# Plotting the grouped bar plot with error bars for reward
+grouped_barplot <- ggplot(proportions, aes(x = reward, y = RT, fill = followup_beha_reward)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = RT - 1.96 * se, ymax = RT + 1.96 * se),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  facet_wrap(~ condition, scales = "free_y") +
+  labs(x = "Reward", y = "RT", fill = "Follow-up Behavior") +
   theme_minimal()
 
-heatmap_plot
+# Display the plot
+print(grouped_barplot)
+
+# Plotting the grouped bar plot with error bars for feedback
+grouped_barplotf <- ggplot(proportions, aes(x = feedback, y = RT, fill = followup_beha_reward)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = RT - 1.96 * se, ymax = RT + 1.96 * se),
+                position = position_dodge(width = 0.9), width = 0.2) +
+  facet_wrap(~ condition, scales = "free_y") +
+  labs(x = "Feedback", y = "RT", fill = "Follow-up Behavior") +
+  theme_minimal()
+
+# Display the plot
+print(grouped_barplotf)
 
 
 ```

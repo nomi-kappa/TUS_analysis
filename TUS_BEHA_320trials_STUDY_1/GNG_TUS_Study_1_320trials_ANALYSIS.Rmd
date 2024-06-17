@@ -131,6 +131,7 @@ if (length(interaction_terms) == 0) {
 # Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 and 9.b is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
            #REML = FALSE
         
+ 
 #all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model1)
@@ -141,11 +142,16 @@ model2 <- glmer(correct ~ OutValence + req_action + condition + trial_number +(1
 model3 <- glmer(correct ~ OutValence * condition + req_action  + trial_number +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3) 
 
+model3.a <- glmer(correct ~ condition*OutValence*trial_number +(1|ID) , 
+                 data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model3.a)
+
 
 #good
 model3.b <- glmer(correct ~ OutValence * condition +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.b) 
 
+model3.c <- glmer(correct ~ req_action * condition*trial_number +(1|ID) , 
+                 data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.c) 
 
 
 #relatively good
@@ -298,6 +304,9 @@ model21<-glmer(correct ~ followup_beha * condition  +(1|ID) ,
 model22<-glmer(correct ~ feedback * condition   +(1|ID) ,
                  data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22)
 
+model22.a<-glmer(followup_beha_binary ~ feedback * condition   +(1|ID) ,
+                 data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22.a)
+
 #convert to a factor
     #tus$followup_beha <- factor(tus$followup_beha_binary, levels = c("no_press", "press"))
 
@@ -353,8 +362,12 @@ model28 <- glmer(correct ~ reward* condition  + (1|ID),
 
 # Fit the model using the subsetted data to get actual_reward, the wrong_feedback is excluded, that we remain with actual reward
 #is singular...not good
-model29 <- glmer(correct ~ reward* condition*Cue  + (1|ID), 
+model29 <- glmer(correct ~ reward* condition + (1|ID), #add cue too
                    data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model29)
+
+
+model29.b <- glmer(correct ~ reward* condition*Cue + (1|ID), #add cue too
+                   data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model29.b)
 
 #follow_up_beha_reward
 #conditionb.dacc                           -0.18329    0.05854  -3.131  0.00174 ** 
@@ -368,8 +381,13 @@ tus_filtered$followup_beha_reward <- factor(tus_filtered$followup_beha_reward)
 #conditionb.dacc:CueNGL  0.36209    0.11619   3.116  0.00183 ** dacc press more after NGL
 #conditionb.dacc:CueNGW  0.51984    0.10125   5.134 2.84e-07 *** dacc press more after NGW
 #conditionc.ai:CueNGW    0.32475    0.10131   3.206  0.00135 ** ai press more after NGW
-model31 <- glmer(followup_beha_reward~condition*Cue  + (1|ID), 
+model31 <- glmer(followup_beha_reward ~condition*OutValence*req_action  + (1|ID), 
                    data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model31)
+model32 <- glmer(followup_beha_reward ~condition*Cue  + (1|ID), 
+                   data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model32)
+
+model22.b<-glmer(followup_beha_binary ~ reward * condition   +(1|ID) ,
+                 data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22.b)
 ```
      
      
@@ -528,6 +546,9 @@ tus_filtered_ex$req_action <- relevel(tus_filtered_ex$req_action, ref = "noGo")
 #OutValenceWin:conditionb.dacc               3.151e-01  1.095e-01  2.667e+04   2.879 0.003990 ** slower
 #OutValenceWin:conditionc.ai                 4.725e-01  1.072e-01  2.667e+04   4.407 1.05e-05 *** much slower
 #req_actionGo:OutValenceWin:conditionc.ai   -9.288e-01  1.517e-01  2.667e+04  -6.122 9.36e-10 *** much faster
+model_rt0 <- lmer(log_RT ~ req_action*OutValence +(1|ID), data  = tus_filtered, REML = FALSE) ;summary (model_rt0)
+
+
 model_rt1 <- lmer(log_RT ~ req_action*OutValence*condition +(1|ID), data  = tus_filtered, REML = FALSE) ;summary (model_rt1) 
 
 
@@ -556,7 +577,7 @@ model_rt2.a <- lmer(log_RT ~ OutValence*condition*trial_number +(1|ID), data  = 
 model_rt3 <- lmer(log_RT ~ OutValence*req_action*condition +trial_number +(1|ID), data  = tus_filtered, REML = FALSE); summary (model_rt3) # good 
 
 #better than 3
-model_rt4 <- lmer(log_RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus_filtered_, REML = FALSE) ;summary (model_rt4) #good too
+model_rt4 <- lmer(log_RT ~ req_action*OutValence*condition +  condition*trial_number +(1|ID), data  = tus_filtered, REML = FALSE) ;summary (model_rt4) #good too
 
 model_rt5 <- lmer(log_RT ~ Cue*condition + trial_number +(1|ID), data  = tus_filtered, REML = FALSE) ; summary (model_rt5)#
 
@@ -591,8 +612,18 @@ model_rt9<-lmer(log_RT ~ followup_beha * condition*Cue  +(1|ID) ,
                data  = tus_filtered, REML = FALSE); summary(model_rt9)
 
 
-#model10<-glmer(followup_beha_binary~ condition*feedback*RT +(1|ID) ,
-               #  data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model10)
+model10<-glmer(followup_beha_binary~ condition*feedback*RT +(1|ID) ,
+                data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model10)
+
+model_rt11<-lmer(log_RT ~ followup_beha * condition*req_action*OutValence  +(1|ID) ,
+               data  = tus_filtered, REML = FALSE); summary(model_rt11)
+
+
+model_rt11.a<-lmer(log_RT ~ followup_beha * condition*feedback  +(1|ID) ,
+               data  = tus_filtered, REML = FALSE); summary(model_rt11.a)
+
+model_rt11.b<-lmer(log_RT ~  condition*feedback  +(1|ID) ,
+               data  = tus_filtered, REML = FALSE); summary(model_rt11.b)
 ```
 
 
@@ -628,7 +659,7 @@ modelrt18 <- lmer(log_RT ~ reward* condition  + (1|ID),
 
 
 # nothing per condition, they were all affected equally for actual reward
-modelrt19 <- lmer(log_RT ~ reward* condition  + (1|ID), 
+modelrt19 <- lmer(log_RT ~ reward* condition*Cue  + (1|ID), 
                    data  = tus_filtered, REML = FALSE); summary(modelrt19)
 
 
