@@ -389,6 +389,115 @@ tus <- tus %>%
 
 ```
           
+     #4 columns added response before followup_beha abd before followu_beha_reward and their binary equivalent       
+          
+```{r}
+# Create a new column for previous response before followup_beha
+tus_filtered <- tus_filtered %>%
+  group_by(ID, condition, Cue, req_action) %>%
+  mutate(previous_beha = lag(followup_beha, order_by = trial_number, default = NA))
+
+# Recode followup_beha as binary (0 for "no_press" and 1 for "press")
+tus_filtered$previous_beha <- as.numeric(tus_filtered$previous_beha == "press")
+
+# Check the recoded variable
+table(tus_filtered$previous_beha_binary)
+
+
+
+
+# Create a new column for previous response before followup_beha_reward
+tus_filtered <- tus_filtered %>%
+  group_by(ID, condition, Cue, req_action) %>%
+  mutate(previous_beha_reward = lag(followup_beha_reward, order_by = trial_number, default = NA))
+
+# Recode followup_beha as binary (0 for "no_press" and 1 for "press")
+tus_filtered$previous_beha_reward <- as.numeric(tus_filtered$previous_beha_reward == "press")
+
+# Check the recoded variable
+table(tus_filtered$previous_beha_binary)
+
+# Print head of the dataframe to verify
+head(tus_filtered[, c("response", "followup_beha", "previous_beha", "followup_beha_reward", "previous_beha_reward"), 20])
+
+
+
+
+
+
+
+
+
+#plot: - not sure if what i am doing correct. i want to try and do what hanneke said. 
+  #proportion of presses after different kind of feedback and what was their response (proportion of presses before) that action
+
+# Your data preparation code
+# Filter out rows with NA in response
+tus_filtered <- tus_filtered %>%
+  filter(!is.na(response))
+
+# Filter out rows where followup_beha or previous_response_beha is no_press
+filtered_data <- tus_filtered %>%
+  filter(followup_beha != "no_press" & previous_response_beha != "no_press")
+
+# Calculate proportion of presses for followup_beha
+proportions_followup <- filtered_data %>%
+  group_by(condition, feedback, followup_beha) %>%
+  summarise(prop_followup = mean(response == "press")) %>%
+  ungroup()
+
+# Calculate proportion of presses for previous_response_beha
+proportions_previous <- filtered_data %>%
+  group_by(condition, feedback, previous_response_beha) %>%
+  summarise(prop_previous = mean(response == "press")) %>%
+  ungroup()
+
+# Arrange data to calculate proportions of previous_response_beha before followup_beha
+arranged_data <- proportions_followup %>%
+  left_join(proportions_previous, by = c("condition", "feedback")) %>%
+  mutate(prop_previous_before_followup = lag(prop_previous, default = 0))
+
+# Create two separate plots
+plot1 <- ggplot(arranged_data, aes(x = feedback, y = prop_followup, fill = followup_beha)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ condition, scales = "free") +
+  labs(title = "Proportion of Presses for followup_beha after each Feedback",
+       x = "Feedback", y = "Proportion of Presses") +
+  scale_fill_manual(values = c("press" = "lightblue")) +  # Exclude no_press from fill colors
+  theme_minimal()
+
+plot2 <- ggplot(arranged_data, aes(x = feedback, y = prop_previous_before_followup, fill = previous_response_beha)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ condition, scales = "free") +
+  labs(title = "Proportion of Presses for previous_response_beha before followup_beha",
+       x = "Feedback", y = "Proportion of Presses") +
+  scale_fill_manual(values = c("press" = "lightblue")) +  # Exclude no_press from fill colors
+  theme_minimal()
+
+# Combine plots using grid.arrange from gridExtra
+combined_plot <- grid.arrange(plot1, plot2, ncol = 2)
+
+# Display the combined plot
+print(combined_plot)
+
+
+
+
+
+
+
+#new trial
+tus_filtered$previous_response_beha <- as.factor(tus_filtered$previous_response_beha)
+tus_filtered$followup_beha <- as.factor(tus_filtered$followup_beha)
+summary_data <- tus_filtered %>%
+  group_by(feedback) %>%
+  summarise(
+    Mean_Behavior_Before = mean(previous_response_beha, na.rm = TRUE),
+    Mean_Follow_Up_Behavior = mean(followup_beha, na.rm = TRUE)
+  )
+
+```
+          
           
           RT_min column - replacing 0s to 0.001
 ```{r}
@@ -455,64 +564,21 @@ summary <- tus %>%
 ```
  
  
-      #plot of the above per Cue (IES_by_cond_cue)
-```{r}
-library(ggplot2)
-
-# Filter data for cues GW and GAL
-GW_GAL_data <- filter(IES_by_cond_cue, Cue %in% c("GW", "GAL"))
-
-# Create plot for cues GW and GAL
-plot_GW_GAL <- ggplot(GW_GAL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
-  labs(title = "Mean IES for Go Cues by Condition",
-       x = "Condition",
-       y = "Mean IES",
-       fill = "Cue") +
-  theme_minimal() +
-  coord_cartesian(ylim = c(400, NA)) +
- facet_wrap(~ Cue, scales = "free_y")
-
-# Filter data for cues NGW and NGL
-NGW_NGL_data <- filter(IES_by_cond_cue, Cue %in% c("NGW", "NGL"))
-
-# Create plot for cues NGW and NGL
-plot_NGW_NGL <- ggplot(NGW_NGL_data, aes(x = condition, y = mean_IES, fill = Cue)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = mean_IES - sd_IES, ymax = mean_IES + sd_IES), width = 0.2, position = position_dodge(0.9)) +
-  labs(title = "Mean IES for noGo Cues by Condition",
-       x = "Condition",
-       y = "Mean IES",
-       fill = "Cue") +
-  theme_minimal() +
-  coord_cartesian(ylim = c(0, NA))+
- facet_wrap(~ Cue, scales = "free_y")
-
-# Display plots
-plot_GW_GAL
-plot_NGW_NGL
-
-
-
-#plot IES by condition only
-   #no, plot is not good or correct as sd is from 0.001 for ngw cues to high. so better seperate by go vs nogo cues
-
-
-```
- 
-
 
       #EXCLUSIONS AND SUBSETS
 
-
 #Exlusion 3SDs still 32 participants
+#Exclude 3SDs per condition
+#Excluding 4th block for JAKA0154 DACC, SSHHW0093 DACC, SINB0180 AI and SKKY0189 because it contains NAs
+#Exclude any trials that Cue presented >20
+#Exclude RTs<200ms (only a few 4,5 instances)
+# decide what else
 
 
 Columns:
 
 1. "mean_accuracy" column per participant
-2. "excluded" column to shor whether included or excluded
+2. "excluded" column to show whether included or excluded
 ```{r}
 # Calculate mean accuracy per participant
 mean_accuracy_per_participant <- tus %>%
@@ -679,10 +745,23 @@ tus_filtered <- tus_filtered %>%
   group_by(ID, condition, block, Cue) %>%
   filter(TrialCount <= 20) %>%
   ungroup()
+```
+
+
+
+   #exclude RTs below 200ms
+   
+```{r}
+tus_filtered <- tus_filtered %>%
+  filter(!(RT <= 200 & response == "press"))
 
 View(tus_filtered)
 ```
 
+   
+   
+   
+   
 #view conditions by cue per id
 ```{r}
 
@@ -719,7 +798,7 @@ View(presses_per_cue)
 write.csv(tus, "GNG_TUS_S1.csv")
 
 #working on this one at the moment - some exclusions, see comment next to it
-write.csv(tus_filtered, "GNG_tus_filtered_S1.csv") # 4blocks with inconsistencies for some and any trials that cue is presented over 20 times per block (exclude also 3 conds eemr and sinb)
+write.csv(tus_filtered, "GNG_tus_filtered_S1.csv") # excluded: 4blocks with inconsistencies for some and any trials that cue is presented over 20 times per block, also RTs<200ms
 
 ```
 
