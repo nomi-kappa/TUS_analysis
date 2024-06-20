@@ -15,19 +15,22 @@
      1 block = 80 trials
      4 blocks = 320 trials
    
-***To avoid running preprocessing download the GNG_TUS_S1.csv file. inside the TUS_BEHA_320trials_STUDY_1 folder***
+***To avoid running preprocessing download the following .csv files that can be found in the TUS_BEHA_320trials_STUDY_1 folder***
+- GNG_TUS_S1.csv file.  or the version with some exclusions
+- GNG_tus_filtered_S1.csv file
+
 
 YOU WILL NEED: 
 
 - EITHER 
 the three files for this study 
-1. GNG_TUS_Study_1_320trials_PREPROCESSING- where "GNG_TUS_S1.csv file" and the "GNG_tus_included_S1.csv are generated (the 2nd excludes some blocks due to technical problems), 
+1. GNG_TUS_Study_1_320trials_PREPROCESSING- where "GNG_TUS_S1.csv file" and the "GNG_tus_included_S1.csv are generated (the 2nd has exclusions and this is the best to download), 
 2. GNG_TUS_Study_1_320trials_PROCESSING and 
 3. GNG_TUS_Study_1_320trials_ANALYSIS 
 
 
 - OR
-1. THE GNG_TUS_S1.csv file and 
+1. THE GNG_TUS_S1.csv file  or the GNG_tus_included_S1.csv file and 
 2. GNG_TUS_Study_1_320trials_PROCESSING and 
 3. GNG_TUS_Study_1_320trials_ANALYSIS 
 
