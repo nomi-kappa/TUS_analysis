@@ -5,20 +5,6 @@ date: "2023-10-31"
 output: html_document
 ---
 
-#READ FILE
-```{r setup, include=FALSE}
-library(readr)
-tus <- read_csv("GNG_TUS_S1.csv")
-#tus_included<- read_csv("GNG_tus_included_S1.csv")
-#tus_included_without_biggerthan20<- read_csv("GNG_tus_included_without_biggerthan20_S1.csv")
-
-#tus_filtered_ex<- read_csv ("tus_filtered_ex.csv")
-
-tus_filtered<- read_csv ("GNG_tus_filtered_S1.csv")
-
-
-```
-
 #Load libraries
 ```{r}
 library(lmerTest)
@@ -44,7 +30,24 @@ library(MuMIn)
 library(AICcmodavg)#https://www.scribbr.com/statistics/akaike-information-criterion/#:~:text=Once%20you've%20created%20several,be%20the%20better%2Dfit%20model.
 #help to interpret results from AICmodavg
 library(lspline)
+library(moments)
 ```
+
+
+#READ FILE
+```{r setup, include=FALSE}
+library(readr)
+tus <- read_csv("GNG_TUS_S1.csv")
+#tus_included<- read_csv("GNG_tus_included_S1.csv")
+#tus_included_without_biggerthan20<- read_csv("GNG_tus_included_without_biggerthan20_S1.csv")
+
+#tus_filtered_ex<- read_csv ("tus_filtered_ex.csv")
+
+tus_filtered<- read_csv ("GNG_tus_filtered_S1.csv")
+
+
+```
+
 
 #Analysis
 
@@ -72,13 +75,13 @@ tus_filtered <- within(tus_filtered, req_action <- relevel(req_action, ref = "no
 ```
            
            
-           #WAY_1        
+           #WAY_1 - automatically is creating/looking/combining models
 ```{r}
 #Equivalent of stepAIC for glmer - comparing models - do not like it
 
 
 # List of fixed effects
-fixed_effects <- c("OutValence", "req_action", "condition", "trial_number")
+fixed_effects <- c("OutValence", "req_action", "condition", "trial_number", "response", "Cue")
 
 # Generate all possible combinations of two-way interactions
 interaction_terms_2way <- combn(fixed_effects, 2, simplify = FALSE) %>%
@@ -128,10 +131,9 @@ if (length(interaction_terms) == 0) {
         #WAY_2 - choose tus or tus_included data set
 ```{r}
 
-# Step 1: Fit a series of GLM models (good models without the overfitted: 4 and 9 and 9.b is decent 8, 7, 6, 3, 1 (5 nearly unidentifiable))
-           #REML = FALSE
-        
- 
+# Step 1: Fit a series of GLM models #REML = FALSE
+
+
 #all main effects are significant 
 model1 <- glmer(correct ~ OutValence + req_action + condition +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model1)
@@ -145,14 +147,15 @@ model3 <- glmer(correct ~ OutValence * condition + req_action  + trial_number +(
 model3.a <- glmer(correct ~ condition*OutValence*trial_number +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model3.a)
 
-
 #good
 model3.b <- glmer(correct ~ OutValence * condition +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.b) 
 
-model3.c <- glmer(correct ~ req_action * condition*trial_number +(1|ID) , 
+model3.c <- glmer(correct ~ req_action * condition * trial_number +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.c) 
 
+model3.d <- glmer(correct ~ OutValence*response +(1|ID) , 
+                 data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.d) 
 
 #relatively good
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
@@ -277,12 +280,11 @@ summ(model1)
 ```
 
       
-      #followup_beha
+      #followup_beha  - ******discuss and help - not sure what to run******
 
 ```{r}
 tus$ID <- factor(tus$ID)
 sum(is.na(tus$ID))
-
 
 tus_filtered$ID <- factor(tus_filtered$ID)
 sum(is.na(tus_filtered$ID))
@@ -386,8 +388,6 @@ model31 <- glmer(followup_beha_reward ~condition*OutValence*req_action  + (1|ID)
 model32 <- glmer(followup_beha_reward ~condition*Cue  + (1|ID), 
                    data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model32)
 
-model22.b<-glmer(followup_beha_binary ~ reward * condition   +(1|ID) ,
-                 data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model22.b)
 ```
      
      
@@ -409,12 +409,16 @@ model22.b<-glmer(followup_beha_binary ~ reward * condition   +(1|ID) ,
 
 #RTs
 
- #Log
+  #Log
+ 
+          #log10(max(x+1) - x) #for negatively skewed data --> lm_test_nogo %>% mutate(log_rt = log10(max(rt + 1) - rt))
+          #log10(x) for positively skewed data,
 ```{r}
-library(moments)
 # Add a small constant to the RT column
 small_constant <- 0.0001  # Adjust as needed
+
 tus$RT <- tus$RT + small_constant
+
 skewness(tus$RT, na.rm = TRUE)
 
 # Calculate log_RT
@@ -422,45 +426,13 @@ tus <- tus %>%
   mutate(log_RT = log10(RT))
 
 
-    #log10(max(x+1) - x) #for negatively skewed data --> lm_test_nogo %>% mutate(log_rt = log10(max(rt + 1) - rt))
-    #log10(x) for positively skewed data,
-
-skewness(tus_included$RT, na.rm = TRUE)
-# Add a small constant to the data
-small_constant <- 0.0001  # Adjust as needed
-tus_included$RT <- tus_included$RT + small_constant
-tus_included <- tus_included %>%
-  mutate(log_RT = log10(RT))
-
-
-
-skewness(tus_included_without_biggerthan20$RT, na.rm = TRUE)
-# Add a small constant to the data
-small_constant <- 0.0001  # Adjust as needed
-tus_included_without_biggerthan20$RT <- tus_included_without_biggerthan20$RT + small_constant
-tus_included_without_biggerthan20 <- tus_included %>%
-  mutate(log_RT = log10(RT))
-
-skewness(tus_clean_allexs$RT, na.rm = TRUE)
-# Add a small constant to the data
-small_constant <- 0.0001  # Adjust as needed
-tus_clean_allexs$RT <- tus_clean_allexs$RT + small_constant
-tus_clean_allexs <- tus_clean_allexs %>%
-  mutate(log_RT = log10(RT))
-
-
+    
 skewness(tus_filtered$RT, na.rm = TRUE)
 # Add a small constant to the data
-small_constant <- 0.0001  # Adjust as needed
-tus_filtered$RT <- tus_filtered$RT + small_constant
-tus_filtered <- tus_filtered %>%
-  mutate(log_RT = log10(RT))
+small_constant <- 0.0001  #
 
-skewness(tus_filtered_ex$RT, na.rm = TRUE)
-# Add a small constant to the data
-small_constant <- 0.0001  # Adjust as needed
-tus_filtered_ex$RT <- tus_filtered_ex$RT + small_constant
-tus_filtered_ex <- tus_filtered_ex %>%
+tus_filtered$RT <- tus_filtered$RT + small_constant# Calculate log_RT
+tus_filtered <- tus_filtered %>%
   mutate(log_RT = log10(RT))
 ```
        
@@ -521,24 +493,8 @@ print(result)
      #WAY 2
 #comparing between three model. This looks to be the best "model_rt_tn" (model 2 and 3)
 ```{r}
-tus$req_action <- relevel(tus$req_action, ref = "noGo")
-
-tus_included$req_action <- as.factor(tus_included$req_action)
-tus_included$req_action <- relevel(tus_included$req_action, ref = "noGo")
-
-
-tus_included_without_biggerthan20$req_action <- as.factor(tus_included_without_biggerthan20$req_action)
-tus_included_without_biggerthan20$req_action <- relevel(tus_included_without_biggerthan20$req_action, ref = "noGo")
-
-tus_clean_allexs$req_action <- as.factor(tus_clean_allexs$req_action)
-tus_clean_allexs$req_action <- relevel(tus_clean_allexs$req_action, ref = "noGo")
-
 tus_filtered$req_action <- as.factor(tus_filtered$req_action)
 tus_filtered$req_action <- relevel(tus_filtered$req_action, ref = "noGo")
-
-tus_filtered_ex$req_action <- as.factor(tus_filtered_ex$req_action)
-tus_filtered_ex$req_action <- relevel(tus_filtered_ex$req_action, ref = "noGo")
-
 
 #conditionb.dacc                             1.938e-01  7.744e-02  2.668e+04   2.503 0.012327 *  slower
 #req_actionGo:OutValenceWin                 -3.836e-01  1.080e-01  2.667e+04  -3.550 0.000385 *** faster
@@ -612,8 +568,16 @@ model_rt9<-lmer(log_RT ~ followup_beha * condition*Cue  +(1|ID) ,
                data  = tus_filtered, REML = FALSE); summary(model_rt9)
 
 
-model10<-glmer(followup_beha_binary~ condition*feedback*RT +(1|ID) ,
-                data  = tus, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model10)
+model_rt10<-glmer(followup_beha_binary~ condition*feedback*RT +(1|ID) ,
+                data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model_rt10)
+
+
+model_rt10.a<-glmer(followup_beha_binary~ condition*OutValence*req_action*log_RT +(1|ID) ,
+                data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model_rt10.a)
+
+model_rt10.b<-glmer(followup_beha_binary~ condition*Cue*log_RT +(1|ID) ,
+                data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(model_rt10.b)
+
 
 model_rt11<-lmer(log_RT ~ followup_beha * condition*req_action*OutValence  +(1|ID) ,
                data  = tus_filtered, REML = FALSE); summary(model_rt11)
@@ -665,55 +629,12 @@ modelrt19 <- lmer(log_RT ~ reward* condition*Cue  + (1|ID),
 
 modelrt20 <- lmer(log_RT ~ followup_beha_reward* condition*Cue  + (1|ID), 
                    data  = tus_filtered); summary(modelrt20)
-``````
 
-#anovaBF for RTs
-predictors with + :  effects are assumed to be additive and independent of each other.
-predictors with * :  possibility the effect of one predictor on the outcome variable may vary depending on the level of another predictor -aptures the synergistic or conditional effects of predictors 
-```{r}
-#run anovaBF IV = req_action and condition
-# Calculate Bayes factors with specified number of iterations
-rt_1 <- anovaBF( formula = log_RT ~ condition*Cue + ID, data = tus,  whichRandom = "ID", progress = FALSE, iterations = 3000); summary (rt_1) # refers to the number of Monte Carlo samples used for approximation when computing Bayes factors. It specifies the number of samples used to estimate the marginal likelihoods of the models being compared.each iteration corresponds to one random sample drawn from the posterior distribution. By increasing the number of iterations, you obtain a more accurate approximation of the integral, leading to more precise estimates of the marginal likelihoods and, consequently, more reliable Bayes factors for model comparison. "Iterations" refers to the number of times the computer repeats a specific calculation to make sure it's accurate.unning a simulation or experiment. By doing it multiple times (more iterations), we can get a more reliable answer.
-rt_1_inter<-rt_1[4]/rt_1[3]; summary(rt_1_inter) #2.299506 ±2.95% #large variation that's why I used iterations above
-
-
-rt_2<-anovaBF(log_RT ~ condition*Cue*block  + ID, data = df, whichRandom = "ID",
-   progress=FALSE, iterations = 3000); summary (rt_2)
-rt_2[10]/rt_2[4] 
-
-
- rt <-anovaBF(log_RT ~ req_action*OutValence*condition  + ID, data = df, whichRandom = "ID",
-   progress=FALSE)
-rt[17]/rt[13] 
- rt[18]/rt[13] 
- rt[18]/rt[17] 
-summary(rt)
-ratios<-rt/max(rt);ratios#best models as denominator to so the closest ones 13, 14, 15, 17, 18, 16, 12, 11
-
-
-
-#or
-# Remove rows with missing values in 'RT'
-tus <- na.omit(tus)
-# Convert 'ID' to factor if it's not already a factor
-if (!is.factor(tus$ID)) {
-  tus$ID <- as.factor(tus$ID)
-}
-
-# Calculate Bayes factors for each model using the 'tus' dataset
-bf_13 <- lmBF(log_RT ~ req_action + OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_15 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_17 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + ID, data = tus, whichRandom = "ID")
-bf_18 <- lmBF(log_RT ~ condition + req_action + condition:req_action + OutValence + condition:OutValence + req_action:OutValence + condition:req_action:OutValence + ID, data = tus, whichRandom = "ID")
-
-# Extract Bayes factors
-bf_values <- c(bf_13, bf_15, bf_17, bf_18)
-
-# Compare Bayes factors
-bf_values / max(bf_values)
-
+modelrt21<-glmer(followup_beha_binary~ condition*Cue*log_RT +(1|ID) ,
+                data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modelrt21)
+modelrt22<-glmer(followup_beha_binary~ condition*req_action*OutValence*log_RT +(1|ID) ,
+                data  = tus_filtered, family="binomial",  glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))); summary(modelrt22)
 ```
-
 
 
 
@@ -727,10 +648,11 @@ model_ies2 <- lmer(IES ~ condition*Cue +trial_number +(1|ID) ,
 
 model_ies3 <- lmer(IES ~ condition*Cue*trial_number +(1|ID) , 
                  data  = tus_filtered );summary(model_ies3) 
+
+
+model_ies4<- lmer(IES ~ condition*req_action*OutValence +(1|ID) , 
+                 data  = tus_filtered );summary(model_ies4) 
 ```
-
-
-
 
 
 

@@ -184,7 +184,7 @@ ggplot(MeanGoResp) +
 ```
      
      
-     #raw trial_by_trial
+     #trial_by_trial behaviour without smooth
      
 ```{r}
 #raw trial-by-trial
@@ -391,7 +391,7 @@ rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
 
 
 
-      #proportion of GO response per type of Stimulation (sham, ai, dACC) - RAW
+  #proportion of GO response per type of Stimulation (sham, ai, dACC) - no smooth
 
 ```{r}
 #AI - 
@@ -758,6 +758,10 @@ cues_r
 ```
 
 
+
+
+# ACCURACY PLOTS 
+
 ## Probability of correct per participant ***IS THAT CORRECT?***
 ```{r}
 tus_correct<-tus_filtered %>%  group_by(ID, Valence=OutValence,condition, Action=req_action) %>% summarise(correct = mean(correct))
@@ -839,8 +843,8 @@ ggplot(tus_correct, aes(x = Action, y = correct, fill = Valence)) +
 ```
 
 
-# ACCURACY PLOTS 
-### proportion of correct per participant per condition ***IMPORTANT FOR THE GW FOR THE AI***
+### more accuracy plots
+#proportion of correct per participant per condition ***IMPORTANT FOR THE GW FOR THE AI***
 
 ```{r}
 # 1. Rename the column in your dataframe
@@ -905,8 +909,8 @@ merged_data <- merged_data %>% na.omit()
 
 
 # Calculate the minimum and maximum y-values in your data
-            #y_min <- min(summary_data$mean_correct - summary_data$se_correct)
-            #y_max <- max(summary_data$mean_correct + summary_data$se_correct)
+          y_min <- min(summary_data$mean_correct - summary_data$se_correct)
+          y_max <- max(summary_data$mean_correct + summary_data$se_correct)
 
 # Create a ggplot with error bars, bars, data points, and facets
 ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = condition)) +
@@ -915,7 +919,7 @@ ggplot(data = summary_data, aes(x = condition, y = mean_correct, fill = conditio
   geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.5, alpha = 0.5) +
 
   # Use merged_data for geom_point instead of tus
-  geom_point(data = merged_data, aes(x = condition, y = mean_correct, color = condition),
+  geom_point(data = merged_data, aes(x = condition, y = mean_correct.y, color = condition),
              position = position_dodge(width = 0.75), size = 1)+
   geom_text(aes(label = round(mean_correct, 3)), vjust = -3, position = position_dodge(width = 0.75)) +
   facet_grid(req_action ~ OutValence) +
@@ -971,6 +975,8 @@ ggplot(tus_filt, aes(x = condition, y = correct, fill = condition)) +
 
 
 ```
+
+
 
 
 
@@ -1094,31 +1100,7 @@ g_plot<-ggplot(data = summary_data_rt, aes(x = condition, y = mean_rt, fill = co
 ```
 
 
-## performance per participant
-```{r}
-#summary - correct Cues
-ggplot(tus_filtered,
-       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
-  geom_bar(stat = "identity")
 
-#correct counts per Cue
-ccc<-tus_filtered %>% group_by (Cue)%>% count (correct);View (ccc)
-
-#correct counts per Cue per ID
-ccc_id<-tus_filtered %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
-
-#correct per ID
-c<-tus_filtered %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
-
-#response per ID
-response_per_ppt <-tus_filtered %>% group_by (ID)%>% count (response);View (response_per_ppt)
-
-mean(c$n) #avg of 294 correct responses--> 
-          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
-```
-
-
-   
    
 #RT trial-by_trial behaviour 
 
@@ -1370,7 +1352,7 @@ plot_RT <- function(tus_filtered, Cue) {
   p <- ggplot(meanRT_data, aes(x = as.factor(TrialCount), y = meanRT, colour = condition, group = condition)) +
     geom_line() +
     geom_point() +
-  #  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = condition), alpha = 0.2, colour = NA) +  # Add shaded CI
+    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = condition), alpha = 0.2, colour = NA) +  # Add shaded CI
   #  scale_colour_manual(values = custom_palette) +  # Custom colors for conditions
     labs(y = "RT", x = "Trial", title = paste("Trial-by-trial behavior", Cue)) +
     theme_bw()
@@ -1402,7 +1384,30 @@ cues_rt
    
    
    
-   
+   ## performance per participant - just a bit of checking
+```{r}
+#summary - correct Cues
+ggplot(tus_filtered,
+       aes(x=Cue, y= correct, color = Cue, fill= Cue)) + 
+  geom_bar(stat = "identity")
+
+#correct counts per Cue
+ccc<-tus_filtered %>% group_by (Cue)%>% count (correct);View (ccc)
+
+#correct counts per Cue per ID
+ccc_id<-tus_filtered %>% group_by (Cue, ID)%>% count (correct);View (ccc_id)
+
+#correct per ID
+c<-tus_filtered %>% filter(correct == "1")%>% group_by (ID)%>% count (correct);c
+
+#response per ID
+response_per_ppt <-tus_filtered %>% group_by (ID)%>% count (response);View (response_per_ppt)
+
+mean(c$n) #avg of 294 correct responses--> 
+          #may be if a person has less than 230 or 210? correct responses --> CUT? or below 53? see below aggregate
+```
+
+
 
 ## PROPORTIONs - correct PER PARTCIPANT
 ```{r}
@@ -1461,8 +1466,6 @@ ggplot(df_rt_id, aes(x = condition, y = mean_acc, color = ID, group = ID)) +
  
  Accuracy connected with dots per ID -- I need to translate it to bar plots with dots connected 
 ```{r}
-
-
 # Summarize the data with mean accuracy
 df_acc_id <- tus_filtered %>%
   group_by(ID, condition, req_action, OutValence) %>%
@@ -1503,10 +1506,6 @@ combined_plot <- wrap_plots(plots) + plot_layout(ncol = 1)
 
 # Display the combined plot
 print(combined_plot)
-
-
-
-
 ```
  
  
@@ -1560,7 +1559,6 @@ ggplot(df_rt, aes(x = condition, y = mean_RT, color = ID, group = ID)) +
  
  RTs connected with dots per ID
 ```{r}
-
 # Summarize the data with mean reaction time
 df_rt <- tus_filtered %>%
   group_by(ID, condition, req_action, OutValence) %>%
@@ -1601,12 +1599,12 @@ combined_rt <- wrap_plots(plots) + plot_layout(ncol = 1)
 
 # Display the combined plot
 print(combined_rt)
-
-
 ```
  
 
 ##FOLLOW UP BEHAVIOUR - AFTER GENERAL FEEDBACK (all feedback - feedback column)
+
+         #plot_1
 ```{r}
 
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
@@ -1660,11 +1658,146 @@ ggplot(mean_proportion_feed_data_r, aes(x = condition, y = mean_proportion_r, fi
   theme_minimal() +
   scale_y_continuous(limits = c(0, 0.65), breaks = seq(0, 0.7, 0.1))  # Set y-axis limit and breaks
 
+```
 
 
+        #plot_2 - follow_up and immediate previous behaviour after feedback
+ #plot: - not sure if what i am doing correct. i want to try and do what hanneke said. 
+  #proportion of presses after different kind of feedback and what was their response (proportion of presses before) that action
+```{r}
+# Your data preparation code
+# Filter out rows with NA in response
+tus_filtered <- tus_filtered %>%
+  filter(!is.na(response))
+# Filter out rows where followup_beha or previous_response_beha is no_press
+#filtered_data <- tus_filtered %>%
+ # filter(followup_beha != "no_press" & previous_beha != "no_press")
+# Create the summary table for proportions_followup
+# Create the summary table for proportions_followup
+proportions_followup <- tus_filtered %>%
+  group_by(condition, feedback, followup_beha) %>%
+  summarise(n = n(), .groups = 'drop') %>%
+  mutate(prop_followup = if_else(is.na(followup_beha), NA_real_, n / sum(n, na.rm = TRUE)))
 
-                                  #accuracy
+# Ensure all combinations of condition, feedback, and followup_beha are present
+all_combinations <- expand.grid(
+  condition = unique(tus_filtered$condition),
+  feedback = unique(tus_filtered$feedback),
+  followup_beha = c("no_press", "press", NA)
+)
 
+# Convert followup_beha to character to match the format in all_combinations
+proportions_followup <- proportions_followup %>%
+  mutate(followup_beha = as.character(followup_beha))
+
+# Join with all_combinations to ensure all combinations are present
+proportions_followup <- all_combinations %>%
+  left_join(proportions_followup, by = c("condition", "feedback", "followup_beha")) %>%
+  arrange(condition, feedback, followup_beha)
+
+# Fill NA in prop_followup where there is no data
+proportions_followup <- proportions_followup %>%
+  mutate(prop_followup = replace_na(prop_followup, 0))
+
+# Display the result
+print(proportions_followup)
+
+# Calculate proportion of presses for previous_response_beha
+# Create the summary table 
+proportions_previous <- tus_filtered %>%
+  group_by(condition, feedback, previous_beha) %>%
+  summarise(n = n(), .groups = 'drop') %>%
+  mutate(prop_previous = if_else(is.na(previous_beha), NA_real_, n / sum(n)))
+
+# Ensure all combinations of condition, feedback, and previous_beha are present
+all_combinations_previous <- expand.grid(
+  condition = unique(tus_filtered$condition),
+  feedback = unique(tus_filtered$feedback),
+  previous_beha = c("press", "no_press", NA)
+)
+
+# Convert previous_beha to character to match the format in all_combinations
+proportions_previous <- proportions_previous %>%
+  mutate(previous_beha = as.character(previous_beha))
+
+# Join with all_combinations to ensure all combinations are present
+proportions_previous <- all_combinations_previous %>%
+  left_join(proportions_previous, by = c("condition", "feedback", "previous_beha")) %>%
+  arrange(condition, feedback, previous_beha)
+
+# Fill NA in prop_previous where there is no data
+proportions_previous <- proportions_previous %>%
+  mutate(prop_previous = replace_na(prop_previous, 0))
+
+# Display the result
+print(proportions_previous)
+
+  
+  
+  
+  # Arrange data to calculate proportions of previous_response_beha before followup_beha
+arranged_data <- proportions_followup %>%
+  left_join(proportions_previous, by = c("condition", "feedback")) %>%
+  mutate(prop_previous_before_followup = lag(prop_previous, default = 0))
+
+# Create the first plot
+plot1 <- ggplot(arranged_data, aes(x = feedback, y = prop_followup, fill = followup_beha)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ condition, scales = "fixed") +
+  labs(title = "Proportion of Presses for followup_beha after each Feedback",
+       x = "Feedback", y = "Proportion of Presses") +
+  scale_fill_manual(values = c("press" = "lightblue", "no_press" = "grey")) +
+  theme_minimal()
+
+# Create the second plot
+plot2 <- ggplot(arranged_data, aes(x = feedback, y = prop_previous_before_followup, fill = previous_beha)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ condition, scales = "fixed") +
+  labs(title = "Proportion of Presses for previous_response_beha before followup_beha",
+       x = "Feedback", y = "Proportion of Presses") +
+  scale_fill_manual(values = c("press" = "pink", "no_press" = "grey")) +
+  theme_minimal()
+
+# Combine plots using grid.arrange from gridExtra
+combined_plot <- grid.arrange(plot2, plot1, ncol = 2)
+
+# Display the combined plot
+print(combined_plot)
+
+#and
+# Combine followup and previous data, ensuring type 'previous' is first
+combined_data <- proportions_previous %>%
+  rename(behavior = previous_beha, proportion = prop_previous) %>%
+  mutate(type = "previous") %>%
+  bind_rows(proportions_followup %>%
+              rename(behavior = followup_beha, proportion = prop_followup) %>%
+              mutate(type = "followup"))
+
+# Filter out NA values in behavior
+combined_data <- combined_data %>%
+  filter(!is.na(behavior))
+
+# Arrange data so that 'previous' behaviors come before 'followup' behaviors
+combined_data <- combined_data %>%
+  arrange(type)
+
+# Create the combined plot
+combined_plot <- ggplot(combined_data, aes(x = feedback, y = proportion, fill = interaction(type, behavior))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  facet_wrap(~ condition, scales = "fixed") +
+  labs(title = "Proportion of Presses for previous and followup behaviors by Feedback",
+       x = "Feedback", y = "Proportion of Presses") +
+  scale_fill_manual(values = c("previous.press" = "purple", "previous.no_press" = "pink",
+                               "followup.press" = "steelblue2", "followup.no_press" = "lightblue")) +
+  theme_minimal()
+
+# Display the combined plot
+print(combined_plot)
+```
+                 
+
+                        #accuracy and follow_up - after feedback [*****correct this to show previous behav as well]
+```{r}
 # A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 accuracy_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha", "correct", "condition"))
 
@@ -1711,47 +1844,8 @@ ggplot(accuracy_data, aes(x = feedback, y = correct, fill = followup_beha)) +
 
 
 
-           #mean RT after different types of feedback
-```{r}
-#A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
-rt_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha","condition", "RT", "req_action", "OutValence"))
 
-# Exclude NA values
-rt_data <- na.omit(rt_data)
-
-# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT
-ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
-  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
-  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
-       x = "Feedback", y = "Mean Reaction Time") +
-  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
-  theme_minimal()+
-  coord_cartesian(ylim = c(0, 600))
-
-# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
-ggplot(rt_data, aes(x = feedback, fill = feedback, y = RT)) +
-  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
-  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
-       x = "Feedback", y = "Mean Reaction Time") +
-  scale_fill_manual(values = c("lose" = "pink", "win" = "lightgreen", neutral ="lightyellow")) +
-  theme_minimal()+
-  facet_wrap(~req_action*condition)+
-  coord_cartesian(ylim = c(0, 600))
-
-
-# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
-ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
-  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
-  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
-       x = "Feedback", y = "Mean Reaction Time") +
- scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
-  theme_minimal()+
-  facet_wrap(~condition)+
-  coord_cartesian(ylim = c(0, 600))
-            
-```
-
-   # foolow_up beha per cue interesting
+       # follow_up beha per cue interesting [*****correct this to show previous behav as well]
 ```{r}
 # Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), 
@@ -1792,9 +1886,49 @@ ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_b
   scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
   theme_minimal() +
   scale_y_continuous(limits = c(0, 0.7), breaks = seq(0, 1, 0.1))  # Set y-axis limit and breaks
+```
 
 
 
+
+           #mean RT after different types of feedback [****correct this to show previous RT as well]
+```{r}
+#A# Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
+rt_data <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_beha","condition", "RT", "req_action", "OutValence"))
+
+# Exclude NA values
+rt_data <- na.omit(rt_data)
+
+# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT
+ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
+       x = "Feedback", y = "Mean Reaction Time") +
+  scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  theme_minimal()+
+  coord_cartesian(ylim = c(0, 600))
+
+# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
+ggplot(rt_data, aes(x = feedback, fill = feedback, y = RT)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
+       x = "Feedback", y = "Mean Reaction Time") +
+  scale_fill_manual(values = c("lose" = "pink", "win" = "lightgreen", neutral ="lightyellow")) +
+  theme_minimal()+
+  facet_wrap(~req_action*condition)+
+  coord_cartesian(ylim = c(0, 600))
+
+
+# Create a grouped bar plot showing the mean of reaction times after each type of feedback for RT per condition
+ggplot(rt_data, aes(x = feedback, fill = followup_beha, y = RT)) +
+  geom_bar(position = "dodge", color = "black", stat = "summary", fun = "mean") +
+  labs(title = "Mean Reaction Time after Different Types of Feedback (RT)",
+       x = "Feedback", y = "Mean Reaction Time") +
+ scale_fill_manual(values = c("press" = "lightgreen", "no_press" = "pink")) +
+  theme_minimal()+
+  facet_wrap(~condition)+
+  coord_cartesian(ylim = c(0, 600))
+            
 ```
 
 
@@ -1802,12 +1936,12 @@ ggplot(mean_proportion, aes(x = feedback, y = mean_proportion, fill = followup_b
 
 
 
-
+  ####KEEP FOR FUTURE - NOT IN USE AT THE MOMENT#####
+  
 
 ##FOLLOW UP BEHAVIOUR CORRECT FEEDBACK
 
 ```{r}
-
    #Filter data for rows where feedback is "win", "lose", or "neutral" and select relevant columns
 feedback_data_r <- subset(tus_filtered, feedback %in% c("win", "lose", "neutral"), select = c("feedback", "followup_correctfeed", "condition"))
 
@@ -1895,31 +2029,123 @@ ggplot(mean_proportion_rcue, aes(x = feedback, y = mean_proportion_rcue, fill = 
   scale_y_continuous(limits = c(0, 0.4), breaks = seq(0, 0.4, 0.1))  # Set y-axis limit and breaks
 
 ```
-
-RTs reward
-```{r}
-
-```
+ ####################
 
 
 
 
 ALSO DO
 
--	a) follow up behaviour after unsuccessfull stop (pressed while a noGo) and 
--	b) follow up behaviour after positive or after correct feedback (80% of the cases, as the other 20% was a random opposite feedback). !!!--.> 
+-	a)**** follow up behaviour after unsuccessfull stop (pressed while a noGo) and 
+-	b) follow up behaviour after positive or *****after correct feedback (80% of the cases, as the other 20% was a random opposite feedback). !!!--.> 
 
 Cai and colleagues (2014): (1) rAI and salience networks may contribute to inhibitory control by detecting salient stopping events; 
-- c) Go Cues behaviour (there is something going on in my data for sure, and (2) rAI and salience networks may directly recruit inhibition by slowing down responses after salient events 
+- c) Go Cues behaviour (there is something going on in my data for sure, and (2) rAI and salience networks may directly recruit inhibition by slowing down responses after salient events [!!!!In my data the slow down after punishment!!! also slowing down after "lose"]
 - d) RTs followup after positive or negative feedback maybe, found for WIN only?  GW, NGW, GAL, NGL ? As, GW and NGW more salient that is why AI significant and GW more presses for AI? 
--	E) follow up after positive and negative feedback only	
+-	E) follow up after positive and negative feedback only***do previous beha as well	
 -	
 
 
-#REWARD accuracy
+#REWARD follow_up beha and previous
+
+          
+  #proportion of presses after different kind of reward and what was their response (proportion of presses before) that action
 ```{r}
+# Calculate proportion of rewards for followup_beha_reward
+proportions_followup <- tus_filtered %>%
+  group_by(condition, reward, followup_beha_reward) %>%
+  summarise(n = n(), .groups = 'drop') %>%
+  mutate(prop_followup = if_else(is.na(followup_beha_reward), NA_real_, n / sum(n, na.rm = TRUE)))
+
+# Ensure all combinations of condition, feedback, and followup_beha_reward are present
+all_combinations_followup <- expand.grid(
+  condition = unique(tus_filtered$condition),
+  reward = unique(tus_filtered$reward),
+  followup_beha_reward = c("press", "no_press", NA)
+)
+
+# Convert followup_beha_reward to character to match the format in all_combinations
+proportions_followup <- proportions_followup %>%
+  mutate(followup_beha_reward = as.character(followup_beha_reward))
+
+# Join with all_combinations to ensure all combinations are present
+proportions_followup <- all_combinations_followup %>%
+  left_join(proportions_followup, by = c("condition", "reward", "followup_beha_reward")) %>%
+  arrange(condition, reward, followup_beha_reward)
+
+# Fill NA in prop_followup where there is no data
+proportions_followup <- proportions_followup %>%
+  mutate(prop_followup = replace_na(prop_followup, 0))
+
+# Display the result
+print(proportions_followup)
+
+# Calculate proportion of rewards for previous_beha_reward
+proportions_previous <- tus_filtered %>%
+  group_by(condition, reward, previous_beha_reward) %>%
+  summarise(n = n(), .groups = 'drop') %>%
+  mutate(prop_previous = if_else(is.na(previous_beha_reward), NA_real_, n / sum(n, na.rm = TRUE)))
+
+# Ensure all combinations of condition, feedback, and previous_beha_reward are present
+all_combinations_previous <- expand.grid(
+  condition = unique(tus_filtered$condition),
+  reward = unique(tus_filtered$reward),
+  previous_beha_reward = c("press", "no_press", NA)
+)
+
+# Convert previous_beha_reward to character to match the format in all_combinations
+proportions_previous <- proportions_previous %>%
+  mutate(previous_beha_reward = as.character(previous_beha_reward))
+
+# Join with all_combinations to ensure all combinations are present
+proportions_previous <- all_combinations_previous %>%
+  left_join(proportions_previous, by = c("condition", "reward", "previous_beha_reward")) %>%
+  arrange(condition, reward, previous_beha_reward)
+
+# Fill NA in prop_previous where there is no data
+proportions_previous <- proportions_previous %>%
+  mutate(prop_previous = replace_na(prop_previous, 0))
+
+# Display the result
+print(proportions_previous)
 
 
+# Combine followup and previous data
+combined_data <- proportions_previous %>%
+  rename(behavior = previous_beha_reward, proportion = prop_previous) %>%
+  mutate(type = "previous") %>%
+  bind_rows(proportions_followup %>%
+              rename(behavior = followup_beha_reward, proportion = prop_followup) %>%
+              mutate(type = "followup"))
+
+# Filter out NA values in behavior
+combined_data <- combined_data %>%
+  filter(!is.na(behavior))
+
+# Arrange data so that 'previous' behaviors come before 'followup' behaviors
+combined_data <- combined_data %>%
+  arrange(type) #is not doing it
+
+# Create the combined plot
+combined_plot <- ggplot(combined_data, aes(x = reward, y = proportion, fill = interaction(type, behavior))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  facet_wrap(~ condition, scales = "fixed") +
+  labs(title = "Proportion of Rewards for previous and followup behaviors by Reward",
+       x = "Reward", y = "Proportion of Rewards") +
+  #scale_fill_manual(values = c("previous.press" = "purple", "previous.no_press" = "pink",
+                            #   "followup.press" = "steelblue2", "followup.no_press" = "lightblue")) +
+  scale_fill_manual(values = c("previous.press" = "purple", "followup.press" = "steelblue2")) +
+  theme_minimal()
+
+# Display the combined plot
+print(combined_plot)
+```
+          
+
+
+
+RTs reward and fedback follow up [*****correct to include previous RT if needed]
+```{r}
 # Filter data
 tus_cl <- tus_filtered %>%
   filter(!is.na(Cue), !is.na(reward), !is.na(followup_beha_reward), !is.na(feedback))
@@ -1959,4 +2185,5 @@ print(grouped_barplotf)
 
 
 ```
+
 

@@ -389,116 +389,38 @@ tus <- tus %>%
 
 ```
           
-     #4 columns added response before followup_beha abd before followu_beha_reward and their binary equivalent       
-          
+     #4 columns added response before followup_beha  before followu_beha_reward and their binary equivalent 
+      
+           # for the follow_up beha something is going on with the neutral feedback for the ai. In general they are pressing more.
 ```{r}
-# Create a new column for previous response before followup_beha
+# 'followup_beha' and 'followup_beha_reward' need to be factors
+# Create binary column for previous response before followup_beha
 tus_filtered <- tus_filtered %>%
   group_by(ID, condition, Cue, req_action) %>%
-  mutate(previous_beha = lag(followup_beha, order_by = trial_number, default = NA))
-
-# Recode followup_beha as binary (0 for "no_press" and 1 for "press")
-tus_filtered$previous_beha <- as.numeric(tus_filtered$previous_beha == "press")
-
-# Check the recoded variable
-table(tus_filtered$previous_beha_binary)
-
-
-
-
-# Create a new column for previous response before followup_beha_reward
-tus_filtered <- tus_filtered %>%
-  group_by(ID, condition, Cue, req_action) %>%
-  mutate(previous_beha_reward = lag(followup_beha_reward, order_by = trial_number, default = NA))
-
-# Recode followup_beha as binary (0 for "no_press" and 1 for "press")
-tus_filtered$previous_beha_reward <- as.numeric(tus_filtered$previous_beha_reward == "press")
-
-# Check the recoded variable
-table(tus_filtered$previous_beha_binary)
-
-# Print head of the dataframe to verify
-head(tus_filtered[, c("response", "followup_beha", "previous_beha", "followup_beha_reward", "previous_beha_reward"), 20])
-
-
-
-
-
-
-
-
-
-#plot: - not sure if what i am doing correct. i want to try and do what hanneke said. 
-  #proportion of presses after different kind of feedback and what was their response (proportion of presses before) that action
-
-# Your data preparation code
-# Filter out rows with NA in response
-tus_filtered <- tus_filtered %>%
-  filter(!is.na(response))
-
-# Filter out rows where followup_beha or previous_response_beha is no_press
-filtered_data <- tus_filtered %>%
-  filter(followup_beha != "no_press" & previous_response_beha != "no_press")
-
-# Calculate proportion of presses for followup_beha
-proportions_followup <- filtered_data %>%
-  group_by(condition, feedback, followup_beha) %>%
-  summarise(prop_followup = mean(response == "press")) %>%
-  ungroup()
-
-# Calculate proportion of presses for previous_response_beha
-proportions_previous <- filtered_data %>%
-  group_by(condition, feedback, previous_response_beha) %>%
-  summarise(prop_previous = mean(response == "press")) %>%
-  ungroup()
-
-# Arrange data to calculate proportions of previous_response_beha before followup_beha
-arranged_data <- proportions_followup %>%
-  left_join(proportions_previous, by = c("condition", "feedback")) %>%
-  mutate(prop_previous_before_followup = lag(prop_previous, default = 0))
-
-# Create two separate plots
-plot1 <- ggplot(arranged_data, aes(x = feedback, y = prop_followup, fill = followup_beha)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ condition, scales = "free") +
-  labs(title = "Proportion of Presses for followup_beha after each Feedback",
-       x = "Feedback", y = "Proportion of Presses") +
-  scale_fill_manual(values = c("press" = "lightblue")) +  # Exclude no_press from fill colors
-  theme_minimal()
-
-plot2 <- ggplot(arranged_data, aes(x = feedback, y = prop_previous_before_followup, fill = previous_response_beha)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ condition, scales = "free") +
-  labs(title = "Proportion of Presses for previous_response_beha before followup_beha",
-       x = "Feedback", y = "Proportion of Presses") +
-  scale_fill_manual(values = c("press" = "lightblue")) +  # Exclude no_press from fill colors
-  theme_minimal()
-
-# Combine plots using grid.arrange from gridExtra
-combined_plot <- grid.arrange(plot1, plot2, ncol = 2)
-
-# Display the combined plot
-print(combined_plot)
-
-
-
-
-
-
-
-#new trial
-tus_filtered$previous_response_beha <- as.factor(tus_filtered$previous_response_beha)
-tus_filtered$followup_beha <- as.factor(tus_filtered$followup_beha)
-summary_data <- tus_filtered %>%
-  group_by(feedback) %>%
-  summarise(
-    Mean_Behavior_Before = mean(previous_response_beha, na.rm = TRUE),
-    Mean_Follow_Up_Behavior = mean(followup_beha, na.rm = TRUE)
+  mutate(
+    previous_beha = lag(followup_beha, order_by = trial_number, default = NA),
+    previous_beha_binary = as.numeric(previous_beha == "press")  # Binary column
   )
 
+# Create binary column for previous response before followup_beha_reward
+tus_filtered <- tus_filtered %>%
+  group_by(ID, condition, Cue, req_action) %>%
+  mutate(
+    previous_beha_reward = lag(followup_beha_reward, order_by = trial_number, default = NA),
+    previous_beha_reward_binary = as.numeric(previous_beha_reward == "press")  # Binary column
+  )
+
+# Check the recoded variables (binary columns)
+table(tus_filtered$previous_beha_binary)
+table(tus_filtered$previous_beha_reward_binary)
+
+# Print head of the dataframe to verify
+head(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_beha_binary", "followup_beha_reward", "previous_beha_reward", "previous_beha_reward_binary")])
 ```
-          
-          
+
+
+
+
           RT_min column - replacing 0s to 0.001
 ```{r}
 tus <- tus %>%
@@ -710,11 +632,6 @@ conditions_count_after <- tus_filtered %>%
 
 cat("\nConditions count per ID after exclusion:\n")
 #View(conditions_count_after)
-
-
-
-View(tus_filtered)
-
 ```
 
 
@@ -754,8 +671,6 @@ tus_filtered <- tus_filtered %>%
 ```{r}
 tus_filtered <- tus_filtered %>%
   filter(!(RT <= 200 & response == "press"))
-
-View(tus_filtered)
 ```
 
    
@@ -785,9 +700,7 @@ presses_per_cue <- tus_filtered %>%
   group_by(ID, Cue, condition) %>%
   summarize(num_presses = sum(response == "press"))
 
-# View the result
-View(presses_per_cue)
-
+#View(presses_per_cue)
 ```
 
 
