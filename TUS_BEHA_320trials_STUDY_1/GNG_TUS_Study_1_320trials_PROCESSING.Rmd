@@ -151,7 +151,7 @@ plot_NGW_NGL
 ```
  
 
-#Cumulative reward/outcome per trial_number and per trial_count per cue? 
+#Cumulative reward/outcome per trial_number and per trial_count per cue? ------NEW CHECK
 
         #trial_count
 ```{r}
@@ -181,7 +181,7 @@ ggplot(learning_data_filtered, aes(x = TrialCount, y = cumulative_reward, color 
 
 ```
      
-     #trial_number
+     #trial_number   ----- NEW CHECK
 ```{r}
 
 # Plot learning curves for cumulative reward per OutValence and condition
@@ -209,7 +209,7 @@ ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, colo
  
  
  
-#Cue beha after reward
+#Cue beha after reward     ---- NEW CHECK
 
 ```{r}  
                                     #????????????????
@@ -232,11 +232,15 @@ ggplot(behavior_data, aes(x = previous_reward_cue, fill = followup_cue_reward)) 
   theme_minimal()
 
 ```
-
+ 
+ 
+  ---NEW CHECK
+  
+   y = "Mean Count of Presses",
+    title = "Count of Press Behavior by Trial Count, Cue, Reward Cues, and Condition",
+    fill = "Follow-up Cue Reward"
+ 
 ```{r}
-library(dplyr)
-library(ggplot2)
-
 # Filter relevant columns and remove NA values in key columns, keep only press values
 behavior_data <- tus_filtered %>%
   select(Cue, TrialCount, previous_reward_cue, followup_cue_reward, followup_beha, condition) %>%
@@ -262,11 +266,11 @@ ggplot() +
   geom_bar(data = behavior_summary, aes(x = TrialCount, y = count_press, fill = factor(followup_cue_reward)),
            stat = "identity", position = "stack") +
   geom_line(data = average_counts, aes(x = TrialCount, y = mean_count_press, group = interaction(Cue, previous_reward_cue, followup_cue_reward, condition)),
-            color = "black", size = 1.2) +  # Add average line
+            color = "black", size = 1.0) +  # Add average line
   facet_grid(Cue ~ previous_reward_cue * condition * followup_cue_reward, scales = "free") +
   labs(
     x = "Trial Count",
-    y = "Count of Presses",
+    y = "Mean Count of Presses",
     title = "Count of Press Behavior by Trial Count, Cue, Reward Cues, and Condition",
     fill = "Follow-up Cue Reward"
   ) +
@@ -274,6 +278,11 @@ ggplot() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+
+
+
+
+
 
 
 
