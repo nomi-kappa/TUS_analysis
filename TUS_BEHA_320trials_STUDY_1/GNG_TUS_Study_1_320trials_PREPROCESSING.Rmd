@@ -423,7 +423,6 @@ head(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_be
 
 For each Cue per participant find the followup behaviour [press or no_press] after specific type of reward based on trial_count (lead)
 ```{r}
-# Create a new data frame with the follow-up behavior for each cue, trial number, and ID
 # Create a new data frame with the previous reward, previous outcomefeed, and follow-up behavior
 tus<- tus %>%
   group_by(ID, Cue, condition) %>%
@@ -514,6 +513,44 @@ tus <- tus %>%
   mutate(cumulative_reward = cumsum(outcomefeed)) %>%
   ungroup()  # Ungroup to return to regular data frame
 
+```
+ 
+ #cumulative reward/outcome per Valence
+```{r}
+
+# Filter data for OutValence == "Win" and "Avoid" separately
+learning_data_filtered <- tus %>%
+  filter(OutValence %in% c("Win", "Avoid"))
+
+# Calculate cumulative reward for OutValence == "Win"
+learning_data_filtered_win <- learning_data_filtered %>%
+   group_by(ID, condition) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
+  filter(OutValence == "Win") %>%
+  mutate(cumulative_reward_win = cumsum(outcomefeed)) %>%
+  ungroup()
+
+# Calculate cumulative reward for OutValence == "Avoid"
+learning_data_filtered_avoid <- learning_data_filtered %>%
+  filter(OutValence == "Avoid") %>%
+   group_by(ID, condition) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
+  mutate(cumulative_reward_avoid = cumsum(outcomefeed)) %>%
+  ungroup()
+
+# Print the head of the dataframe to verify
+head(learning_data_filtered_win)
+head(learning_data_filtered_avoid)
+
+
+# Add cumulative_reward_win and cumulative_reward_avoid back to the original dataset
+tus <- tus %>%
+  left_join(learning_data_filtered_win %>% select(ID, trial_number, cumulative_reward_win),
+            by = c("ID", "trial_number")) %>%
+  left_join(learning_data_filtered_avoid %>% select(ID, trial_number, cumulative_reward_avoid),
+            by = c("ID", "trial_number"))
+
+View(tus)
 ```
  
  

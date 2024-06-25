@@ -181,6 +181,52 @@ ggplot(learning_data_filtered, aes(x = TrialCount, y = cumulative_reward, color 
 
 ```
      
+    OR cumulative_reward_win and cumulative_reward_avoid (not sure if it is correct!!!???????)
+```{r}
+a<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_win, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial Count",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+  #facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+ # facet_grid(~block)+
+  scale_color_brewer(palette = "Set1")# ;a 
+
+b<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_avoid, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial Count",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+ # facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+#  facet_grid(~block)+
+  scale_color_brewer(palette = "Set1")# ;b
+
+a+b
+```
+    
+    
+    
+    
      #trial_number   ----- NEW CHECK
 ```{r}
 
@@ -205,6 +251,51 @@ ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, colo
   scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
 ```
      
+     
+         OR trianumber cumulative_reward_win and cumulative_reward_avoid (not sure if it is correct!!!???????) - 
+```{r}
+c<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_win, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial Number",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+  #facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+ # facet_grid(~block)+
+  scale_color_brewer(palette = "Set1")# 
+
+d<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_avoid, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial Number",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+ # facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+#  facet_grid(~block)+
+  scale_color_brewer(palette = "Set1")# 
+
+c+d
+```
+    
+    
  
  
  
