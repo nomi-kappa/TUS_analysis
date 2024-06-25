@@ -418,6 +418,27 @@ table(tus_filtered$previous_beha_reward_binary)
 head(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_beha_binary", "followup_beha_reward", "previous_beha_reward", "previous_beha_reward_binary")])
 ```
 
+#Put together all the GW outcome for the GW and for each Cue only - 
+ by Trial umber for this context only (each cue) and then followup for each cue, for example 1. GW --> reward --> press  2.GW -->no_reward --> no_press 3.GW --> no_reward --> no_press etc
+
+For each Cue per participant find the followup behaviour [press or no_press] after specific type of reward based on trial_count (lead)
+```{r}
+# Create a new data frame with the follow-up behavior for each cue, trial number, and ID
+# Create a new data frame with the previous reward, previous outcomefeed, and follow-up behavior
+tus<- tus %>%
+  group_by(ID, Cue, condition) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
+  mutate(
+    previous_reward_cue = lag(reward),
+    previous_outcomefeed_cue = lag(outcomefeed),
+    followup_cue_reward = lead(response)
+  ) %>%
+  ungroup(); View(tus)
+
+
+  check<-tus %>%select(ID, Cue, condition, trial_number, outcomefeed, followup_beha, previous_reward_cue, previous_outcomefeed_cue, followup_cue_reward);View(check)
+
+```
 
 
 
@@ -485,8 +506,18 @@ summary <- tus %>%
 
 ```
  
- 
+ #Cumulative reward/outcome column
+```{r}
+tus <- tus %>%
+  group_by(ID, condition) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
+  mutate(cumulative_reward = cumsum(outcomefeed)) %>%
+  ungroup()  # Ungroup to return to regular data frame
 
+```
+ 
+ 
+ 
       #EXCLUSIONS AND SUBSETS
 
 #Exlusion 3SDs still 32 participants
@@ -524,7 +555,7 @@ mean_accuracy_per_participant <- mean_accuracy_per_participant %>%
   mutate(excluded = ifelse(ID %in% excluded_participants$ID, "Excluded", "Included"))
 
 # Merge exclusion information back into tus dataset
-tus <- left_join(tus, mean_accuracy_per_participant, by = "ID"); View(tus)
+tus <- left_join(tus, mean_accuracy_per_participant, by = "ID")#; View(tus)
 
 # Print number of participants before and after exclusion
 num_participants_before <- nrow(mean_accuracy_per_participant)
@@ -636,6 +667,43 @@ cat("\nConditions count per ID after exclusion:\n")
 
 
 
+#per ID and req_action whatever is below 30% for the condition == sham only, exclude the specific condition for the specific participant
+Show what I am excluding (print?) before I exclude
+If total presses (response == press) per participant in the sham condition is under 30% --> delete the sham condition for this ID
+If total no_presses (response == no_press) per participant in the sham condition is under 30% --> delete  the sham condition for this ID
+```{r}
+# Calculate total trials, presses, and no_presses per ID and condition
+id_condition_summary <- tus_filtered %>%
+  filter(condition == "a.sham") %>%
+  group_by(ID) %>%
+  summarise(
+    total_trials = n(),
+    total_presses = sum(response == "press"),
+    total_no_presses = sum(response == "no_press")
+  ) %>%
+  mutate(
+    press_percentage = total_presses / total_trials,
+    no_press_percentage = total_no_presses / total_trials
+  )
+
+# Identify IDs where either press or no_press percentage is below 30%
+ids_to_exclude <- id_condition_summary %>%
+  filter(press_percentage < 0.3 | no_press_percentage < 0.3) %>%
+  pull(ID)
+
+# Print IDs to be excluded
+cat("IDs to be excluded from the 'sham' condition based on press or no_press percentage:\n")
+print(ids_to_exclude) # EEMR0429 sham
+
+# Exclude 'sham' condition for the identified IDs
+tus_filtered <- tus_filtered %>%
+  filter(!(ID %in% ids_to_exclude & condition == "a.sham"))
+
+# Optional: Check the dataset after filtering
+View(tus_filtered)
+```
+
+
       #deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC, SINB0180 AI and SKKY0189 because it contains NAs
       
 ```{r}
@@ -651,10 +719,10 @@ tus_filtered <- tus_filtered %>%
 
     # exclude any trials that Cue presented >20
 ```{r}
-tus_filtered<-tus_filtered %>%
- filter(!( ID == "EEMR0429" & condition == "b.dacc")) %>%
- filter(!(ID == "EEMR0429" & condition == "a.sham")) %>%
- filter(!(ID =="SINB0180" & condition == "c.ai"))
+#tus_filtered<-tus_filtered %>%
+ #filter(!( ID == "EEMR0429" & condition == "b.dacc")) %>%
+ #filter(!(ID == "EEMR0429" & condition == "a.sham")) %>%
+ #filter(!(ID =="SINB0180" & condition == "c.ai"))
 
 
 # Filter out the rows where TrialCount is greater than 20
@@ -666,11 +734,13 @@ tus_filtered <- tus_filtered %>%
 
 
 
-   #exclude RTs below 200ms
+   # RTs below 200ms --> NaN to retain learning data (not completely removing RTs)
    
 ```{r}
 tus_filtered <- tus_filtered %>%
-  filter(!(RT <= 200 & response == "press"))
+  mutate(
+    RT = if_else(RT <= 200 & response == "press", NaN, RT)
+  )
 ```
 
    

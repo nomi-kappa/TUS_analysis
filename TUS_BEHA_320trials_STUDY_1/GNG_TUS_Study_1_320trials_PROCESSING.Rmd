@@ -40,7 +40,7 @@ tus_filtered<- read_csv ("GNG_tus_filtered_S1.csv")
 ## MEAN RT - PRESSES 
 ```{r}
 tus_presses <- subset(tus_filtered, RT != "0") # exlude 0s (no presses)
-RT_presses <-tus_clean_allexs%>%  group_by(condition) %>% 
+RT_presses <-tus_presses%>%  group_by(condition) %>% 
   summarise(Mean_RT = mean(RT, na.rm = TRUE))
 RT_presses_many_variables <-tus_presses %>%  group_by(condition, req_action, correct, response) %>% 
   summarise(Mean_RT = mean(RT, na.rm = TRUE))
@@ -150,6 +150,131 @@ plot_NGW_NGL
    #no, plot is not good or correct as sd is from 0.001 for ngw cues to high. so better seperate by go vs nogo cues
 ```
  
+
+#Cumulative reward/outcome per trial_number and per trial_count per cue? 
+
+        #trial_count
+```{r}
+# Filter data for OutValence == "Win" and "Avoid"
+learning_data_filtered <- tus_filtered %>%
+  filter(OutValence %in% c("Win", "Avoid"))
+
+# Plot learning curves for cumulative reward per OutValence and condition
+ggplot(learning_data_filtered, aes(x = TrialCount, y = cumulative_reward, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial Count",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+  facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+  facet_grid(~OutValence)+
+  scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
+
+```
+     
+     #trial_number
+```{r}
+
+# Plot learning curves for cumulative reward per OutValence and condition
+ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, color = condition)) +
+  geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  labs(
+    x = "Trial number",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+  facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+  facet_grid(~OutValence)+
+  scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
+```
+     
+ 
+ 
+ 
+ 
+#Cue beha after reward
+
+```{r}  
+                                    #????????????????
+# Filter relevant columns
+behavior_data <- tus_filtered %>%
+  select(Cue, previous_reward_cue, followup_cue_reward, followup_beha, condition) %>%
+  filter(!is.na(previous_reward_cue) & !is.na(followup_cue_reward))  # Remove rows with NA in key columns
+
+
+# Plot 1: followup_beha by Cue and previous_reward_cue
+ggplot(behavior_data, aes(x = previous_reward_cue, fill = followup_cue_reward)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ condition*Cue, scales = "free") +
+  labs(
+    x = "Previous Reward Cue",
+    y = "Proportion",
+    title = "Follow-up Behavior by Previous Reward Cue (Stacked Bar Plot)",
+    fill = "Follow-up Behavior"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Filter relevant columns and remove NA values in key columns, keep only press values
+behavior_data <- tus_filtered %>%
+  select(Cue, TrialCount, previous_reward_cue, followup_cue_reward, followup_beha, condition) %>%
+  filter(!is.na(previous_reward_cue) & !is.na(followup_cue_reward) & followup_beha == "press")  # Remove rows with NA in key columns and keep only press values
+
+# Group by Cue, TrialCount, previous_reward_cue, followup_cue_reward, and condition
+behavior_summary <- behavior_data %>%
+  group_by(Cue, TrialCount, previous_reward_cue, followup_cue_reward, condition) %>%
+  summarise(count_press = n()) %>%
+  ungroup()
+
+# Ensure TrialCount is treated as numeric for proper ordering in plots
+behavior_summary$TrialCount <- as.numeric(behavior_summary$TrialCount)
+
+# Calculate the average count of press behavior across TrialCount for each group
+average_counts <- behavior_summary %>%
+  group_by(Cue, previous_reward_cue, followup_cue_reward, condition, TrialCount) %>%
+  summarise(mean_count_press = mean(count_press, na.rm = TRUE)) %>%
+  ungroup()
+
+# Plotting mean press count by TrialCount, Cue, previous_reward_cue, and condition
+ggplot() +
+  geom_bar(data = behavior_summary, aes(x = TrialCount, y = count_press, fill = factor(followup_cue_reward)),
+           stat = "identity", position = "stack") +
+  geom_line(data = average_counts, aes(x = TrialCount, y = mean_count_press, group = interaction(Cue, previous_reward_cue, followup_cue_reward, condition)),
+            color = "black", size = 1.2) +  # Add average line
+  facet_grid(Cue ~ previous_reward_cue * condition * followup_cue_reward, scales = "free") +
+  labs(
+    x = "Trial Count",
+    y = "Count of Presses",
+    title = "Count of Press Behavior by Trial Count, Cue, Reward Cues, and Condition",
+    fill = "Follow-up Cue Reward"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
 
 
 
