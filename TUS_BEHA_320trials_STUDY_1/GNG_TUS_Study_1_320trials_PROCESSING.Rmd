@@ -179,16 +179,46 @@ ggplot(learning_data_filtered, aes(x = TrialCount, y = cumulative_reward, color 
   facet_grid(~OutValence)+
   scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
 
+
+
+
+
+#inclusive of raw data to - to show that reward reaches 96
+
+# Plot learning curves for cumulative reward per OutValence and condition
+ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, color = condition)) +
+  geom_point(alpha = 0.1, size = 1) +  # Add points for raw data with very light color
+  stat_smooth(method = "lm", formula = y ~ x, size = 1.2, se = TRUE, aes(group = condition), alpha = 0.2) +  # Fit linear model
+  labs(
+    x = "Trial number",
+    y = "Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward",
+    color = "Condition"
+  ) +
+  facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),  # Adjust text size
+    axis.title = element_text(size = 14, face = "bold"),  # Bold axis titles
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
+    legend.position = "right"  # Position legend to the right
+  ) +
+  scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
+
+
 ```
      
     OR cumulative_reward_win and cumulative_reward_avoid (not sure if it is correct!!!???????)
 ```{r}
-a<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_win, color = condition)) +
+
+learning_data_win <- tus_filtered %>%
+  filter(OutValence %in% c("Win"))
+a<-ggplot(learning_data_win, aes(x = TrialCount, y = cumulative_reward_win, color = condition)) +
   geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
   labs(
     x = "Trial Count",
     y = "Cumulative Reward",
-    title = "Learning Curves of Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward - Win",
     color = "Condition"
   ) +
   #facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
@@ -199,15 +229,19 @@ a<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_win, color = c
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
     legend.position = "right"  # Position legend to the right
   ) +
- # facet_grid(~block)+
+ facet_grid(~Cue)+
   scale_color_brewer(palette = "Set1")# ;a 
 
-b<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_avoid, color = condition)) +
+
+learning_data_avoid <- tus_filtered %>%
+  filter(OutValence %in% c("Avoid"))
+
+b<-ggplot(learning_data_avoid, aes(x = TrialCount, y = cumulative_reward_avoid, color = condition)) +
   geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
   labs(
     x = "Trial Count",
     y = "Cumulative Reward",
-    title = "Learning Curves of Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward -Avoid",
     color = "Condition"
   ) +
  # facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
@@ -218,7 +252,7 @@ b<-ggplot(tus_filtered, aes(x = TrialCount, y = cumulative_reward_avoid, color =
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
     legend.position = "right"  # Position legend to the right
   ) +
-#  facet_grid(~block)+
+ facet_grid(~Cue)+
   scale_color_brewer(palette = "Set1")# ;b
 
 a+b
@@ -252,14 +286,17 @@ ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, colo
 ```
      
      
-         OR trianumber cumulative_reward_win and cumulative_reward_avoid (not sure if it is correct!!!???????) - 
+         OR trianumber cumulative_reward_win and cumulative_reward_avoid (not sure if it is correct!!!???????) 
 ```{r}
-c<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_win, color = condition)) +
+
+learning_data_win <- tus_filtered %>%
+  filter(OutValence %in% c("Win"))
+c<-ggplot(learning_data_win, aes(x = trial_number, y = cumulative_reward_win, color = condition)) +
   geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
   labs(
     x = "Trial Number",
     y = "Cumulative Reward",
-    title = "Learning Curves of Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward -Win",
     color = "Condition"
   ) +
   #facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
@@ -270,15 +307,19 @@ c<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_win, color =
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
     legend.position = "right"  # Position legend to the right
   ) +
- # facet_grid(~block)+
+facet_grid(~Cue)+
   scale_color_brewer(palette = "Set1")# 
 
-d<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_avoid, color = condition)) +
+
+
+learning_data_avoid <- tus_filtered %>%
+  filter(OutValence %in% c("Avoid"))
+d<-ggplot(learning_data_avoid, aes(x = trial_number, y = cumulative_reward_avoid, color = condition)) +
   geom_smooth(method = "loess", se = TRUE, size = 1.2, alpha = 0.2) +  # Smooth curve with standard error
   labs(
     x = "Trial Number",
     y = "Cumulative Reward",
-    title = "Learning Curves of Cumulative Reward",
+    title = "Learning Curves of Cumulative Reward - Avoid",
     color = "Condition"
   ) +
  # facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
@@ -289,7 +330,7 @@ d<-ggplot(tus_filtered, aes(x = trial_number, y = cumulative_reward_avoid, color
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
     legend.position = "right"  # Position legend to the right
   ) +
-#  facet_grid(~block)+
+ facet_grid(~Cue)+
   scale_color_brewer(palette = "Set1")# 
 
 c+d
