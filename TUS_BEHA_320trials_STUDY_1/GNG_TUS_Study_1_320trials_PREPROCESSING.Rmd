@@ -134,6 +134,8 @@ tus <- tus %>%
 
 ```
 
+
+
 ## Add response col (press - no_press)
 ```{r}
 tus$response <- with(tus, ifelse(RT>0, "press", "no_press"))
@@ -159,6 +161,22 @@ tus$req_action <- ifelse(tus$stim_ID == tus$NGL, 'noGo',
               #      felse(pilot$Cue == 'GAL', 'Go', NA))))
 
 ```
+ 
+
+#view conditions by cue per id
+```{r}
+
+# Create the table
+t_table <- table(tus$ID, tus$stim_ID, tus$condition)
+
+# Print all matrices
+for (cond in dimnames(t_table)[[3]]) {
+  cat("Condition:", cond, "\n")
+  print(t_table[, , cond])
+  cat("\n")  # Add a newline for better readability
+}
+```
+
  
 ## Add correct column (0-1)  
 ```{r}
@@ -218,9 +236,22 @@ tus$OutValence <- ifelse(tus$Cue == 'NGL', 'Avoid',
 ```{r}
 tus <- tus %>%
   mutate(salient = ifelse(feedback == "win","win",
-                      ifelse(feedback == "lose", "lose", NA)))
+                      ifelse(feedback == "lose", "lose", NA))); View(tus)
 ```
     
+    
+    #view conditions by cue per id
+```{r}
+t_table <- table(tus$ID, tus$stim_ID, tus$condition)
+
+# Print all matrices
+for (cond in dimnames(t_table)[[3]]) {
+  cat("Condition:", cond, "\n")
+  print(t_table[, , cond])
+  cat("\n")  # Add a newline for better readability
+}
+```
+
         #'followup_beha' showing response after feedback + 1 in trial_number
 #behaviour after loss and after winning feedback general (followup_beha, followup_beha_binary) 
 
@@ -334,8 +365,6 @@ table(tus$followup_correctfeed_trinary)
 
 ```
 
-         
-         
           #Actual reward, excluding wrong feedback (20%) column - called: actual_reward
          
          
@@ -376,6 +405,10 @@ tus$reward[tus$OutValence == "Avoid" & tus$feedback == "neutral"] <- "no_punishm
 tus$reward[tus$OutValence == "Avoid" & tus$feedback == "lose"] <- "punishment"
 
 ```
+   
+   
+   
+
           
           #behaviour following reward
           
@@ -418,6 +451,8 @@ table(tus_filtered$previous_beha_reward_binary)
 head(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_beha_binary", "followup_beha_reward", "previous_beha_reward", "previous_beha_reward_binary")])
 ```
 
+
+
 #Put together all the GW outcome for the GW and for each Cue only - 
  by Trial umber for this context only (each cue) and then followup for each cue, for example 1. GW --> reward --> press  2.GW -->no_reward --> no_press 3.GW --> no_reward --> no_press etc
 
@@ -434,11 +469,11 @@ tus<- tus %>%
   ) %>%
   ungroup(); View(tus)
 
-
-  check<-tus %>%select(ID, Cue, condition, trial_number, outcomefeed, followup_beha, previous_reward_cue, previous_outcomefeed_cue, followup_cue_reward);View(check)
+  check<- tus%>%dplyr::select(ID, Cue, condition, trial_number, outcomefeed, followup_beha, previous_reward_cue, previous_outcomefeed_cue, followup_cue_reward);View(check)
 
 ```
 
+ 
 
 
           RT_min column - replacing 0s to 0.001
@@ -505,6 +540,7 @@ summary <- tus %>%
 
 ```
  
+  
  #Cumulative reward/outcome column
 ```{r}
 tus <- tus %>%
@@ -514,6 +550,14 @@ tus <- tus %>%
   ungroup()  # Ungroup to return to regular data frame
 
 ```
+
+
+
+
+ -------------------------------------------------
+ 
+ the next chunk messes the data. 
+ 
  
  #cumulative reward/outcome per Valence
 ```{r}
@@ -524,36 +568,51 @@ learning_data_filtered <- tus %>%
 
 # Calculate cumulative reward for OutValence == "Win"
 learning_data_filtered_win <- learning_data_filtered %>%
-   group_by(ID, condition) %>%
-  arrange(trial_number, .by_group = TRUE) %>%
   filter(OutValence == "Win") %>%
+  group_by(ID, trial_number, condition) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
   mutate(cumulative_reward_win = cumsum(outcomefeed)) %>%
-  ungroup()
+  ungroup() %>%
+  distinct(ID, trial_number, .keep_all = TRUE)
 
 # Calculate cumulative reward for OutValence == "Avoid"
 learning_data_filtered_avoid <- learning_data_filtered %>%
   filter(OutValence == "Avoid") %>%
-   group_by(ID, condition) %>%
+  group_by(ID, trial_number, condition) %>%
   arrange(trial_number, .by_group = TRUE) %>%
   mutate(cumulative_reward_avoid = cumsum(outcomefeed)) %>%
-  ungroup()
+  ungroup() %>%
+  distinct(ID, trial_number, .keep_all = TRUE)
 
 # Print the head of the dataframe to verify
 head(learning_data_filtered_win)
 head(learning_data_filtered_avoid)
 
-
 # Add cumulative_reward_win and cumulative_reward_avoid back to the original dataset
 tus <- tus %>%
-  left_join(learning_data_filtered_win %>% select(ID, trial_number, cumulative_reward_win),
+  left_join(learning_data_filtered_win %>% dplyr::select(ID, trial_number, cumulative_reward_win),
             by = c("ID", "trial_number")) %>%
-  left_join(learning_data_filtered_avoid %>% select(ID, trial_number, cumulative_reward_avoid),
+  left_join(learning_data_filtered_avoid %>% dplyr::select(ID, trial_number, cumulative_reward_avoid),
             by = c("ID", "trial_number"))
 
-View(tus)
+# Print the head of the resulting dataset to verify
+head(tus)
+
+
 ```
  
- 
+   #view conditions by cue per id
+```{r}
+t_table <- table(tus$ID, tus$stim_ID, tus$condition)
+
+# Print all matrices
+for (cond in dimnames(t_table)[[3]]) {
+  cat("Condition:", cond, "\n")
+  print(t_table[, , cond])
+  cat("\n")  # Add a newline for better readability
+}
+```
+
  
       #EXCLUSIONS AND SUBSETS
 

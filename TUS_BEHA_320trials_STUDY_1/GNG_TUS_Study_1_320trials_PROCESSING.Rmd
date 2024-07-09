@@ -196,6 +196,7 @@ ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, colo
     color = "Condition"
   ) +
   facet_grid(OutValence ~ ., scales = "free_y") +  # Facet by OutValence, allow y-axis scales to vary
+  scale_y_continuous(breaks = seq(0, max(learning_data_filtered$cumulative_reward), by = 10)) +  # Set y-axis breaks every 5 units
   theme_minimal() +
   theme(
     text = element_text(size = 12),  # Adjust text size
@@ -203,7 +204,8 @@ ggplot(learning_data_filtered, aes(x = trial_number, y = cumulative_reward, colo
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Centered and bold plot title
     legend.position = "right"  # Position legend to the right
   ) +
-  scale_color_brewer(palette = "Set1")  # Use a qualitative color palette
+  scale_color_brewer(palette = "Set1")  
+
 
 
 ```
@@ -341,7 +343,7 @@ c+d
  
  
  
-#Cue beha after reward     ---- NEW CHECK
+#Cue beha after reward     ---- NEW CHECK - i like it
 
 ```{r}  
                                     #????????????????
@@ -435,8 +437,8 @@ ggplot(MeanGoResp) +
   geom_smooth(aes(TrialCount, GoResponse, colour = OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +
-  scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
-  theme_bw()
+  scale_x_continuous(breaks = seq(5, 20, by = 5)) +  # Set breaks manually
+  theme_minimal()
 
 # Plot of p(Go) responses per block
 ggplot(MeanGoResp) + 
@@ -444,8 +446,8 @@ ggplot(MeanGoResp) +
   scale_colour_brewer(palette = "Set1") +
   facet_grid(~block) +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour") +
-  scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
-  theme_bw()
+  scale_x_continuous(breaks = seq(5, 20, by = 5)) +  # Set breaks manually
+  theme_minimal()
 
 ```
      
@@ -613,7 +615,7 @@ ai_rolavg<- ggplot(MeanGoResp.ai) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for AI") +
    xlim(NA, 20)+
- theme_bw() 
+ theme_minimal() 
 
 
     #dACC - 
@@ -629,7 +631,7 @@ dacc_rolavg<- ggplot(MeanGoResp.dacc) +
   geom_smooth(aes(TrialCount, GoResponse,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for dACC")+
-   xlim(NA, 20)+ theme_bw() 
+   xlim(NA, 20)+  theme_minimal() 
 
 
 
@@ -647,7 +649,7 @@ sham_rolavg<- ggplot(MeanGoResp.sham) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour for sham") +
    xlim(NA, 20)+
- theme_bw() 
+ theme_minimal() 
 
 #roll avg per CONDITION
 rol_avg <- ggarrange(sham_rolavg, ai_rolavg, dacc_rolavg,
@@ -689,7 +691,7 @@ pai<-ggplot(meango_ai, aes(x = TrialCount, y = GoResponse, colour = OutValence, 
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour AI") +
     scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
  # xlim(1, 20) +  # Ensures the plot starts from 1
-  theme_bw()
+  theme_minimal() 
   
 
 
@@ -723,7 +725,7 @@ pdacc<-ggplot(meango_dacc, aes(x = TrialCount, y = GoResponse, colour = OutValen
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour dACC") +
     scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
  # xlim(1, 20) +  # Ensures the plot starts from 1
-  theme_bw()
+ theme_minimal() 
 
 
 
@@ -757,7 +759,7 @@ psham<-ggplot(meango_sham, aes(x = TrialCount, y = GoResponse, colour = OutValen
   labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour Sham") +
     scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
  # xlim(1, 20) +  # Ensures the plot starts from 1
-  theme_bw()
+ theme_minimal() 
 
 #roll avg per CONDITION
 rol_avg_raw <- ggarrange(psham, pai, pdacc,
@@ -791,7 +793,7 @@ GW<-ggplot(data=MeanGoResp_gw, mapping =aes(TrialCount, GoResponse, colour=condi
    #facet_grid(~condition)+
    xlim(NA, 20)+
   ylim(0.05, 1)+
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") +theme_bw() 
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GW") + theme_minimal() 
 
 #GAL
 GAL <- subset(tus_filtered, Cue == "GAL")
@@ -808,7 +810,7 @@ GAL<-ggplot(data=MeanGoResp_gal, mapping =aes(TrialCount, GoResponse, colour=con
    #facet_grid(~condition)+
    xlim(NA, 20)+
      ylim(0.05, 1)+
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") +theme_bw() 
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_GAL") + theme_minimal() 
 
 #NGW
 NGW <- subset(tus_filtered, Cue == "NGW")
@@ -825,7 +827,7 @@ NGW<-ggplot(MeanGoResp_NGW) +
   # facet_grid(~condition)+
    xlim(NA, 20)+
      ylim(0.05, 1)+
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") +theme_bw() 
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGW") + theme_minimal() 
 
 
 
@@ -844,7 +846,7 @@ NGL<-ggplot(MeanGoResp_NGL) +
   # facet_grid(~condition)+
    xlim(NA, 20)+
       ylim(0.05, 0.9)+
-  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") + theme_bw() 
+  labs(y = "p(GO)", x = "Trial", title = "Trial-by-trial behaviour_NGL") +  theme_minimal() 
 
 
 # Determine the maximum and minimum values of GoResponse, cause NGL depricated
@@ -1030,7 +1032,7 @@ cues_r
 
 ## Probability of correct per participant ***IS THAT CORRECT?***
 ```{r}
-tus_correct<-tus_filtered %>%  group_by(ID, Valence=OutValence,condition, Action=req_action) %>% summarise(correct = mean(correct))
+tus_correct<-tus_filtered %>%  group_by(ID, Cue, Valence=OutValence,condition, Action=req_action) %>% summarise(correct = mean(correct))
 #tus_correct_sub_gen <- tus_correct %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
 tus_correct<-na.omit(tus_correct)
 # Identify outliers
@@ -1076,9 +1078,11 @@ yarrr::pirateplot(formula = correct ~  Action + Valence + condition,
 
 
 
-# Calculate mean and standard error per condition and req_action
+
+
+# Calculate mean and standard error per condition and req_action - this is good.
 summary_data <- tus_correct %>%
-  group_by(Action, condition, Valence) %>%
+  group_by(Action, condition, Valence, Cue) %>%
   summarise(mean_correct = mean(correct),
             se_correct = sd(correct, na.rm = TRUE) / sqrt(n()))
 
@@ -1092,6 +1096,37 @@ ggplot(summary_data, aes(x = Action, y = mean_correct, fill = Valence)) +
   theme_bw() +
   coord_cartesian(ylim = c(0.50, 0.95)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+#as previous for each cue per condition
+
+# Plot with error bars by Cue and Condition
+plot1 <- ggplot(summary_data, aes(x = Cue, y = mean_correct, fill = Valence)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.7) +  # Increase width for thicker bars
+  geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
+                position = position_dodge(width = 0.75), width = 0.25) +  # Adjust width for error bars
+  facet_wrap(~ condition) +
+  labs(title = "Mean Correct by Cue & Condition", x = "Cue", y = "Mean Correct") +
+  theme_bw() +
+  coord_cartesian(ylim = c(0.50, 0.95)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+
+plot2 <- ggplot(summary_general, aes(x = Action, y = mean_correct, fill = Valence)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.7) +  # Increase width for thicker bars
+  geom_errorbar(aes(ymin = mean_correct - se_correct, ymax = mean_correct + se_correct),
+                position = position_dodge(width = 0.75), width = 0.25) +  # Adjust width for error bars
+  labs(title = "Mean Correct by Action & Valence", x = "Action", y = "Mean Correct") +
+  theme_bw() +
+  coord_cartesian(ylim = c(0.50, 0.95)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+# Combine the two plots, giving more space to plot1
+combined_plot <- plot2 + plot1 + plot_layout(widths = c(1, 2)); combined_plot
+
+
+
+
+
 
 
 
@@ -1389,18 +1424,71 @@ ggplot(MeanRT) +
   geom_smooth(aes(TrialCount, meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_RT") +
-  xlim (0,20) +theme_bw() 
+  xlim (0,20) +theme_minimal() 
 #plot of RT per block
 ggplot(MeanRT) + 
   geom_smooth(aes(TrialCount,meanRT,colour=OutValence, lty = req_action)) +
   scale_colour_brewer(palette = "Set1") +
   facet_grid(~block)+
-  theme_bw() +
+  theme_minimal() +
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_RT_perBlock") +
   xlim(0, 20) +
   ylim(500, 1100)
 ```
 
+
+ #trial_by_trial general and by block no smooth
+```{r}
+ # Summarize data to calculate mean and CIs for GoResponse
+mean_go <- tus_filtered %>%
+  filter(response != "no_press") %>%
+  group_by(Cue, req_action, OutValence, TrialCount) %>%
+  summarise(
+    meanRT = mean(RT),
+    seRT = sd(RT) / sqrt(n()),
+    lower_ci = meanRT - qt(1 - 0.05 / 2, n() - 1) * seRT,
+    upper_ci = meanRT + qt(1 - 0.05 / 2, n() - 1) * seRT
+  ) %>%
+  ungroup()
+
+  # Plot of RT responses over time without smooth line
+  ggplot(mean_go, aes(x = TrialCount, y = meanRT, colour = OutValence, linetype = req_action)) +
+    geom_line() +
+    geom_point() +
+    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = OutValence), alpha = 0.1, colour = NA) +
+    scale_colour_brewer(palette = "Set1") +
+    scale_fill_brewer(palette = "Set1") +
+    labs(y = "RT", x = "Trial", title = "Trial-by-trial behavior") +
+    scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
+  theme_minimal()
+
+
+# Summarize data to calculate mean and CIs for GoResponse per block
+mean_go_block <- tus_filtered %>%
+  filter(response != "no_press") %>%
+  group_by(Cue, req_action, block, OutValence, TrialCount) %>%
+  summarise(
+    meanRT = mean(RT),
+    seRT = sd(RT) / sqrt(n()),
+    lower_ci = meanRT - qt(1 - 0.05 / 2, n() - 1) * seRT,
+    upper_ci = meanRT + qt(1 - 0.05 / 2, n() - 1) * seRT
+  ) %>%
+  ungroup()
+
+# Plot of RT responses per block without smooth line
+ggplot(mean_go_block, aes(x = TrialCount, y = meanRT, colour = OutValence, linetype = req_action)) +
+  geom_line(aes(group = interaction(OutValence, req_action))) +
+  geom_point() +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = OutValence), alpha = 0.1, colour = NA) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
+  facet_grid(~ block) +  # Ensure `block` is included in facet_grid()
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behavior per Block") +
+  scale_x_continuous(breaks = seq(1, 20, by = 1)) +  # Set breaks manually
+  theme_minimal()
+
+```
+ 
 
 #RT trial-by_trial behaviour by condition
 ```{r}
@@ -1420,7 +1508,7 @@ ai_avg<- ggplot(MeanRTResp.ai) +
     #facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for AI_RT") +
    xlim(1, 20)+
- theme_bw() +
+ theme_minimal() +
   ylim(500, 1100)
 
 
@@ -1438,7 +1526,7 @@ dacc_avg<- ggplot(MeanRTpersp.dacc) +
   scale_colour_brewer(palette = "Set1") +
     #  facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for dACC_RT")+
-   xlim(1, 20)+ theme_bw()  +
+   xlim(1, 20)+ theme_minimal()  +
   ylim(500, 1100)
 
 
@@ -1458,7 +1546,7 @@ sham_avg<- ggplot(MeanRTResp.sham) +
      # facet_grid(~block)+
   labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour for sham_RT") +
    xlim(1, 20)+
- theme_bw()  +
+ theme_minimal()  +
   ylim(500, 1100)
 
 #roll avg per CONDITION
@@ -1485,7 +1573,7 @@ plot_RT <- function(data, condition_name) {
         labs(y = "RT", x = "Trial", title = paste("Trial-by-trial behavior for", condition_name, "_RT")) +
         xlim(1, 20) +
         ylim(400, 950) +
-        theme_bw()
+        theme_minimal()
     
     return(p)
 }
@@ -1532,7 +1620,7 @@ GW_rt<-ggplot(data=MeanRTResp_gw, mapping =aes(TrialCount, meanRT, colour=condit
    #facet_grid(~condition)+
    xlim(1, 20)+
   ylim(NA, 900)+
-  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GW_RT") +theme_bw() 
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GW_RT") +theme_minimal() 
 
 #GAL
 GAL <- subset(tus_filtered, Cue == "GAL")
@@ -1549,7 +1637,7 @@ GAL_rt<-ggplot(data=MeanRTResp_gal, mapping =aes(TrialCount, meanRT, colour=cond
    #facet_grid(~condition)+
    xlim(NA, 20)+
      ylim(400, 900)+
-  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GAL_RT") +theme_bw() 
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_GAL_RT") +theme_minimal() 
 
 #NGW
 NGW <- subset(tus_filtered, Cue == "NGW")
@@ -1566,7 +1654,7 @@ NGW_rt<-ggplot(MeanRTResp_NGW) +
   # facet_grid(~condition)+
    xlim(NA, 20)+
      ylim(400,900)+
-  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGW_RT") +theme_bw() 
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGW_RT") +theme_minimal() 
 
 
 
@@ -1585,7 +1673,7 @@ NGL_rt<-ggplot(MeanRTResp_NGL) +
   # facet_grid(~condition)+
    xlim(NA, 20)+
       coord_cartesian(ylim = c(400, 900))+
-  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGL_RT") + theme_bw() 
+  labs(y = "RT", x = "Trial", title = "Trial-by-trial behaviour_NGL_RT") + theme_minimal() 
 
 
 
@@ -1604,24 +1692,39 @@ cues_rt <- ggarrange(GW_rt, GAL_rt, NGW_rt, NGL_rt,
 
 # Function to create RT plot with lines connecting points for conditions
 plot_RT <- function(tus_filtered, Cue) {
+  # Get the range of trial counts for completeness
+  trial_counts <- tus_filtered %>%
+    filter(response != "no_press") %>%
+    select(TrialCount) %>%
+    distinct()
+  
   meanRT_data <- tus_filtered %>%
     filter(response != "no_press") %>%
     group_by(TrialCount, condition) %>%
     summarise(
-      meanRT = mean(RT),
-      sdRT = sd(RT),
-      seRT = sd(RT) / sqrt(n()),
+      meanRT = mean(RT, na.rm = TRUE),
+      sdRT = sd(RT, na.rm = TRUE),
+      seRT = sd(RT, na.rm = TRUE) / sqrt(n()),
       lower_ci = meanRT - qt(1 - 0.05 / 2, n() - 1) * seRT,
-      upper_ci = meanRT + qt(1 - 0.05 / 2, n() - 1) * seRT
-    )
+      upper_ci = meanRT + qt(1 - 0.05 / 2, n() - 1) * seRT,
+      .groups = 'drop'
+    ) %>%
+    complete(TrialCount = full_seq(trial_counts$TrialCount, 1), condition, fill = list(meanRT = NA, sdRT = NA, seRT = NA, lower_ci = NA, upper_ci = NA))
+  
+  # Set y-axis limits based on Cue
+  y_limits <- if (Cue %in% c("GW", "GAL")) {
+    c(550, 800)
+  } else {
+    c(400, 1000)
+  }
   
   p <- ggplot(meanRT_data, aes(x = as.factor(TrialCount), y = meanRT, colour = condition, group = condition)) +
     geom_line() +
     geom_point() +
-    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = condition), alpha = 0.2, colour = NA) +  # Add shaded CI
-  #  scale_colour_manual(values = custom_palette) +  # Custom colors for conditions
+    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = condition), alpha = 0.1, colour = NA) +  # Add shaded CI
     labs(y = "RT", x = "Trial", title = paste("Trial-by-trial behavior", Cue)) +
-    theme_bw()
+    theme_bw() +
+    coord_cartesian(ylim = y_limits)  # Set y-axis limits based on Cue
   
   return(p)
 }
@@ -1639,13 +1742,76 @@ pngw <- plot_RT(NGW, "NGW")
 pngl <- plot_RT(NGL, "NGL")
 
 # Arrange plots into a grid
-cues_rt <- ggarrange(pgw, pgal, pngw, pngl, ncol = 2, nrow = 2)
-
-# Display the grid of plots
-cues_rt
+cues_rt <- ggarrange(pgw, pgal, pngw, pngl, ncol = 2, nrow = 2); cues_rt
 
 
 ```
+   
+   
+   
+   
+   
+   for paper? Mean RT and by Cue
+```{r}
+tus_correct<-tus_filtered %>%  group_by(ID, Cue, Valence=OutValence,condition, Action=req_action) %>% summarise(correct = mean(correct))
+#tus_correct_sub_gen <- tus_correct %>% group_by(OutValence, req_action, condition) %>% summarise(correct = mean(correct))
+tus_correct<-na.omit(tus_correct)
+# Identify outliers
+outliers <- boxplot.stats(tus_correct$correct)$out
+# Remove outliers from the dataset
+tus_correct <- tus_correct[!tus_correct$correct %in% outliers, ]
+
+
+# Prepare the data
+tus_rt <- tus_filtered %>%
+  group_by(ID, Cue, Valence = OutValence, condition, Action = req_action) %>%
+  summarise(rt = mean(RT, na.rm = TRUE))
+
+tus_rt <- na.omit(tus_rt)
+
+# Identify and remove outliers
+outliers <- boxplot.stats(tus_rt$rt)$out
+tus_rt <- tus_rt[!tus_rt$rt %in% outliers, ]
+
+# Calculate mean and standard error per condition and Cue
+summary_data <- tus_rt %>%
+  group_by(Action, condition, Valence, Cue) %>%
+  summarise(mean_rt = mean(rt),
+            se_rt = sd(rt, na.rm = TRUE) / sqrt(n()),
+            .groups = 'drop')
+
+# Calculate mean and standard error for general plot
+summary_general <- tus_rt %>%
+  group_by(Action, Valence) %>%
+  summarise(mean_rt = mean(rt),
+            se_rt = sd(rt, na.rm = TRUE) / sqrt(n()),
+            .groups = 'drop')
+
+# Plot with error bars by Cue and Condition
+plot_cue_condition <- ggplot(summary_data, aes(x = Cue, y = mean_rt, fill = Valence)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.7) +  # Increase width for thicker bars
+  geom_errorbar(aes(ymin = mean_rt - se_rt, ymax = mean_rt + se_rt),
+                position = position_dodge(width = 0.75), width = 0.25) +  # Adjust width for error bars
+  facet_wrap(~ condition) +
+  labs(title = "Mean RT by Cue & Condition", x = "Cue", y = "Mean RT") +
+  theme_bw() +
+  coord_cartesian(ylim = c(min(summary_data$mean_rt - summary_data$se_rt), max(summary_data$mean_rt + summary_data$se_rt))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+# Plot with error bars - general RT
+plot_general <- ggplot(summary_general, aes(x = Action, y = mean_rt, fill = Valence)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.7) +  # Increase width for thicker bars
+  geom_errorbar(aes(ymin = mean_rt - se_rt, ymax = mean_rt + se_rt),
+                position = position_dodge(width = 0.75), width = 0.25) +  # Adjust width for error bars
+  labs(title = "Mean RT by Action & Valence", x = "Action", y = "Mean RT") +
+  theme_bw() +
+  coord_cartesian(ylim = c(min(summary_general$mean_rt - summary_general$se_rt), max(summary_general$mean_rt + summary_general$se_rt))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+combined_plot <- plot_general + plot_cue_condition + plot_layout(widths = c(1, 2));combined_plot
+
+```
+
    
    
    

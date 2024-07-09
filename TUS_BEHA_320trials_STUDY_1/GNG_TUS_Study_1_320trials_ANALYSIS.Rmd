@@ -75,7 +75,7 @@ tus_filtered <- within(tus_filtered, req_action <- relevel(req_action, ref = "no
 ```
            
            
-           #WAY_1 - automatically is creating/looking/combining models
+           #WAY_1 - automatically is creating/looking/combining models - deleted
 ```{r}
 #Equivalent of stepAIC for glmer - comparing models - do not like it
 
@@ -157,6 +157,11 @@ model3.c <- glmer(correct ~ req_action * condition * trial_number +(1|ID) ,
 model3.d <- glmer(correct ~ OutValence*response +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.d) 
 
+model3.e <- glmer(correct ~ OutValence*req_action +(1|ID) , 
+                 data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.e) 
+
+model3.f <- glmer(correct ~ OutValence*req_action*trial_number +(1|ID) , 
+                 data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)));summary(model3.f) 
 #relatively good
 model4 <- glmer(correct ~ OutValence * req_action * condition +(1|ID) , 
                  data  = tus_filtered, family="binomial", glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))) ;summary(model4) 
