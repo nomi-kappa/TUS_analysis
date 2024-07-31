@@ -23,7 +23,6 @@ library(tidyverse)
 library(patchwork)
 library(ggpubr)
 library(jtools) #for explanation of lmer
-library(yarr)
 library (yarrr)
 library(afex)
 #install.packages("devtools")
