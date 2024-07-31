@@ -133,7 +133,8 @@ tus <- tus %>%
 
 ```
 
-
+## remove missing trials / lines of NaNs
+tus <- filter(tus, stim_ID != "NaN")
 
 ## Add response col (press - no_press)
 ```{r}
@@ -797,20 +798,6 @@ tus_filtered <- tus_filtered %>%
 # Optional: Check the dataset after filtering
 View(tus_filtered)
 ```
-
-
-      #deleting 4th block for JAKA0154 DACC, SSHHW0093 DACC, SINB0180 AI and SKKY0189 because it contains NAs
-      
-```{r}
-# Exclude specified rows
-tus_filtered <- tus_filtered %>%
-  filter(!(block == 4 & ID == "JAKA0154" & condition == "b.dacc")) %>%
-  filter(!(block == 4 & ID == "SSHW0093" & condition == "b.dacc")) %>%
-  filter(!(block == 4 & ID == "SINB0180" & condition == "c.ai"))%>%
-  filter(!(block == 4 & ID == "SKKY0189" & condition == "b.dacc")) %>%
-  filter(!(block == 4 & ID == "SKKY0189" & condition == "c.ai"))
-```
-
 
     # exclude any trials that Cue presented >20
 ```{r}
