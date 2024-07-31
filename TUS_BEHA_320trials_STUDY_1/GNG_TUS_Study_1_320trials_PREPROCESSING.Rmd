@@ -474,14 +474,13 @@ tus<- tus %>%
 ```
 
  
-
-
           RT_min column - replacing 0s to 0.001
+          NB: this is wrong, RTs for no presses should be NA, not 0 and certainly not 0.001 
 ```{r}
 tus <- tus %>%
-  mutate(RT_min = ifelse(RT == 0, 0.001, RT))
+  mutate(RT_min = ifelse(RT == 0, NA, RT),
+         RT = ifelse(RT == 0, NA, RT))
 
-tus_play <- tus 
 ```
 
           
