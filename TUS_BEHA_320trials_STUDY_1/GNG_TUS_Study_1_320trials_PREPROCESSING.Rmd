@@ -491,67 +491,59 @@ Formula:
 IES = RT/1 - PE (proportion of errors) OR
 IES = RT/PC (proportion of correct responses)
 
+see https://psychologicabelgica.com/articles/10.5334/pb-51-1-5
 1. so I need to find the proportion of correct responses first per participant, Cue, condition
-2. calculate their IES
-3. summarize per condition and Cue maybe? 
+2. compute the mean (or median) RT per participant, Cue, condition
+3. calculate their IES
 
+Note that the IES attempt to capture some kind of speed accuracy trade off. The applies to stadanrd go/nogo tasks but it's not as relevant in RL tasks, since the choosing the non-advantageous option is not necessarily an error, it's part of the learning process to accumulate evident relative to the value of each option. Besides, in this task, the 'correct' response is a no-press, hence is not associated ith a RT, for half of the cues.
 
-          
-          # not sure whether IES calculation is correct - problem with the WIN cues as by default have low or 0 proportion of errors. 
-          Especially aIns even if less accuracy in GW they were pressing fast, so it turns out to have a better IES score than the other conditions.
-  
   #A. Calculate the IES for each row:
 ```{r}
 # Calculate proportion of correct responses
-tus$correct_proportion <- tus$correct / 100  #  correct is given as a percentage
-
-# Calculate IES
-tus$IES <- tus$RT_min / (1 - tus$correct_proportion)
-
-# Selectively show columns
-tus[, (ncol(tus) - 5):(ncol(tus))]
+# NB: you cannot compute a proportion for a single trial. You first need to compute the proportion of correct response per participant & cue
 
 # Summarize by condition
 IES_by_cond_cue_id<- tus %>%
   group_by(ID, condition, Cue) %>%
+  summarise(
+    prop_correct = mean(correct, na.rm = TRUE),
+    meanRT = mean(RT, na.rm = TRUE),
+    IES = meanRT/prop_correct,  # Calculate the mean IES for each condition
+    n = n()  # Count the number of observations for each condition
+  )
+
+# Selectively show columns
+# tus[, (ncol(tus) - 5):(ncol(tus))]
+
+# replace NaNs (not a number) and Inf with NAs (missing values)
+IES_by_cond_cue_id <- IES_by_cond_cue_id %>%
+  mutate(IES = ifelse(is.nan(IES), NA, IES),
+         IES = ifelse(IES==Inf, NA, IES),
+         meanRT = ifelse(is.nan(meanRT), NA, meanRT))
+
+IES_by_cond_cue<- IES_by_cond_cue_id %>%
+  group_by(condition, Cue) %>%
   summarise(
     mean_IES = mean(IES, na.rm = TRUE),  # Calculate the mean IES for each condition
     sd_IES = sd(IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
     n = n()  # Count the number of observations for each condition
   )
 
-IES_by_cond_cue<- IES_by_cond_cue_id %>%
-  group_by(condition, Cue) %>%
-  summarise(
-    mean_IES = mean(mean_IES, na.rm = TRUE),  # Calculate the mean IES for each condition
-    sd_IES = sd(sd_IES, na.rm = TRUE),  # Calculate the standard deviation of the IES for each condition
-    n = n()  # Count the number of observations for each condition
-  )
-
 print(IES_by_cond_cue) #done by ID first - this one is good
-
-
-#or
-# Step 3: Summarize IES per condition and cue
-summary <- tus %>%
-  group_by(condition, Cue) %>%
-  summarize(mean_IES = mean(IES, na.rm = TRUE))
 
 ```
  
   
- #Cumulative reward/outcome column
+ # Cumulative reward/outcome column - this is computed independently for each cue
 ```{r}
 tus <- tus %>%
-  group_by(ID, condition) %>%
+  group_by(ID, condition, Cue) %>%
   arrange(trial_number, .by_group = TRUE) %>%
   mutate(cumulative_reward = cumsum(outcomefeed)) %>%
   ungroup()  # Ungroup to return to regular data frame
 
 ```
-
-
-
 
  -------------------------------------------------
  
