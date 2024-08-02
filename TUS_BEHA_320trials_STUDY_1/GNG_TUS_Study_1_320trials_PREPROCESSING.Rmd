@@ -49,26 +49,25 @@ b.dacc<- tibble(filename = list.files("2.dACC", "*.txt", full.names=TRUE)) %>%
     do(read.table(.$filename))
 ```
 
-## add condition column
+## add condition column and trial number as early as possible to avoid accidental reorder
 ```{r}
 a.sham <- a.sham %>%
-      mutate (condition="a.sham")
+      mutate(condition="Sham", trial_number = row_number()) 
 c.ai <- c.ai %>%
-      mutate (condition="c.ai")
+      mutate (condition="AI", trial_number = row_number())
 b.dacc <- b.dacc %>%
-      mutate (condition="b.dacc")
+      mutate (condition="dACC", trial_number = row_number())
 ```
 
 ## Set variable names
 ```{r}
 a.sham <- a.sham %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+              "jitter2", "RT", "outcomefeed", "condition", "trial_number"))
 b.dacc <- b.dacc %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+              "jitter2", "RT", "outcomefeed", "condition", "trial_number"))
 c.ai <- c.ai %>% set_names(c("ID", "stim_ID", "GW", "GAL", "NGW", "NGL", "jitter1", 
-              "jitter2", "RT", "outcomefeed", "condition"))
+              "jitter2", "RT", "outcomefeed", "condition", "trial_number"))
 ```
-
 
 ## combine datasets
 ```{r}
