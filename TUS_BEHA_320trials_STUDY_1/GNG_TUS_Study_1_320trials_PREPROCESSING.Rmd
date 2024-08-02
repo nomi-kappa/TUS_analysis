@@ -193,34 +193,25 @@ tus <- tus %>%
                     ifelse(req_action == "Go", ifelse(response == "press", 1, 0), 1)))
 ```
         
-## Trial column 
-```{r}
-#1,2,3...100...320
-tus <- tus %>%
-  group_by(ID, condition) %>%
-  mutate(trial_number = row_number())
-```
-
-
 ## block colums 1, 2, 3, 4   =====sos with the trials that have 400 instead of 320
 ```{r}
-tus$block <- ifelse(tus$trial_number == 1:80, '1',
-                ifelse(tus$trial_number == 81:160, '2', 
-                ifelse(tus$trial_number == 161:240, '3', 
-              ifelse(tus$trial_number == 241:320, '4', NA))))
+tus$block <- ifelse(tus$trial_number <= 80, 1,
+                ifelse(tus$trial_number <= 160, 2, 
+                ifelse(tus$trial_number <= 240, 3, 
+              ifelse(tus$trial_number <= 320, 4, NA))))
 # counts trials of the same condition within each block
 count_trials <- rollify(function(x) sum(last(x) == x), window=80)#turns a function 
 #into a rolling version of itself for use inside of a call to dplyr::mutate() ,
 # however it works equally as well when called from purrr::map()
+
+extratrials <-  filter(tus, trial_number>320)
 ```
 
 ## trial_count column
 ```{r}
 tus <- tus %>%
-  group_by(ID, block, condition) %>%
-  mutate(TrialCount = count_trials(Cue)) %>%
-  group_by(ID, block,condition, Cue) %>%
-  mutate(TrialCount = ifelse(is.na(TrialCount), row_number(ID), TrialCount))
+  group_by(ID, session, block, Cue) %>%
+  mutate(TrialCount = row_number())
 ```
 
 
