@@ -80,7 +80,7 @@ tus <-bind_rows(a.sham, c.ai, b.dacc)
 ```{r}
 # Extract numbers at the end of each level and create a new column
 tus<-tus %>%
-  mutate(session = as.factor(str_extract(ID,"(?<=\\D)\\d+(?=_log.txt)")))
+  mutate(session = as.numeric(str_extract(ID,"(?<=\\D)\\d+(?=_log.txt)")))
 #View(tus)
 ```
 
