@@ -133,7 +133,15 @@ tus <- tus %>%
 ```
 
 ## remove missing trials / lines of NaNs
+```{r}
 tus <- filter(tus, stim_ID != "NaN")
+```
+
+## order data
+```{r}
+tus <- tus %>%
+  arrange(ID, session, trial_number)
+```
 
 ## Add response col (press - no_press)
 ```{r}
