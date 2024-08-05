@@ -274,7 +274,7 @@ tus <- tus %>%
 tus$followup_beha_binary <- as.numeric(tus$followup_beha == "press")
 
 # Check the recoded variable
-table(tus$followup_beha_binary)
+# table(tus$followup_beha_binary)
 ```
 
 
@@ -319,8 +319,8 @@ tus <- tus %>%
   ))
 
         #check percentages and if 80% 20%
-        table(tus$feedback)
-        table(tus$correct_feedback)
+        # table(tus$feedback)
+        # table(tus$correct_feedback)
 
                     
 total_count <- 28500
@@ -361,7 +361,7 @@ tus$followup_correctfeed_trinary <- ifelse(tus$followup_correctfeed == "press", 
                                            ifelse(tus$followup_correctfeed == "no_press", 0, 2))
 
 # Check the recoded variable
-table(tus$followup_correctfeed_trinary)
+# table(tus$followup_correctfeed_trinary)
 
 
 ```
@@ -429,7 +429,7 @@ tus <- tus %>%
 ```{r}
 # 'followup_beha' and 'followup_beha_reward' need to be factors
 # Create binary column for previous response before followup_beha
-tus_filtered <- tus_filtered %>%
+tus <- tus %>%
   group_by(ID, condition, Cue, req_action) %>%
   mutate(
     previous_beha = lag(followup_beha, order_by = trial_number, default = NA),
@@ -437,7 +437,7 @@ tus_filtered <- tus_filtered %>%
   )
 
 # Create binary column for previous response before followup_beha_reward
-tus_filtered <- tus_filtered %>%
+tus <- tus %>%
   group_by(ID, condition, Cue, req_action) %>%
   mutate(
     previous_beha_reward = lag(followup_beha_reward, order_by = trial_number, default = NA),
@@ -445,11 +445,11 @@ tus_filtered <- tus_filtered %>%
   )
 
 # Check the recoded variables (binary columns)
-table(tus_filtered$previous_beha_binary)
-table(tus_filtered$previous_beha_reward_binary)
+table(tus$previous_beha_binary)
+table(tus$previous_beha_reward_binary)
 
 # Print head of the dataframe to verify
-head(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_beha_binary", "followup_beha_reward", "previous_beha_reward", "previous_beha_reward_binary")])
+#bhead(tus_filtered[, c("response", "followup_beha", "previous_beha", "previous_beha_binary", "followup_beha_reward", "previous_beha_reward", "previous_beha_reward_binary")])
 ```
 
 
