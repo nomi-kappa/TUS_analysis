@@ -1,0 +1,168 @@
+---
+title: "cumulative_reward_analysis"
+author: "Nadège B."
+date: "2024-07-31"
+output:
+  html_document: default
+---
+
+#Load libraries and custom functions
+```{r include=FALSE}
+library(ggplot2)
+library (yarrr)
+library(tidyverse)
+library(forcats)
+library(lmerTest)
+library(effects)
+library(sjPlot)
+library(emmeans)
+library(sommer)
+library(here) # find your project's files, based on the current working directory at the time when the package is loaded
+
+# load custom function
+source(here("custom_functions_lme4.R"))
+```
+
+# READ FILES
+```{r include=FALSE}
+tus <- read_csv("GNG_TUS_S1.csv")
+tus_filtered <- read_csv ("GNG_tus_filtered_S1.csv")
+```
+
+# Compute cumulative reward/outcome column - this is computed independently for each cue
+```{r}
+tus_filtered <- tus_filtered %>%
+  group_by(ID, condition, Cue, block) %>%
+  arrange(trial_number, .by_group = TRUE) %>%
+  mutate(cumulative_reward = cumsum(outcomefeed)) %>%
+  ungroup()  # Ungroup to return to regular data frame
+
+# check whether there are missing values
+filtered <- tus_filtered %>%
+  filter(is.na(cumulative_reward))
+```
+
+# Summarize by condition
+```{r}
+cumul_reward <- tus_filtered %>%
+  group_by(ID, condition, req_action, OutValence, Cue, TrialCount) %>%
+  summarise(
+    cumrew_mean = mean(cumulative_reward, na.rm = TRUE),
+    cumrew_sd = sd(RT, na.rm = TRUE),
+    n = n()  # Count the number of observations for each condition
+  )
+```
+
+# create a nice plot
+```{r}
+ggplot(data = cumul_reward, 
+  mapping = aes(x = TrialCount, y = cumrew_mean, color = forcats::fct_rev(condition), fill = forcats::fct_rev(condition) )) + 
+  stat_summary(fun = mean, geom = "point") + # mean accuracy across participants in each trial
+  stat_summary(fun = mean, geom = "line") +  # connect the means with a line
+  geom_smooth(method = "loess", se = TRUE, linewidth = 1.2, alpha = 0.2) +  # Smooth curve with standard error
+  scale_x_continuous(name = 'Trial'   , breaks = 1:20, labels = function(x) ifelse(x%%2==0, x, '')) + 
+  scale_y_continuous(name = 'Cumulative Outcome', breaks = scales::pretty_breaks()) +
+  facet_grid(forcats::fct_relevel(OutValence, "Win", "Avoid") ~ req_action, scales = "free") +                # split by domain and by symbol condition
+  scale_color_brewer(palette = "Set2", name = "Condition") +  # Use a qualitative color palette
+  scale_fill_brewer(palette = "Set2", name = "Condition") +  # Use a qualitative color palette
+  theme_bw()
+```
+
+# GLM analyses
+
+```{r}
+# convert variables to factors
+tus_filtered <- tus_filtered %>% mutate_at(c('req_action', 'OutValence', 'condition', 'ID'), as.factor)
+# refactor reference level
+tus_filtered <- within(tus_filtered, req_action <- relevel(req_action, ref = "noGo"))
+tus_filtered <- within(tus_filtered, OutValence <- relevel(OutValence, ref = "Win"))
+tus_filtered <- within(tus_filtered, condition <- relevel(condition, ref = "Sham"))
+```
+
+GLM -seperate analyses on win and avoid conditions, to avoid triple interactions (difficult to interpret) and
+as comparing the two is not the main focus of interest of the study.
+
+## Win condition
+```{r}
+tus_win <- tus_filtered %>% filter(OutValence == "Win")
+# testing full model
+mcumwin_full <- lmer(cumulative_reward ~ req_action*condition + (req_action*condition | ID), data  = tus_win)
+summary(mcumwin_full)
+```
+
+### check for singularity and effect of random slopes
+```{r}
+# check for singularity
+isSingular(mcumwin_full)
+
+# Diagnosis with RePsychLing approach: PCA on random effects variance-covariance estimates
+rePCA_full <- rePCA(mcumwin_full)
+summary(rePCA_full$ID)
+```
+
+The random slopes for the interaction terms have very little impact on the model, therefore we'll remove them
+
+### model reduced to random slopes with substantial proportion of variance explained
+```{r}
+mcumwin <- lmer(cumulative_reward ~ req_action*condition + (req_action + condition | ID), data  = tus_win)
+summary(mcumwin)
+tab_model(mcumwin)
+```
+
+```{r}
+plot(allEffects(mcumwin), ask=FALSE)
+```
+
+### display simple effects for each condition
+```{r}
+emmeans(mcumwin, pairwise ~ condition | req_action)
+
+```
+
+### plot effects 
+```{r}
+Labels = c("Intercept", "Required Action", "Stimulation AI", "Stimulation dACC", "Req. Action x AI", "Req. Action x dACC")
+pwin <- custom_coefplot(mcumwin, yLabels = Labels,
+                      plotSub = F, plotText = T, dropIntercept = T,  revOrder = T) # without random effects
+```
+
+## Avoid condition
+```{r}
+tus_avoid <- tus_filtered %>% filter(OutValence == "Avoid")
+mcumavoid_full <- lmer(cumulative_reward ~ req_action*condition + (req_action*condition | ID), data  = tus_avoid)
+summary (mcumavoid_full) 
+```
+
+### check for singularity and effect of random slopes
+```{r}
+isSingular(mcumavoid_full)
+
+# Diagnosis with RePsychLing approach: PCA on random effects variance-covariance estimates
+rePCA_full <- rePCA(mcumavoid_full)
+summary(rePCA_full$ID)
+```
+
+### fit reduced model
+```{r}
+mcumavoid <- lmer(cumulative_reward ~ req_action*condition + (req_action + condition | ID), data  = tus_avoid)
+summary (mcumavoid) 
+tab_model(mcumavoid)
+```
+
+### display simple effects for each condition
+```{r}
+emmeans(mcumavoid, pairwise ~ condition | req_action)
+```
+### plot effects 
+```{r}
+plot(allEffects(mcumavoid), ask=FALSE)
+
+```
+
+
+```{r}
+
+Labels = c("Intercept", "Required Action", "Stimulation AI", "Stimulation dACC", "Req. Action x AI", "Req. Action x dACC")
+pavoid <- custom_coefplot(mcumavoid, yLabels = Labels,
+                      plotSub = F, plotText = T, dropIntercept = T,  revOrder = T) # without random effects
+```
