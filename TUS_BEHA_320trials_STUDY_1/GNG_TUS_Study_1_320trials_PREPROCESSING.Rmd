@@ -298,6 +298,9 @@ following correct action (whether they were correct after receiving the correct 
 3. "followup_wrong_feed" behaviour column, is what they did after received the unexpected wrong feedback (20%) 
 
 4. "followup_correctfeed_trinary"column is the "followup_correctfeed" coded trinary; (0 for "no_press", 1 for "press", 2 for "wrong_feed_20%). Not sure if of any use.
+
+
+NB: This is a probabilistic task, therefore, there is no "correct" or "wrong" feedback. All feedback is correct. You could maybe talk of dominant and non-dominant outcomes.
   
 ```{r}
 # Step 1: Calculate correct_feedback based on specified conditions (check in which instance feedback was correct 80%) - all good!
